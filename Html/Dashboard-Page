@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-light bg-light">
+  <div class="container">
+    <span class="navbar-brand">Habit Tracker</span>
+    <a href="index.html" class="btn btn-danger">Logout</a>
+  </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container mt-4">
+  <h2>Your Habits</h2>
+  <p class="text-muted">Today: 31 March 2026</p>
+
+  <!-- Habit 1 -->
+  <div class="card mt-3 p-3">
+    <p><b>Exercise</b></p>
+    <p>Status: <span id="status1" class="text-danger">Not Done</span></p>
+    <button class="btn btn-primary" onclick="markDone(1)">Mark as Done</button>
+  </div>
+
+  <!-- Habit 2 -->
+  <div class="card mt-3 p-3">
+    <p><b>Drink Water</b></p>
+    <p>Status: <span id="status2" class="text-danger">Not Done</span></p>
+    <button class="btn btn-primary" onclick="markDone(2)">Mark as Done</button>
+  </div>
+
+  <!-- Progress Section -->
+  <div class="card mt-4 p-3">
+    <p><b>Progress</b></p>
+    <div class="progress">
+      <div id="progressBar" class="progress-bar" style="width: 0%"></div>
+    </div>
+  </div>
+
+  <!-- Streak -->
+  <div class="card mt-3 p-3">
+    <p><b>Streak</b></p>
+    <p>5 days </p>
+  </div>
+
+  <button class="btn btn-success mt-4">+ Add Habit</button>
+</div>
+
+<!-- Simple JavaScript -->
+<script>
+let completed = 0;
+
+function markDone(habitNumber) {
+  let status = document.getElementById("status" + habitNumber);
+
+  if (status.innerText === "Not Done") {
+    status.innerText = "Done";
+    status.classList.remove("text-danger");
+    status.classList.add("text-success");
+
+    completed++;
+    updateProgress();
+  }
+}
+
+function updateProgress() {
+  let total = 2;
+  let percent = (completed / total) * 100;
+
+  let bar = document.getElementById("progressBar");
+  bar.style.width = percent + "%";
+}
+</script>
+
+</body>
+</html>
