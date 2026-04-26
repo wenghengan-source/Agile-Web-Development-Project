@@ -1,0 +1,24 @@
+body {
+    background-color: #f5f7fb;
+}
+
+.card {
+    border-radius: 12px;
+}
+
+.calendar-table {
+    table-layout: fixed;
+}
+
+.calendar-cell {
+    height: 130px;
+    vertical-align: top;
+    font-size: 14px;
+}
+
+.calendar-habit {
+    background-color: #e7f1ff;
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 12px;
+}

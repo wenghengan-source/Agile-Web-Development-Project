@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Profile</h2>
+
+<div class="card p-4">
+    <h4>User Information</h4>
+
+    <p><strong>Name:</strong> {{ user[0] }}</p>
+    <p><strong>Email:</strong> {{ user[1] }}</p>
+
+    <hr>
+
+    <h4>Habit Summary</h4>
+
+    <p><strong>Total Habits:</strong> {{ total_habits }}</p>
+    <p><strong>Total Completed Records:</strong> {{ completed_habits }}</p>
+</div>
+
+{% endblock %}
