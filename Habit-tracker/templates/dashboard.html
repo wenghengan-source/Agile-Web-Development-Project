@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Dashboard</h2>
+
+<div class="alert alert-info">
+    {{ quote }}
+</div>
+
+{% if reminders %}
+    <div class="alert alert-warning">
+        <h5>Reminder</h5>
+        <p>You have unfinished habits today:</p>
+
+        <ul>
+            {% for reminder in reminders %}
+                <li>{{ reminder[1] }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+<div class="card p-4 mb-4">
+    <h4>Welcome, {{ session["user_name"] }}!</h4>
+    <p>Track your daily habits below.</p>
+</div>
+
+<div class="card p-4 mb-4">
+    <h4>Today’s Progress</h4>
+
+    <p><strong>Total Habits:</strong> {{ total }}</p>
+    <p><strong>Completed Today:</strong> {{ completed }}</p>
+    <p><strong>Completion Rate:</strong> {{ percentage }}%</p>
+
+    <div class="progress" style="height: 30px;">
+        <div class="progress-bar bg-success" style="width: {{ percentage }}%;">
+            {{ percentage }}%
+        </div>
+    </div>
+</div>
+
+<div class="card p-4 mb-4">
+    <h4>Add New Habit</h4>
+    <a href="/new_habit" class="btn btn-primary">Add Habit</a>
+</div>
+
+<div class="card p-4 mb-4">
+    <h4>Search and Filter</h4>
+
+    <form method="GET" action="/dashboard">
+        <div class="row">
+            <div class="col-md-3 mb-2">
+                <input type="text" name="search" class="form-control" placeholder="Search habit" value="{{ search }}">
+            </div>
+
+            <div class="col-md-3 mb-2">
+                <select name="category" class="form-control">
+                    <option value="">All Categories</option>
+                    <option value="Health">Health</option>
+                    <option value="Study">Study</option>
+                    <option value="Work">Work</option>
+                    <option value="Personal">Personal</option>
+                    <option value="General">General</option>
+                </select>
+            </div>
+
+            <div class="col-md-3 mb-2">
+                <select name="priority" class="form-control">
+                    <option value="">All Priorities</option>
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+
+            <div class="col-md-3 mb-2">
+                <select name="status" class="form-control">
+                    <option value="">All Status</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Not Completed">Not Completed</option>
+                </select>
+            </div>
+        </div>
+
+        <button class="btn btn-secondary mt-2">Apply Filter</button>
+        <a href="/dashboard" class="btn btn-outline-secondary mt-2">Clear</a>
+    </form>
+</div>
+
+<div class="card p-4">
+    <h4>Your Habits Today</h4>
+
+    {% if habits %}
+        <ul class="list-group">
+            {% for habit in habits %}
+                <li class="list-group-item">
+                    <strong>{{ habit[1] }}</strong><br>
+
+                    Category: {{ habit[2] }} |
+                    Priority: {{ habit[3] }} |
+                    Created: {{ habit[5] }} |
+                    Status Today: {{ habit[7] }} |
+                    Streak: {{ habit[6] }} days
+
+                    {% if habit[4] %}
+                        <p class="mt-2"><strong>Notes:</strong> {{ habit[4] }}</p>
+                    {% endif %}
+
+                    <div class="mt-2">
+                        <a href="/complete_habit/{{ habit[0] }}" class="btn btn-success btn-sm">Complete Today</a>
+                        <a href="/reset_habit/{{ habit[0] }}" class="btn btn-warning btn-sm">Reset Today</a>
+                        <a href="/edit_habit/{{ habit[0] }}" class="btn btn-info btn-sm">Edit</a>
+                        <a href="/delete_habit/{{ habit[0] }}" class="btn btn-danger btn-sm">Delete</a>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No habits found.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

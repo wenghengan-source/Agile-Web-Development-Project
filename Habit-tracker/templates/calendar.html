@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Habit Calendar</h2>
+
+<div class="card p-4">
+    <h4 class="text-center mb-4">{{ month_name }}</h4>
+
+    <table class="table table-bordered calendar-table">
+        <thead class="table-primary text-center">
+            <tr>
+                <th>Monday</th>
+                <th>Tuesday</th>
+                <th>Wednesday</th>
+                <th>Thursday</th>
+                <th>Friday</th>
+                <th>Saturday</th>
+                <th>Sunday</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for week in month_days %}
+                <tr>
+                    {% for day in week %}
+                        <td class="calendar-cell">
+                            {% if day != 0 %}
+                                <strong>{{ day }}</strong>
+
+                                {% set date_string = "%04d-%02d-%02d"|format(year, month, day) %}
+
+                                {% for habit in habits %}
+                                    {% if date_string >= habit[4] %}
+                                        <div class="calendar-habit mt-2">
+                                            <strong>{{ habit[1] }}</strong><br>
+                                            {{ habit[2] }} | {{ habit[3] }}<br>
+
+                                            {% if (habit[0], date_string) in completed_set %}
+                                                <small class="text-success">Completed</small>
+                                            {% else %}
+                                                <small class="text-danger">Not Completed</small>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
