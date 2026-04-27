@@ -11,17 +11,32 @@
 
 <body class="dashboard-body">
 
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/">Habit Tracker</a>
+        <div>
+            <a class="btn btn-light btn-sm" href="/">Home</a>
+            <a class="btn btn-light btn-sm" href="/dashboard">Dashboard</a>
+            <a class="btn btn-light btn-sm" href="/calendar">Calendar</a>
+            <a class="btn btn-light btn-sm" href="/friends">Friends</a>
+            <a class="btn btn-light btn-sm" href="/stats">Stats</a>
+            <a class="btn btn-light btn-sm" href="/profile">Profile</a>
+            <a class="btn btn-danger btn-sm" href="/logout">Logout</a>
+        </div>
+    </div>
+</nav>
+
 <div class="container mt-4">
 
     <div class="profile-hero">
-        <div class="profile-avatar">
-            {{ user[0][0] }}
+        <div class="profile-avatar" id="heroInitial">
+            {{ user[0][0]|upper if user and user[0] else "U" }}
         </div>
 
         <div>
             <span class="profile-badge">User Profile</span>
-            <h1>{{ user[0] }}</h1>
-            <p>{{ user[1] }}</p>
+            <h1 id="heroName">{{ user[0] }}</h1>
+            <p id="heroEmail">{{ user[1] }}</p>
         </div>
 
         <a href="/dashboard" class="btn btn-light">Back to Dashboard</a>
@@ -42,9 +57,9 @@
         </div>
 
         <div class="profile-stat-card">
-            <div class="profile-stat-icon">🔥</div>
-            <span>Motivation</span>
-            <h2>Keep Going</h2>
+            <div class="profile-stat-icon">🎯</div>
+            <span>Current Goals</span>
+            <h2>{{ goals|length }}</h2>
         </div>
 
     </div>
@@ -54,20 +69,42 @@
 
         <div class="profile-info-row">
             <span>Name</span>
-            <strong>{{ user[0] }}</strong>
+            <strong id="infoName">{{ user[0] }}</strong>
         </div>
 
         <div class="profile-info-row">
             <span>Email</span>
             <strong>{{ user[1] }}</strong>
         </div>
+
+        <div class="profile-info-row">
+            <span>Focus Note</span>
+            <strong id="focusNote">Stay consistent and build momentum one day at a time.</strong>
+        </div>
     </div>
 
-    <div class="profile-card mt-4 mb-5">
+    <div class="profile-card mt-4">
+        <h3>Current Goals</h3>
+        <p class="text-muted">
+            These are based on your most recent habits so you can quickly see what you are focused on right now.
+        </p>
+
+        <div class="d-grid gap-2" id="goalGrid">
+            {% if goals %}
+                {% for goal in goals %}
+                    <div class="goal-pill">{{ goal }}</div>
+                {% endfor %}
+            {% else %}
+                <div class="goal-pill">Add a few habits to see your current goals here.</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="profile-card mt-4">
         <h3>Progress Summary</h3>
 
         <p class="text-muted">
-            This summary shows your current habit tracking activity and completed records.
+            This summary shows your current habit tracking activity, completed records, and the goals you are working on.
         </p>
 
         <div class="profile-progress-box">
@@ -83,7 +120,105 @@
         </div>
     </div>
 
+    <div class="profile-card mt-4 mb-5">
+        <h3>Edit Profile Preview</h3>
+        <p class="text-muted">
+            This updates the profile preview in the browser only, so you can experiment without changing stored account data.
+        </p>
+
+        <div class="editor-field">
+            <label class="form-label fw-semibold" for="nameInput">Display Name</label>
+            <input type="text" id="nameInput" class="form-control" value="{{ user[0] }}" disabled>
+        </div>
+
+        <div class="editor-field">
+            <label class="form-label fw-semibold" for="summaryInput">Focus Note</label>
+            <textarea id="summaryInput" class="form-control" rows="3" disabled>Stay consistent and build momentum one day at a time.</textarea>
+        </div>
+
+        <div class="editor-field">
+            <label class="form-label fw-semibold" for="goalsInput">Goals</label>
+            <textarea id="goalsInput" class="form-control" rows="5" disabled>{% if goals %}{% for goal in goals %}{{ goal }}{% if not loop.last %}
+{% endif %}{% endfor %}{% else %}Add your first habit goal here.{% endif %}</textarea>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn btn-primary" id="editButton">Edit</button>
+            <button type="button" class="btn btn-outline-secondary" id="saveButton">Save</button>
+        </div>
+
+        <p class="text-success fw-semibold mt-3 mb-0" id="statusText"></p>
+    </div>
+
 </div>
+
+<script>
+const nameInput = document.getElementById("nameInput");
+const summaryInput = document.getElementById("summaryInput");
+const goalsInput = document.getElementById("goalsInput");
+const editButton = document.getElementById("editButton");
+const saveButton = document.getElementById("saveButton");
+const statusText = document.getElementById("statusText");
+const heroName = document.getElementById("heroName");
+const heroInitial = document.getElementById("heroInitial");
+const infoName = document.getElementById("infoName");
+const focusNote = document.getElementById("focusNote");
+const goalGrid = document.getElementById("goalGrid");
+
+function setEditable(isEditable) {
+    nameInput.disabled = !isEditable;
+    summaryInput.disabled = !isEditable;
+    goalsInput.disabled = !isEditable;
+}
+
+function buildInitial(name) {
+    return (name.trim()[0] || "U").toUpperCase();
+}
+
+function renderGoals(goalText) {
+    const goals = goalText
+        .split("\n")
+        .map(goal => goal.trim())
+        .filter(Boolean);
+
+    goalGrid.innerHTML = "";
+
+    if (goals.length === 0) {
+        const emptyGoal = document.createElement("div");
+        emptyGoal.className = "goal-pill";
+        emptyGoal.textContent = "Add your first habit goal here.";
+        goalGrid.appendChild(emptyGoal);
+        return;
+    }
+
+    goals.forEach(goal => {
+        const goalElement = document.createElement("div");
+        goalElement.className = "goal-pill";
+        goalElement.textContent = goal;
+        goalGrid.appendChild(goalElement);
+    });
+}
+
+editButton.addEventListener("click", function () {
+    setEditable(true);
+    statusText.textContent = "Edit mode enabled.";
+    nameInput.focus();
+});
+
+saveButton.addEventListener("click", function () {
+    const updatedName = nameInput.value.trim() || "User";
+    const updatedSummary = summaryInput.value.trim() || "No focus note added yet.";
+
+    heroName.textContent = updatedName;
+    heroInitial.textContent = buildInitial(updatedName);
+    infoName.textContent = updatedName;
+    focusNote.textContent = updatedSummary;
+    renderGoals(goalsInput.value);
+
+    setEditable(false);
+    statusText.textContent = "Profile preview updated.";
+});
+</script>
 
 </body>
 </html>

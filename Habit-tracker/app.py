@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import sqlite3
 import random
 from datetime import date
+from datetime import timedelta
 import calendar as cal
 
 app = Flask(__name__)
@@ -674,6 +675,112 @@ def search_users():
     return jsonify({"users": result})
 
 
+@app.route("/stats")
+def stats():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    today = date.today()
+    week_dates = [today - timedelta(days=offset) for offset in range(6, -1, -1)]
+    week_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM habit_completions WHERE user_id = ?",
+        (session["user_id"],)
+    )
+    total_completed = cursor.fetchone()[0]
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM habits WHERE user_id = ?",
+        (session["user_id"],)
+    )
+    total_habits = cursor.fetchone()[0]
+
+    weekly_progress = []
+    active_days = 0
+
+    for week_day in week_dates:
+        day_string = week_day.isoformat()
+
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM habit_completions
+            WHERE user_id = ? AND completion_date = ?
+            """,
+            (session["user_id"], day_string)
+        )
+        completed = cursor.fetchone()[0]
+
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM habits
+            WHERE user_id = ? AND created_date <= ?
+            """,
+            (session["user_id"], day_string)
+        )
+        goal = cursor.fetchone()[0]
+
+        if goal > 0:
+            active_days += 1
+
+        weekly_progress.append({
+            "label": week_labels[week_day.weekday()],
+            "completed": completed,
+            "goal": goal,
+            "percentage": 0 if goal == 0 else int((completed / goal) * 100)
+        })
+
+    average_progress = 0
+    if active_days > 0:
+        average_progress = int(
+            sum(day["percentage"] for day in weekly_progress) / active_days
+        )
+
+    cursor.execute(
+        """
+        SELECT completion_date
+        FROM habit_completions
+        WHERE user_id = ?
+        GROUP BY completion_date
+        ORDER BY completion_date DESC
+        """,
+        (session["user_id"],)
+    )
+    completion_days = [row[0] for row in cursor.fetchall()]
+
+    current_streak = 0
+    streak_cursor = today
+    completion_set = set(completion_days)
+
+    while streak_cursor.isoformat() in completion_set:
+        current_streak += 1
+        streak_cursor -= timedelta(days=1)
+
+    best_day = {"label": "No data", "completed": 0, "goal": 0}
+    if weekly_progress:
+        best_day = max(
+            weekly_progress,
+            key=lambda item: (item["percentage"], item["completed"])
+        )
+
+    conn.close()
+
+    return render_template(
+        "stats.html",
+        total_completed=total_completed,
+        current_streak=current_streak,
+        average_progress=average_progress,
+        total_habits=total_habits,
+        weekly_progress=weekly_progress,
+        best_day=best_day
+    )
+
+
 @app.route("/profile")
 def profile():
     if "user_id" not in session:
@@ -706,13 +813,26 @@ def profile():
     )
     completed_habits = cursor.fetchone()[0]
 
+    cursor.execute(
+        """
+        SELECT habit_name
+        FROM habits
+        WHERE user_id = ?
+        ORDER BY created_date DESC, id DESC
+        LIMIT 4
+        """,
+        (session["user_id"],)
+    )
+    goals = [row[0] for row in cursor.fetchall()]
+
     conn.close()
 
     return render_template(
         "profile.html",
         user=user,
         total_habits=total_habits,
-        completed_habits=completed_habits
+        completed_habits=completed_habits,
+        goals=goals
     )
 
 @app.route("/habit/<int:habit_id>")

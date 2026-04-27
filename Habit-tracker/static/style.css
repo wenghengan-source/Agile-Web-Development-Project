@@ -1332,3 +1332,115 @@ h1, h2, h3, h4, h5 {
         gap: 12px;
     }
 }
+
+/* =====================================
+   SHARED STATS / PROFILE SECTIONS
+===================================== */
+
+.page-section {
+    margin-bottom: 24px;
+}
+
+.page-intro.card,
+.feature-panel.card,
+.metric-card.card,
+.editor-card.card {
+    padding: 24px;
+}
+
+.stats-metric-grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.metric-value {
+    font-size: 38px;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 6px;
+}
+
+.muted-copy {
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.progress-week {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 12px;
+    align-items: end;
+    margin-top: 20px;
+}
+
+.progress-day {
+    text-align: center;
+}
+
+.progress-bar-wrap {
+    height: 160px;
+    border-radius: 14px;
+    background: #e5e7eb;
+    overflow: hidden;
+    display: flex;
+    align-items: end;
+}
+
+.progress-bar-fill {
+    width: 100%;
+    background: linear-gradient(180deg, #5ea2ff 0%, #0d6efd 100%);
+    border-radius: 14px;
+    transition: height 0.3s ease;
+}
+
+.progress-day-value {
+    margin: 10px 0 4px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.progress-day-label {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.goal-pill {
+    background: #eef3ff;
+    color: #0d47a1;
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-weight: 600;
+}
+
+.editor-field {
+    margin-bottom: 16px;
+}
+
+.editor-field input,
+.editor-field textarea {
+    border-radius: 12px;
+}
+
+@media (max-width: 900px) {
+    .stats-metric-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 640px) {
+    .landing-nav-container {
+        width: 92%;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .landing-nav-links {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .progress-week {
+        gap: 8px;
+    }
+}
