@@ -30,8 +30,7 @@ def init_db():
             priority TEXT DEFAULT 'Medium',
             notes TEXT,
             created_date TEXT NOT NULL,
-            streak INTEGER DEFAULT 0,
-            FOREIGN KEY (user_id) REFERENCES users(id)
+            streak INTEGER DEFAULT 0
         )
     """)
 
@@ -40,8 +39,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             habit_id INTEGER NOT NULL,
             user_id INTEGER NOT NULL,
-            completion_date TEXT NOT NULL,
-            FOREIGN KEY (habit_id) REFERENCES habits(id)
+            completion_date TEXT NOT NULL
         )
     """)
 
@@ -49,9 +47,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS friends (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
-            friend_id INTEGER NOT NULL,
-            FOREIGN KEY (user_id) REFERENCES users(id),
-            FOREIGN KEY (friend_id) REFERENCES users(id)
+            friend_id INTEGER NOT NULL
         )
     """)
 
@@ -82,11 +78,9 @@ def register():
             conn.commit()
             flash("Registration successful! Please login.")
             return redirect(url_for("login"))
-
         except sqlite3.IntegrityError:
             flash("Email already exists.")
             return redirect(url_for("register"))
-
         finally:
             conn.close()
 
@@ -185,6 +179,46 @@ def dashboard():
     completed = len([habit for habit in habits if habit[7] == "Completed"])
     percentage = 0 if total == 0 else int((completed / total) * 100)
 
+    video_list = [
+        {
+            "title": "How to Build Better Habits",
+            "thumbnail": "https://img.youtube.com/vi/TQMbvJNRpLE/hqdefault.jpg",
+            "watch_url": "https://www.youtube.com/watch?v=TQMbvJNRpLE"
+        },
+        {
+            "title": "Daily Motivation",
+            "thumbnail": "https://img.youtube.com/vi/ZXsQAXx_ao0/hqdefault.jpg",
+            "watch_url": "https://www.youtube.com/watch?v=ZXsQAXx_ao0"
+        },
+        {
+            "title": "Stop Procrastinating",
+            "thumbnail": "https://img.youtube.com/vi/arj7oStGLkU/hqdefault.jpg",
+            "watch_url": "https://www.youtube.com/watch?v=arj7oStGLkU"
+        },
+        {
+            "title": "Productivity Tips",
+            "thumbnail": "https://img.youtube.com/vi/fYz5XcM2b7A/hqdefault.jpg",
+            "watch_url": "https://www.youtube.com/watch?v=fYz5XcM2b7A"
+        },
+        {
+            "title": "Focus and Consistency",
+            "thumbnail": "https://img.youtube.com/vi/H14bBuluwB8/hqdefault.jpg",
+            "watch_url": "https://www.youtube.com/watch?v=H14bBuluwB8"
+        },
+        {
+            "title": "Build a Better Routine",
+            "thumbnail": "https://img.youtube.com/vi/Zi9ToVdd6xc/hqdefault.jpg",
+            "watch_url": "https://www.youtube.com/watch?v=Zi9ToVdd6xc"
+        }
+    ]
+
+    day_number = date.today().toordinal()
+    start_index = day_number % len(video_list)
+
+    today_videos = []
+    for i in range(3):
+        today_videos.append(video_list[(start_index + i) % len(video_list)])
+
     conn.close()
 
     return render_template(
@@ -198,7 +232,8 @@ def dashboard():
         reminders=reminders,
         total=total,
         completed=completed,
-        percentage=percentage
+        percentage=percentage,
+        today_videos=today_videos
     )
 
 
@@ -426,6 +461,11 @@ def friends():
     if request.method == "POST":
         friend_email = request.form["friend_email"]
 
+        if friend_email == "":
+            flash("Please select a user first.")
+            conn.close()
+            return redirect(url_for("friends"))
+
         cursor.execute(
             "SELECT id FROM users WHERE email = ?",
             (friend_email,)
@@ -512,13 +552,22 @@ def profile():
     conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
-    cursor.execute("SELECT name, email FROM users WHERE id = ?", (session["user_id"],))
+    cursor.execute(
+        "SELECT name, email FROM users WHERE id = ?",
+        (session["user_id"],)
+    )
     user = cursor.fetchone()
 
-    cursor.execute("SELECT COUNT(*) FROM habits WHERE user_id = ?", (session["user_id"],))
+    cursor.execute(
+        "SELECT COUNT(*) FROM habits WHERE user_id = ?",
+        (session["user_id"],)
+    )
     total_habits = cursor.fetchone()[0]
 
-    cursor.execute("SELECT COUNT(*) FROM habit_completions WHERE user_id = ?", (session["user_id"],))
+    cursor.execute(
+        "SELECT COUNT(*) FROM habit_completions WHERE user_id = ?",
+        (session["user_id"],)
+    )
     completed_habits = cursor.fetchone()[0]
 
     conn.close()
