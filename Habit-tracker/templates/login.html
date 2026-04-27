@@ -11,45 +11,42 @@
 
 <body class="auth-body">
 
-<div class="auth-wrapper">
-    <div class="auth-card">
+<div class="auth-card">
+    <div class="text-center mb-4">
+        <h2>Welcome Back</h2>
+        <p class="text-muted">Login to continue tracking your habits.</p>
+    </div>
 
-        <div class="text-center mb-4">
-            <h2>Welcome Back</h2>
-            <p class="text-muted">Login to continue tracking your habits.</p>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-info">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        <div class="mb-3">
+            <label>Email</label>
+            <input type="email" name="email" class="form-control auth-input" required>
         </div>
 
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="alert alert-info">
-                    {{ messages[0] }}
-                </div>
-            {% endif %}
-        {% endwith %}
+        <div class="mb-3">
+            <label>Password</label>
+            <input type="password" name="password" class="form-control auth-input" required>
+        </div>
 
-        <form method="POST">
-            <div class="mb-3">
-                <label>Email</label>
-                <input type="email" name="email" class="form-control auth-input" required>
-            </div>
+        <button class="btn btn-primary w-100 auth-button">Login</button>
+    </form>
 
-            <div class="mb-3">
-                <label>Password</label>
-                <input type="password" name="password" class="form-control auth-input" required>
-            </div>
+    <p class="text-center mt-4">
+        Don’t have an account?
+        <a href="/register">Register here</a>
+    </p>
 
-            <button class="btn btn-primary w-100 auth-button">Login</button>
-        </form>
-
-        <p class="text-center mt-4">
-            Don’t have an account?
-            <a href="/register">Register here</a>
-        </p>
-
-        <p class="text-center">
-            <a href="/">Back to Home</a>
-        </p>
-    </div>
+    <p class="text-center mb-0">
+        <a href="/">Back to Home</a>
+    </p>
 </div>
 
 </body>
