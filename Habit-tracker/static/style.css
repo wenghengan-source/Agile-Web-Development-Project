@@ -1,115 +1,40 @@
 /* =====================================
-   FULL STYLE.CSS — HABIT TRACKER
+   HABIT TRACKER — FULL STYLE.CSS
 ===================================== */
 
-/* ---------- Global ---------- */
-
 body {
-    font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f4f6f9;
+    font-family: 'Segoe UI', sans-serif;
+    background: #f4f7fb;
+    color: #1f2937;
+}
+
+a {
+    text-decoration: none;
 }
 
 h1, h2, h3, h4, h5 {
+    font-weight: 700;
+}
+
+.btn {
+    border-radius: 12px;
     font-weight: 600;
 }
 
-.container {
-    margin-top: 30px;
-    margin-bottom: 50px;
-}
-
-
-/* ---------- Buttons ---------- */
-
-.btn {
-    border-radius: 10px;
-    font-weight: 500;
-}
-
-
-/* ---------- Cards ---------- */
-
-.card {
-    background: rgba(255, 255, 255, 0.96);
-    border: none;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-    backdrop-filter: blur(6px);
-}
-
-.alert {
-    border-radius: 14px;
-}
-
-.progress {
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-
-/* ---------- Dashboard ---------- */
-
-.list-group-item {
-    border-radius: 12px !important;
-    margin-bottom: 12px;
-    border: 1px solid #eeeeee;
-    padding: 18px;
-}
-
-
-/* ---------- Video Section ---------- */
-
-.video-thumbnail {
-    width: 100%;
-    height: 230px;
-    object-fit: cover;
-    border-radius: 12px;
-    transition: 0.3s;
-    box-shadow: 0 8px 18px rgba(0,0,0,0.08);
-}
-
-.video-thumbnail:hover {
-    transform: scale(1.03);
-}
-
-
-/* ---------- Calendar ---------- */
-
-.calendar-table {
-    table-layout: fixed;
-}
-
-.calendar-cell {
-    height: 160px;
-    vertical-align: top;
-    font-size: 14px;
-    background-color: rgba(255,255,255,0.95);
-}
-
-.calendar-habit {
-    background-color: #e7f1ff;
-    padding: 8px;
-    border-radius: 10px;
-    font-size: 12px;
-    margin-top: 6px;
-}
-
-
 /* =====================================
-   LANDING PAGE
+   INDEX PAGE
 ===================================== */
 
 .landing-body {
-    margin: 0;
-    background: #f4f6f9;
+    background: #f8fafc;
 }
 
-/* ---------- Navbar ---------- */
+/* Navbar */
 
 .landing-navbar {
-    background: #0d6efd;
+    background: #2563eb;
     padding: 22px 0;
     box-shadow: 0 8px 20px rgba(0,0,0,0.08);
 }
@@ -124,34 +49,25 @@ h1, h2, h3, h4, h5 {
 
 .landing-logo {
     color: white;
-    text-decoration: none;
     font-size: 28px;
     font-weight: 800;
 }
 
 .landing-nav-links {
     display: flex;
-    align-items: center;
     gap: 14px;
-}
-
-.nav-link-custom {
-    color: white;
-    text-decoration: none;
-    font-weight: 600;
+    align-items: center;
 }
 
 .nav-btn {
     padding: 10px 18px;
     border-radius: 12px;
-    text-decoration: none;
     font-weight: 600;
-    transition: 0.2s;
 }
 
 .nav-btn.light {
     background: white;
-    color: #0d6efd;
+    color: #2563eb;
 }
 
 .nav-btn.outline {
@@ -160,26 +76,18 @@ h1, h2, h3, h4, h5 {
 }
 
 .nav-btn.danger {
-    background: #dc3545;
+    background: #ef4444;
     color: white;
 }
 
-.nav-btn:hover {
-    transform: translateY(-2px);
-}
-
-
-/* ---------- Hero Section ---------- */
+/* Hero */
 
 .hero-section {
-    position: relative;
     min-height: 760px;
-
+    position: relative;
     background-image: url("/static/images/fitness-bg.png");
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
-
     display: flex;
     align-items: center;
 }
@@ -187,12 +95,11 @@ h1, h2, h3, h4, h5 {
 .hero-overlay {
     position: absolute;
     inset: 0;
-
     background: linear-gradient(
         90deg,
-        rgba(255,255,255,0.92) 0%,
-        rgba(255,255,255,0.75) 45%,
-        rgba(255,255,255,0.25) 100%
+        rgba(255,255,255,0.92),
+        rgba(255,255,255,0.75),
+        rgba(255,255,255,0.25)
     );
 }
 
@@ -201,12 +108,10 @@ h1, h2, h3, h4, h5 {
     z-index: 2;
 }
 
-/* ---------- Left Content ---------- */
-
 .hero-badge {
     display: inline-block;
-    background: rgba(13, 110, 253, 0.12);
-    color: #0d6efd;
+    background: rgba(37,99,235,0.1);
+    color: #2563eb;
     padding: 8px 16px;
     border-radius: 999px;
     font-weight: 700;
@@ -214,74 +119,53 @@ h1, h2, h3, h4, h5 {
 }
 
 .hero-title {
-    font-size: 62px;
+    font-size: 60px;
     font-weight: 900;
     line-height: 1.08;
-    color: #111827;
 }
 
 .hero-title span {
-    color: #0d6efd;
+    color: #2563eb;
 }
 
 .hero-text {
     font-size: 20px;
-    color: #374151;
+    color: #4b5563;
+    margin: 24px 0 32px;
     max-width: 560px;
-    margin: 26px 0 34px;
-    line-height: 1.6;
 }
-
-.hero-buttons {
-    display: flex;
-    gap: 14px;
-}
-
-
-/* ---------- Right Card ---------- */
 
 .hero-card {
-    background: rgba(255,255,255,0.88);
-    backdrop-filter: blur(12px);
-    border-radius: 28px;
+    background: rgba(255,255,255,0.9);
     padding: 36px;
-    box-shadow: 0 30px 60px rgba(0,0,0,0.18);
-}
-
-.hero-card h3 {
-    font-size: 34px;
-    font-weight: 800;
-    margin-bottom: 24px;
+    border-radius: 28px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.12);
 }
 
 .mini-task {
-    background: #eef3ff;
-    padding: 16px 18px;
-    margin-bottom: 14px;
+    background: #eef2ff;
+    padding: 16px;
     border-radius: 14px;
-    font-size: 18px;
-    font-weight: 500;
+    margin-bottom: 12px;
 }
 
 .mini-task.completed {
-    background: #d1e7dd;
-    color: #0f5132;
+    background: #dcfce7;
+    color: #166534;
 }
 
-
-/* ---------- Feature Section ---------- */
+/* Feature Section */
 
 .feature-section {
     padding: 60px 0;
-    background: #f4f6f9;
 }
 
 .feature-card {
     background: white;
+    border-radius: 22px;
+    padding: 30px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.06);
     height: 100%;
-    padding: 32px 24px;
-    border-radius: 24px;
-    box-shadow: 0 14px 30px rgba(0,0,0,0.08);
     transition: 0.3s;
 }
 
@@ -290,36 +174,16 @@ h1, h2, h3, h4, h5 {
 }
 
 .feature-icon {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 20px;
-    border-radius: 50%;
-    background: #e7f1ff;
-    color: #0d6efd;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 28px;
+    font-size: 32px;
+    margin-bottom: 14px;
 }
-
-.feature-card h4 {
-    font-weight: 800;
-    margin-bottom: 12px;
-}
-
-.feature-card p {
-    color: #4b5563;
-    line-height: 1.6;
-}
-
 
 /* =====================================
-   LOGIN + REGISTER PAGE
+   LOGIN + REGISTER
 ===================================== */
 
 .auth-body {
     min-height: 100vh;
-
     background:
         linear-gradient(
             rgba(0,0,0,0.45),
@@ -329,34 +193,293 @@ h1, h2, h3, h4, h5 {
 
     background-size: cover;
     background-position: center;
-    background-repeat: no-repeat;
 
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.auth-wrapper {
-    width: 100%;
-    padding: 20px;
-}
-
 .auth-card {
     background: rgba(255,255,255,0.97);
-    max-width: 430px;
-    margin: auto;
-    padding: 38px;
+    padding: 40px;
     border-radius: 28px;
-    box-shadow: 0 25px 55px rgba(0,0,0,0.20);
+    width: 420px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.18);
 }
 
 .auth-input {
-    height: 50px;
+    height: 52px;
     border-radius: 14px;
 }
 
 .auth-button {
-    height: 50px;
+    height: 52px;
     border-radius: 14px;
     font-weight: 700;
+}
+
+/* =====================================
+   DASHBOARD
+===================================== */
+
+.dashboard-body {
+    background:
+        linear-gradient(
+            rgba(255,255,255,0.82),
+            rgba(255,255,255,0.82)
+        ),
+        url("/static/images/gym-bg.jpg");
+
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+.dashboard-layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+
+.dashboard-sidebar {
+    width: 270px;
+    background: rgba(11,18,54,0.96);
+    color: white;
+    padding: 30px 22px;
+    position: fixed;
+    height: 100vh;
+    border-radius: 0 28px 28px 0;
+}
+
+.sidebar-logo {
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 35px;
+}
+
+.sidebar-link {
+    display: block;
+    color: white;
+    padding: 14px 18px;
+    border-radius: 14px;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+}
+
+.sidebar-link.logout {
+    color: #ff6b6b;
+    margin-top: 40px;
+}
+
+.sidebar-quote {
+    margin-top: 45px;
+    background: rgba(99,102,241,0.35);
+    padding: 22px;
+    border-radius: 20px;
+}
+
+/* Main */
+
+.dashboard-main {
+    margin-left: 270px;
+    width: calc(100% - 270px);
+    padding: 40px;
+}
+
+.dashboard-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+}
+
+.date-pill {
+    background: white;
+    padding: 14px 20px;
+    border-radius: 16px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+}
+
+/* Summary Cards */
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 22px;
+}
+
+.summary-card {
+    background: rgba(255,255,255,0.95);
+    border-radius: 22px;
+    padding: 24px;
+    display: flex;
+    gap: 18px;
+    align-items: center;
+}
+
+.summary-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+}
+
+.summary-card.purple .summary-icon {
+    background: #ede9fe;
+}
+
+.summary-card.green .summary-icon {
+    background: #dcfce7;
+}
+
+.summary-card.blue .summary-icon {
+    background: #dbeafe;
+}
+
+.summary-card.orange .summary-icon {
+    background: #ffedd5;
+}
+
+/* Cards */
+
+.dash-card {
+    background: rgba(255,255,255,0.96);
+    border-radius: 24px;
+    padding: 26px;
+    box-shadow: 0 14px 30px rgba(0,0,0,0.06);
+}
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1.1fr;
+    gap: 18px;
+}
+
+/* Health */
+
+.health-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+}
+
+.health-grid div {
+    background: #f3f4ff;
+    padding: 16px;
+    border-radius: 16px;
+}
+
+/* Steps */
+
+.steps-ring {
+    width: 210px;
+    height: 210px;
+    border-radius: 50%;
+    margin: 25px auto;
+    background: conic-gradient(
+        #22c55e 0% 70%,
+        #e5e7eb 70% 100%
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.steps-ring > div {
+    width: 155px;
+    height: 155px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.steps-ring h2 {
+    font-size: 40px;
+    font-weight: 900;
+    margin: 0;
+}
+
+/* Video */
+
+.video-thumbnail {
+    width: 100%;
+    height: 210px;
+    object-fit: cover;
+    border-radius: 14px;
+    transition: 0.3s;
+}
+
+.video-thumbnail:hover {
+    transform: scale(1.03);
+}
+
+/* Habit List */
+
+.habit-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.habit-item {
+    background: white;
+    border: 1px solid #eeeeee;
+    border-radius: 18px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center;
+}
+
+.habit-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* =====================================
+   MOBILE
+===================================== */
+
+@media (max-width: 1000px) {
+    .summary-grid,
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-layout {
+        flex-direction: column;
+    }
+
+    .dashboard-sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+        border-radius: 0;
+    }
+
+    .dashboard-main {
+        margin-left: 0;
+        width: 100%;
+        padding: 20px;
+    }
+
+    .habit-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
