@@ -1,17 +1,120 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habit Tracker</title>
 
-{% block content %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
 
-<div class="text-center">
-    <h1>Welcome to Habit Tracker</h1>
-    <p class="lead">Track your daily habits, view progress, and compete with friends.</p>
+<body class="landing-body">
 
-    {% if "user_id" in session %}
-        <a href="/dashboard" class="btn btn-primary">Go to Dashboard</a>
-    {% else %}
-        <a href="/register" class="btn btn-primary">Get Started</a>
-        <a href="/login" class="btn btn-outline-primary">Login</a>
-    {% endif %}
-</div>
+<nav class="landing-navbar">
+    <div class="landing-nav-container">
+        <a class="landing-logo" href="/">Habit Tracker</a>
 
-{% endblock %}
+        <div class="landing-nav-links">
+            {% if "user_id" in session %}
+                <a href="/dashboard" class="nav-link-custom">Dashboard</a>
+                <a href="/logout" class="nav-btn danger">Logout</a>
+            {% else %}
+                <a href="/login" class="nav-btn light">Login</a>
+                <a href="/register" class="nav-btn outline">Register</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<section class="hero-section">
+    <div class="hero-overlay"></div>
+
+    <div class="container hero-content">
+        <div class="row align-items-center">
+
+            <div class="col-lg-6">
+                <span class="hero-badge">Build Better Routines</span>
+
+                <h1 class="hero-title">
+                    Track your habits.<br>
+                    Stay consistent.<br>
+                    <span>Improve every day.</span>
+                </h1>
+
+                <p class="hero-text">
+                    Build healthy routines, track your daily progress,
+                    view your calendar history, and compete with friends.
+                </p>
+
+                <div class="hero-buttons">
+                    {% if "user_id" in session %}
+                        <a href="/dashboard" class="btn btn-primary btn-lg">Go to Dashboard</a>
+                    {% else %}
+                        <a href="/register" class="btn btn-primary btn-lg">Get Started</a>
+                        <a href="/login" class="btn btn-outline-light btn-lg">Login</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="col-lg-6 mt-5 mt-lg-0">
+                <div class="hero-card">
+                    <h3>Today’s Goal</h3>
+
+                    <div class="mini-task completed">✓ Drink Water</div>
+                    <div class="mini-task completed">✓ Study 1 Hour</div>
+                    <div class="mini-task">○ Exercise</div>
+                    <div class="mini-task">○ Sleep Early</div>
+
+                    <div class="progress mt-4" style="height: 24px;">
+                        <div class="progress-bar bg-success" style="width: 50%;">50%</div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<section class="feature-section">
+    <div class="container">
+        <div class="row text-center">
+
+            <div class="col-md-3 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">✓</div>
+                    <h4>Daily Tracking</h4>
+                    <p>Mark habits as completed and build consistency over time.</p>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">📅</div>
+                    <h4>Calendar View</h4>
+                    <p>See your habit history and daily completion status clearly.</p>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">👥</div>
+                    <h4>Friend Challenge</h4>
+                    <p>Add friends and compare completed habits together.</p>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h4>Progress</h4>
+                    <p>View your daily progress directly from the dashboard.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+</body>
+</html>
