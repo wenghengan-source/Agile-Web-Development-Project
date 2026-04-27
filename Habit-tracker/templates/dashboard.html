@@ -9,198 +9,300 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body>
+<body class="dashboard-body">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="/">Habit Tracker</a>
+<div class="dashboard-layout">
 
-        <div>
-            <a class="btn btn-light btn-sm" href="/">Home</a>
+    <!-- Sidebar -->
+    <aside class="dashboard-sidebar">
+        <h3 class="sidebar-logo">🏋️ Habit Tracker</h3>
 
-            {% if "user_id" in session %}
-                <a class="btn btn-light btn-sm" href="/dashboard">Dashboard</a>
-                <a class="btn btn-light btn-sm" href="/calendar">Calendar</a>
-                <a class="btn btn-light btn-sm" href="/friends">Friends</a>
-                <a class="btn btn-light btn-sm" href="/profile">Profile</a>
-                <a class="btn btn-danger btn-sm" href="/logout">Logout</a>
-            {% else %}
-                <a class="btn btn-light btn-sm" href="/login">Login</a>
-                <a class="btn btn-light btn-sm" href="/register">Register</a>
-            {% endif %}
+        <a href="/dashboard" class="sidebar-link active">🏠 Dashboard</a>
+        <a href="/calendar" class="sidebar-link">📅 Calendar</a>
+        <a href="/friends" class="sidebar-link">👥 Friends</a>
+        <a href="/profile" class="sidebar-link">👤 Profile</a>
+        <a href="/logout" class="sidebar-link logout">🚪 Logout</a>
+
+        <div class="sidebar-quote">
+            <h4>“</h4>
+            <p>Discipline today leads to strength tomorrow.</p>
         </div>
-    </div>
-</nav>
+    </aside>
 
-<div class="container mt-4">
+    <!-- Main -->
+    <main class="dashboard-main">
 
-    <h2>Dashboard</h2>
+        <!-- Top -->
+        <div class="dashboard-top">
+            <div>
+                <h1>Welcome back, {{ session["user_name"] }} 👋</h1>
+                <p>Stay consistent and crush your goals today.</p>
+            </div>
 
-    <div class="alert alert-info">
-        {{ quote }}
-    </div>
-
-    {% if reminders %}
-        <div class="alert alert-warning">
-            <h5>Reminder</h5>
-            <p>You have unfinished habits today:</p>
-
-            <ul>
-                {% for reminder in reminders %}
-                    <li>{{ reminder[1] }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-    {% endif %}
-
-    <div class="card p-4 mb-4">
-        <h4>Welcome, {{ session["user_name"] }}!</h4>
-        <p>Track your daily habits below.</p>
-    </div>
-
-    <div class="card p-4 mb-4">
-        <h4>Today’s Progress</h4>
-
-        <p><strong>Total Habits:</strong> {{ total }}</p>
-        <p><strong>Completed Today:</strong> {{ completed }}</p>
-        <p><strong>Completion Rate:</strong> {{ percentage }}%</p>
-
-        <div class="progress" style="height: 30px;">
-            <div class="progress-bar bg-success" style="width: {{ percentage }}%;">
-                {{ percentage }}%
+            <div class="date-pill">
+                {{ quote }}
             </div>
         </div>
-    </div>
 
-    <div class="card p-4 mb-4">
-        <h4>Today's Suggested Videos</h4>
-        <p class="text-muted">
-            Three different motivation videos are selected automatically every day.
-        </p>
+        <!-- Summary -->
+        <div class="summary-grid">
 
-        <div class="row">
-            {% for video in today_videos %}
-                <div class="col-md-4 mb-3">
-                    <h5>{{ video.title }}</h5>
-
-                    <a href="{{ video.watch_url }}" target="_blank">
-                        <img
-                            src="{{ video.thumbnail }}"
-                            alt="{{ video.title }}"
-                            class="img-fluid video-thumbnail"
-                        >
-                    </a>
-                </div>
-            {% endfor %}
-        </div>
-    </div>
-
-    <div class="card p-4 mb-4">
-        <h4>Add New Habit</h4>
-        <a href="/new_habit" class="btn btn-primary">
-            Add Habit
-        </a>
-    </div>
-
-    <div class="card p-4 mb-4">
-        <h4>Search and Filter</h4>
-
-        <form method="GET" action="/dashboard">
-            <div class="row">
-                <div class="col-md-3 mb-2">
-                    <input
-                        type="text"
-                        name="search"
-                        class="form-control"
-                        placeholder="Search habit"
-                        value="{{ search }}"
-                    >
-                </div>
-
-                <div class="col-md-3 mb-2">
-                    <select name="category" class="form-control">
-                        <option value="">All Categories</option>
-                        <option value="Health">Health</option>
-                        <option value="Study">Study</option>
-                        <option value="Work">Work</option>
-                        <option value="Personal">Personal</option>
-                        <option value="General">General</option>
-                    </select>
-                </div>
-
-                <div class="col-md-3 mb-2">
-                    <select name="priority" class="form-control">
-                        <option value="">All Priorities</option>
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                    </select>
-                </div>
-
-                <div class="col-md-3 mb-2">
-                    <select name="status" class="form-control">
-                        <option value="">All Status</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Not Completed">Not Completed</option>
-                    </select>
+            <div class="summary-card purple">
+                <div class="summary-icon">📋</div>
+                <div>
+                    <p>Total Habits</p>
+                    <h2>{{ total }}</h2>
+                    <span>Active today</span>
                 </div>
             </div>
 
-            <button class="btn btn-secondary mt-2">
-                Apply Filter
-            </button>
+            <div class="summary-card green">
+                <div class="summary-icon">✓</div>
+                <div>
+                    <p>Completed Today</p>
+                    <h2>{{ completed }}</h2>
+                    <span>Keep going</span>
+                </div>
+            </div>
 
-            <a href="/dashboard" class="btn btn-outline-secondary mt-2">
-                Clear
-            </a>
-        </form>
-    </div>
+            <div class="summary-card blue">
+                <div class="summary-icon">📈</div>
+                <div>
+                    <p>Completion Rate</p>
+                    <h2>{{ percentage }}%</h2>
+                </div>
+            </div>
 
-    <div class="card p-4">
-        <h4>Your Habits Today</h4>
+            <div class="summary-card orange">
+                <div class="summary-icon">👟</div>
+                <div>
+                    <p>Steps Today</p>
+                    <h2>{{ today_steps }}</h2>
+                    <span>Daily movement</span>
+                </div>
+            </div>
 
-        {% if habits %}
-            <ul class="list-group">
-                {% for habit in habits %}
-                    <li class="list-group-item">
-                        <strong>{{ habit[1] }}</strong><br>
+        </div>
 
-                        Category: {{ habit[2] }} |
-                        Priority: {{ habit[3] }} |
-                        Created: {{ habit[5] }} |
-                        Status Today: {{ habit[7] }} |
-                        Streak: {{ habit[6] }} days
+        <!-- Main Grid -->
+        <div class="dashboard-grid">
 
-                        {% if habit[4] %}
-                            <p class="mt-2">
-                                <strong>Notes:</strong> {{ habit[4] }}
-                            </p>
-                        {% endif %}
+            <!-- Reminder -->
+            <section class="dash-card">
+                <h3>🔔 Reminder</h3>
 
-                        <div class="mt-2">
-                            <a href="/complete_habit/{{ habit[0] }}" class="btn btn-success btn-sm">
-                                Complete Today
-                            </a>
+                {% if reminders %}
+                    <p>You still have unfinished habits:</p>
+                    <ul>
+                        {% for reminder in reminders %}
+                            <li>{{ reminder[1] }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>Great job! Everything is completed today 🎉</p>
+                {% endif %}
+            </section>
 
-                            <a href="/reset_habit/{{ habit[0] }}" class="btn btn-warning btn-sm">
-                                Reset Today
-                            </a>
+            <!-- Health -->
+            <section class="dash-card">
+                <h3>👤 Health Profile</h3>
 
-                            <a href="/edit_habit/{{ habit[0] }}" class="btn btn-info btn-sm">
-                                Edit
-                            </a>
+                <div class="health-grid">
 
-                            <a href="/delete_habit/{{ habit[0] }}" class="btn btn-danger btn-sm">
-                                Delete
-                            </a>
+                    <div>
+                        <small>Weight</small>
+                        <strong>
+                            {% if health_profile %}
+                                {{ health_profile[0] }} kg
+                            {% else %}
+                                -
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <small>Height</small>
+                        <strong>
+                            {% if health_profile %}
+                                {{ health_profile[1] }} cm
+                            {% else %}
+                                -
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <small>Age</small>
+                        <strong>
+                            {% if health_profile %}
+                                {{ health_profile[2] }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div>
+                        <small>BMI</small>
+                        <strong>
+                            {% if bmi %}
+                                {{ bmi }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                </div>
+
+                {% if health_profile %}
+                    <p class="mt-3">
+                        <strong>Goal:</strong> {{ health_profile[3] }}
+                    </p>
+                {% endif %}
+
+                <hr>
+
+                <form method="POST" action="/update_health">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <input type="number" step="0.1" name="weight" class="form-control" placeholder="Weight kg" required>
                         </div>
-                    </li>
+
+                        <div class="col-md-3 mb-2">
+                            <input type="number" step="0.1" name="height" class="form-control" placeholder="Height cm" required>
+                        </div>
+
+                        <div class="col-md-3 mb-2">
+                            <input type="number" name="age" class="form-control" placeholder="Age" required>
+                        </div>
+
+                        <div class="col-md-3 mb-2">
+                            <input type="text" name="goal" class="form-control" placeholder="Goal" required>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-primary mt-2">
+                        Save Health Profile
+                    </button>
+                </form>
+            </section>
+
+            <!-- Steps -->
+            <section class="dash-card">
+                <h3>👟 Daily Steps</h3>
+
+                <div class="steps-ring">
+                    <div>
+                        <h2>{{ today_steps }}</h2>
+                        <span>steps</span>
+                    </div>
+                </div>
+
+                <form method="POST" action="/update_steps">
+                    <input
+                        type="number"
+                        name="steps"
+                        class="form-control mb-3"
+                        placeholder="Enter today's steps"
+                        required
+                    >
+
+                    <button class="btn btn-success w-100">
+                        Save Steps
+                    </button>
+                </form>
+            </section>
+
+        </div>
+
+        <!-- Videos -->
+        <section class="dash-card mt-4">
+            <h3>🎬 Today's Suggested Videos</h3>
+
+            <div class="row">
+                {% for video in today_videos %}
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ video.watch_url }}" target="_blank">
+                            <img
+                                src="{{ video.thumbnail }}"
+                                class="video-thumbnail"
+                                alt="{{ video.title }}"
+                            >
+                        </a>
+
+                        <h6 class="mt-2">{{ video.title }}</h6>
+                    </div>
                 {% endfor %}
-            </ul>
-        {% else %}
-            <p>No habits found.</p>
-        {% endif %}
-    </div>
+            </div>
+        </section>
+
+        <!-- Habit List -->
+        <section class="dash-card mt-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>Your Habits Today</h3>
+
+                <a href="/new_habit" class="btn btn-primary">
+                    + Add Habit
+                </a>
+            </div>
+
+            {% if habits %}
+                <div class="habit-list">
+
+                    {% for habit in habits %}
+                        <div class="habit-item">
+
+                            <div>
+                                <h5>{{ habit[1] }}</h5>
+
+                                <span class="badge bg-primary">{{ habit[2] }}</span>
+                                <span class="badge bg-secondary">{{ habit[3] }}</span>
+
+                                {% if habit[7] == "Completed" %}
+                                    <span class="badge bg-success">Completed</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">Not Completed</span>
+                                {% endif %}
+
+                                <p class="text-muted mt-2">
+                                    Created: {{ habit[5] }} |
+                                    Streak: {{ habit[6] }} days
+                                </p>
+
+                                {% if habit[4] %}
+                                    <p><strong>Notes:</strong> {{ habit[4] }}</p>
+                                {% endif %}
+                            </div>
+
+                            <div class="habit-actions">
+                                <a href="/complete_habit/{{ habit[0] }}" class="btn btn-success btn-sm">
+                                    Complete
+                                </a>
+
+                                <a href="/reset_habit/{{ habit[0] }}" class="btn btn-warning btn-sm">
+                                    Reset
+                                </a>
+
+                                <a href="/edit_habit/{{ habit[0] }}" class="btn btn-info btn-sm">
+                                    Edit
+                                </a>
+
+                                <a href="/delete_habit/{{ habit[0] }}" class="btn btn-danger btn-sm">
+                                    Delete
+                                </a>
+                            </div>
+
+                        </div>
+                    {% endfor %}
+
+                </div>
+            {% else %}
+                <p>No habits found yet.</p>
+            {% endif %}
+        </section>
+
+    </main>
 
 </div>
 
