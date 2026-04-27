@@ -17,7 +17,7 @@
 
         <div class="landing-nav-links">
             {% if "user_id" in session %}
-                <a href="/dashboard" class="nav-link-custom">Dashboard</a>
+                <a href="/dashboard" class="nav-btn light">Dashboard</a>
                 <a href="/logout" class="nav-btn danger">Logout</a>
             {% else %}
                 <a href="/login" class="nav-btn light">Login</a>
@@ -47,14 +47,12 @@
                     view your calendar history, and compete with friends.
                 </p>
 
-                <div class="hero-buttons">
-                    {% if "user_id" in session %}
-                        <a href="/dashboard" class="btn btn-primary btn-lg">Go to Dashboard</a>
-                    {% else %}
-                        <a href="/register" class="btn btn-primary btn-lg">Get Started</a>
-                        <a href="/login" class="btn btn-outline-light btn-lg">Login</a>
-                    {% endif %}
-                </div>
+                {% if "user_id" in session %}
+                    <a href="/dashboard" class="btn btn-primary btn-lg">Go to Dashboard</a>
+                {% else %}
+                    <a href="/register" class="btn btn-primary btn-lg me-2">Get Started</a>
+                    <a href="/login" class="btn btn-outline-primary btn-lg">Login</a>
+                {% endif %}
             </div>
 
             <div class="col-lg-6 mt-5 mt-lg-0">
