@@ -9,25 +9,13 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body>
-
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="/">Habit Tracker</a>
-        <div>
-            <a class="btn btn-light btn-sm" href="/dashboard">Dashboard</a>
-            <a class="btn btn-light btn-sm" href="/calendar">Calendar</a>
-            <a class="btn btn-light btn-sm" href="/friends">Friends</a>
-            <a class="btn btn-light btn-sm" href="/profile">Profile</a>
-            <a class="btn btn-danger btn-sm" href="/logout">Logout</a>
-        </div>
-    </div>
-</nav>
+<body class="dashboard-body">
 
 <div class="container mt-4">
-    <h2>Edit Habit</h2>
+    <div class="card p-4 mx-auto" style="max-width: 650px;">
+        <h2>Edit Habit</h2>
+        <p class="text-muted">Update your habit details.</p>
 
-    <div class="card p-4">
         <form method="POST">
             <div class="mb-3">
                 <label>Habit Name</label>
