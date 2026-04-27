@@ -9,37 +9,26 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body>
-
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="/">Habit Tracker</a>
-        <div>
-            <a class="btn btn-light btn-sm" href="/dashboard">Dashboard</a>
-            <a class="btn btn-light btn-sm" href="/calendar">Calendar</a>
-            <a class="btn btn-light btn-sm" href="/friends">Friends</a>
-            <a class="btn btn-light btn-sm" href="/profile">Profile</a>
-            <a class="btn btn-danger btn-sm" href="/logout">Logout</a>
-        </div>
-    </div>
-</nav>
+<body class="dashboard-body">
 
 <div class="container mt-4">
-    <h2>Habit Calendar</h2>
 
     <div class="card p-4">
-        <h4 class="text-center mb-4">{{ month_name }}</h4>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>{{ month_name }}</h2>
+            <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
+        </div>
 
-        <table class="table table-bordered calendar-table">
-            <thead class="table-primary text-center">
+        <table class="table table-bordered calendar-table text-center">
+            <thead class="table-primary">
                 <tr>
-                    <th>Monday</th>
-                    <th>Tuesday</th>
-                    <th>Wednesday</th>
-                    <th>Thursday</th>
-                    <th>Friday</th>
-                    <th>Saturday</th>
-                    <th>Sunday</th>
+                    <th>Mon</th>
+                    <th>Tue</th>
+                    <th>Wed</th>
+                    <th>Thu</th>
+                    <th>Fri</th>
+                    <th>Sat</th>
+                    <th>Sun</th>
                 </tr>
             </thead>
 
@@ -51,18 +40,19 @@
                                 {% if day != 0 %}
                                     <strong>{{ day }}</strong>
 
-                                    {% set date_string = "%04d-%02d-%02d"|format(year, month, day) %}
-
                                     {% for habit in habits %}
-                                        {% if date_string >= habit[4] %}
-                                            <div class="calendar-habit">
-                                                <strong>{{ habit[1] }}</strong><br>
-                                                {{ habit[2] }} | {{ habit[3] }}<br>
+                                        {% set created_day = habit[4].split("-")[2]|int %}
 
-                                                {% if (habit[0], date_string) in completed_set %}
-                                                    <small class="text-success">Completed</small>
+                                        {% if day >= created_day %}
+                                            <div class="calendar-habit">
+                                                {{ habit[1] }}
+
+                                                {% set full_date = year ~ "-" ~ "%02d"|format(month) ~ "-" ~ "%02d"|format(day) %}
+
+                                                {% if (habit[0], full_date) in completed_set %}
+                                                    <div class="text-success">✓ Done</div>
                                                 {% else %}
-                                                    <small class="text-danger">Not Completed</small>
+                                                    <div class="text-muted">Pending</div>
                                                 {% endif %}
                                             </div>
                                         {% endif %}
@@ -73,8 +63,10 @@
                     </tr>
                 {% endfor %}
             </tbody>
+
         </table>
     </div>
+
 </div>
 
 </body>
