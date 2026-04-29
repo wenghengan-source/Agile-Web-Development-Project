@@ -1,11 +1,11 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import sqlite3
 import random
 from datetime import date
 import calendar as cal
 
 app = Flask(__name__)
-app.secret_key = "your_secret_key"
+app.secret_key = "habit_tracker_secret_key"
 
 
 def init_db():
@@ -16,7 +16,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
-            email TEXT NOT NULL UNIQUE,
+            email TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL
         )
     """)
@@ -26,8 +26,10 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             habit_name TEXT NOT NULL,
-            category TEXT DEFAULT 'General',
-            priority TEXT DEFAULT 'Medium',
+            category TEXT,
+            priority TEXT,
+            target_value TEXT,
+            target_unit TEXT,
             notes TEXT,
             created_date TEXT NOT NULL,
             streak INTEGER DEFAULT 0
@@ -48,6 +50,26 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
             friend_id INTEGER NOT NULL
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS health_profile (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            weight REAL,
+            height REAL,
+            age INTEGER,
+            goal TEXT
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS daily_steps (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            step_date TEXT NOT NULL,
+            steps INTEGER DEFAULT 0
         )
     """)
 
@@ -76,7 +98,7 @@ def register():
                 (name, email, password)
             )
             conn.commit()
-            flash("Registration successful! Please login.")
+            flash("Registration successful. Please login.")
             return redirect(url_for("login"))
         except sqlite3.IntegrityError:
             flash("Email already exists.")
@@ -122,71 +144,67 @@ def dashboard():
 
     today = date.today().isoformat()
 
-    search = request.args.get("search", "")
-    category = request.args.get("category", "")
-    priority = request.args.get("priority", "")
-    status_filter = request.args.get("status", "")
-
     quotes = [
         "Small progress is still progress.",
         "Build habits, build your future.",
-        "One day at a time.",
-        "Consistency is the key to success.",
-        "Do something today your future self will thank you for."
+        "Discipline today leads to strength tomorrow.",
+        "Stay focused and trust the process.",
+        "Consistency beats motivation."
     ]
 
-    query = """
-        SELECT h.id, h.habit_name, h.category, h.priority, h.notes,
-               h.created_date, h.streak,
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT h.id, h.habit_name, h.category, h.priority,
+               h.notes, h.created_date, h.streak,
                CASE
                    WHEN c.id IS NOT NULL THEN 'Completed'
                    ELSE 'Not Completed'
-               END AS today_status
+               END,
+               h.target_value, h.target_unit
         FROM habits h
         LEFT JOIN habit_completions c
         ON h.id = c.habit_id
         AND c.completion_date = ?
         WHERE h.user_id = ?
-        AND h.created_date <= ?
-    """
+        ORDER BY h.id DESC
+    """, (today, session["user_id"]))
 
-    params = [today, session["user_id"], today]
-
-    if search:
-        query += " AND h.habit_name LIKE ?"
-        params.append(f"%{search}%")
-
-    if category:
-        query += " AND h.category = ?"
-        params.append(category)
-
-    if priority:
-        query += " AND h.priority = ?"
-        params.append(priority)
-
-    conn = sqlite3.connect("habit_tracker.db")
-    cursor = conn.cursor()
-
-    cursor.execute(query, params)
     habits = cursor.fetchall()
 
-    if status_filter:
-        habits = [habit for habit in habits if habit[7] == status_filter]
-
-    reminders = [habit for habit in habits if habit[7] == "Not Completed"]
-
     total = len(habits)
-    completed = len([habit for habit in habits if habit[7] == "Completed"])
-    percentage = 0 if total == 0 else int((completed / total) * 100)
+    completed = len([h for h in habits if h[7] == "Completed"])
+    percentage = int((completed / total) * 100) if total > 0 else 0
+    reminders = [h for h in habits if h[7] == "Not Completed"]
 
-    video_list = [
+    cursor.execute(
+        "SELECT weight, height, age, goal FROM health_profile WHERE user_id = ?",
+        (session["user_id"],)
+    )
+    health_profile = cursor.fetchone()
+
+    bmi = None
+    if health_profile and health_profile[0] and health_profile[1]:
+        weight = health_profile[0]
+        height = health_profile[1] / 100
+        bmi = round(weight / (height * height), 1)
+
+    cursor.execute(
+        "SELECT steps FROM daily_steps WHERE user_id = ? AND step_date = ?",
+        (session["user_id"], today)
+    )
+    step_data = cursor.fetchone()
+    today_steps = step_data[0] if step_data else 0
+
+    today_videos = [
         {
             "title": "How to Build Better Habits",
             "thumbnail": "https://img.youtube.com/vi/TQMbvJNRpLE/hqdefault.jpg",
             "watch_url": "https://www.youtube.com/watch?v=TQMbvJNRpLE"
         },
         {
-            "title": "Daily Motivation",
+            "title": "Study Motivation",
             "thumbnail": "https://img.youtube.com/vi/ZXsQAXx_ao0/hqdefault.jpg",
             "watch_url": "https://www.youtube.com/watch?v=ZXsQAXx_ao0"
         },
@@ -194,47 +212,96 @@ def dashboard():
             "title": "Stop Procrastinating",
             "thumbnail": "https://img.youtube.com/vi/arj7oStGLkU/hqdefault.jpg",
             "watch_url": "https://www.youtube.com/watch?v=arj7oStGLkU"
-        },
-        {
-            "title": "Productivity Tips",
-            "thumbnail": "https://img.youtube.com/vi/fYz5XcM2b7A/hqdefault.jpg",
-            "watch_url": "https://www.youtube.com/watch?v=fYz5XcM2b7A"
-        },
-        {
-            "title": "Focus and Consistency",
-            "thumbnail": "https://img.youtube.com/vi/H14bBuluwB8/hqdefault.jpg",
-            "watch_url": "https://www.youtube.com/watch?v=H14bBuluwB8"
-        },
-        {
-            "title": "Build a Better Routine",
-            "thumbnail": "https://img.youtube.com/vi/Zi9ToVdd6xc/hqdefault.jpg",
-            "watch_url": "https://www.youtube.com/watch?v=Zi9ToVdd6xc"
         }
     ]
-
-    day_number = date.today().toordinal()
-    start_index = day_number % len(video_list)
-
-    today_videos = []
-    for i in range(3):
-        today_videos.append(video_list[(start_index + i) % len(video_list)])
 
     conn.close()
 
     return render_template(
         "dashboard.html",
         habits=habits,
-        quote=random.choice(quotes),
-        search=search,
-        category=category,
-        priority=priority,
-        status=status_filter,
-        reminders=reminders,
         total=total,
         completed=completed,
         percentage=percentage,
+        reminders=reminders,
+        quote=random.choice(quotes),
+        health_profile=health_profile,
+        bmi=bmi,
+        today_steps=today_steps,
         today_videos=today_videos
     )
+
+
+@app.route("/update_health", methods=["POST"])
+def update_health():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    weight = request.form["weight"]
+    height = request.form["height"]
+    age = request.form["age"]
+    goal = request.form["goal"]
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT id FROM health_profile WHERE user_id = ?",
+        (session["user_id"],)
+    )
+    existing = cursor.fetchone()
+
+    if existing:
+        cursor.execute("""
+            UPDATE health_profile
+            SET weight = ?, height = ?, age = ?, goal = ?
+            WHERE user_id = ?
+        """, (weight, height, age, goal, session["user_id"]))
+    else:
+        cursor.execute("""
+            INSERT INTO health_profile (user_id, weight, height, age, goal)
+            VALUES (?, ?, ?, ?, ?)
+        """, (session["user_id"], weight, height, age, goal))
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/update_steps", methods=["POST"])
+def update_steps():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    steps = request.form["steps"]
+    today = date.today().isoformat()
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT id FROM daily_steps WHERE user_id = ? AND step_date = ?",
+        (session["user_id"], today)
+    )
+    existing = cursor.fetchone()
+
+    if existing:
+        cursor.execute("""
+            UPDATE daily_steps
+            SET steps = ?
+            WHERE user_id = ? AND step_date = ?
+        """, (steps, session["user_id"], today))
+    else:
+        cursor.execute("""
+            INSERT INTO daily_steps (user_id, step_date, steps)
+            VALUES (?, ?, ?)
+        """, (session["user_id"], today, steps))
+
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("dashboard"))
 
 
 @app.route("/new_habit", methods=["GET", "POST"])
@@ -246,20 +313,28 @@ def new_habit():
         habit_name = request.form["habit_name"]
         category = request.form["category"]
         priority = request.form["priority"]
+        target_value = request.form["target_value"]
+        target_unit = request.form["target_unit"]
         notes = request.form["notes"]
         created_date = date.today().isoformat()
 
         conn = sqlite3.connect("habit_tracker.db")
         cursor = conn.cursor()
 
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO habits
-            (user_id, habit_name, category, priority, notes, created_date)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            (session["user_id"], habit_name, category, priority, notes, created_date)
-        )
+            (user_id, habit_name, category, priority, target_value, target_unit, notes, created_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            session["user_id"],
+            habit_name,
+            category,
+            priority,
+            target_value,
+            target_unit,
+            notes,
+            created_date
+        ))
 
         conn.commit()
         conn.close()
@@ -279,34 +354,25 @@ def complete_habit(habit_id):
     conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT id FROM habit_completions
         WHERE habit_id = ? AND user_id = ? AND completion_date = ?
-        """,
-        (habit_id, session["user_id"], today)
-    )
+    """, (habit_id, session["user_id"], today))
 
     existing = cursor.fetchone()
 
     if not existing:
-        cursor.execute(
-            """
+        cursor.execute("""
             INSERT INTO habit_completions
             (habit_id, user_id, completion_date)
             VALUES (?, ?, ?)
-            """,
-            (habit_id, session["user_id"], today)
-        )
+        """, (habit_id, session["user_id"], today))
 
-        cursor.execute(
-            """
+        cursor.execute("""
             UPDATE habits
             SET streak = streak + 1
             WHERE id = ? AND user_id = ?
-            """,
-            (habit_id, session["user_id"])
-        )
+        """, (habit_id, session["user_id"]))
 
     conn.commit()
     conn.close()
@@ -324,13 +390,10 @@ def reset_habit(habit_id):
     conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
-    cursor.execute(
-        """
+    cursor.execute("""
         DELETE FROM habit_completions
         WHERE habit_id = ? AND user_id = ? AND completion_date = ?
-        """,
-        (habit_id, session["user_id"], today)
-    )
+    """, (habit_id, session["user_id"], today))
 
     conn.commit()
     conn.close()
@@ -350,30 +413,35 @@ def edit_habit(habit_id):
         habit_name = request.form["habit_name"]
         category = request.form["category"]
         priority = request.form["priority"]
+        target_value = request.form["target_value"]
+        target_unit = request.form["target_unit"]
         notes = request.form["notes"]
 
-        cursor.execute(
-            """
+        cursor.execute("""
             UPDATE habits
-            SET habit_name = ?, category = ?, priority = ?, notes = ?
+            SET habit_name = ?, category = ?, priority = ?, target_value = ?, target_unit = ?, notes = ?
             WHERE id = ? AND user_id = ?
-            """,
-            (habit_name, category, priority, notes, habit_id, session["user_id"])
-        )
+        """, (
+            habit_name,
+            category,
+            priority,
+            target_value,
+            target_unit,
+            notes,
+            habit_id,
+            session["user_id"]
+        ))
 
         conn.commit()
         conn.close()
 
         return redirect(url_for("dashboard"))
 
-    cursor.execute(
-        """
-        SELECT id, habit_name, category, priority, notes, created_date
+    cursor.execute("""
+        SELECT id, habit_name, category, priority, target_value, target_unit, notes, created_date
         FROM habits
         WHERE id = ? AND user_id = ?
-        """,
-        (habit_id, session["user_id"])
-    )
+    """, (habit_id, session["user_id"]))
 
     habit = cursor.fetchone()
     conn.close()
@@ -409,43 +477,77 @@ def delete_habit(habit_id):
     return redirect(url_for("dashboard"))
 
 
-@app.route("/api/search_users")
-def search_users():
+@app.route("/calendar")
+def calendar():
     if "user_id" not in session:
-        return {"users": []}
+        return redirect(url_for("login"))
 
-    search_text = request.args.get("q", "")
+    today = date.today()
+    year = today.year
+    month = today.month
 
-    if search_text.strip() == "":
-        return {"users": []}
+    month_name = today.strftime("%B %Y")
+    month_days = cal.monthcalendar(year, month)
 
     conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
-    cursor.execute(
-        """
-        SELECT id, name, email
-        FROM users
-        WHERE name LIKE ?
-        AND id != ?
-        LIMIT 5
-        """,
-        (f"%{search_text}%", session["user_id"])
-    )
+    cursor.execute("""
+        SELECT id, habit_name, category, priority, created_date
+        FROM habits
+        WHERE user_id = ?
+    """, (session["user_id"],))
+    habits = cursor.fetchall()
 
-    users = cursor.fetchall()
-    conn.close()
+    cursor.execute("""
+        SELECT habit_id, completion_date
+        FROM habit_completions
+        WHERE user_id = ?
+    """, (session["user_id"],))
+    completions = cursor.fetchall()
 
-    result = []
+    completed_set = set(completions)
 
-    for user in users:
-        result.append({
-            "id": user[0],
-            "name": user[1],
-            "email": user[2]
+    chart_labels = []
+    last_7_days = []
+
+    for i in range(6, -1, -1):
+        day = date.fromordinal(today.toordinal() - i)
+        chart_labels.append(day.strftime("%a"))
+        last_7_days.append(day.isoformat())
+
+    habit_lines = []
+
+    for habit in habits:
+        habit_id = habit[0]
+        habit_name = habit[1]
+
+        data = []
+
+        for day_string in last_7_days:
+            if (habit_id, day_string) in completed_set:
+                data.append(1)
+            else:
+                data.append(0)
+
+        habit_lines.append({
+            "label": habit_name,
+            "data": data
         })
 
-    return {"users": result}
+    conn.close()
+
+    return render_template(
+        "calendar.html",
+        month_name=month_name,
+        month_days=month_days,
+        habits=habits,
+        completed_set=completed_set,
+        year=year,
+        month=month,
+        chart_labels=chart_labels,
+        habit_lines=habit_lines
+    )
 
 
 @app.route("/friends", methods=["GET", "POST"])
@@ -461,11 +563,6 @@ def friends():
     if request.method == "POST":
         friend_email = request.form["friend_email"]
 
-        if friend_email == "":
-            flash("Please select a user first.")
-            conn.close()
-            return redirect(url_for("friends"))
-
         cursor.execute(
             "SELECT id FROM users WHERE email = ?",
             (friend_email,)
@@ -476,62 +573,59 @@ def friends():
             friend_id = friend[0]
 
             if friend_id == session["user_id"]:
-                flash("You cannot add yourself as a friend.")
+                flash("You cannot add yourself.")
             else:
-                cursor.execute(
-                    """
+                cursor.execute("""
                     SELECT id FROM friends
                     WHERE user_id = ? AND friend_id = ?
-                    """,
-                    (session["user_id"], friend_id)
-                )
+                """, (session["user_id"], friend_id))
 
                 existing = cursor.fetchone()
 
                 if existing:
                     flash("This user is already your friend.")
                 else:
-                    cursor.execute(
-                        "INSERT INTO friends (user_id, friend_id) VALUES (?, ?)",
-                        (session["user_id"], friend_id)
-                    )
+                    cursor.execute("""
+                        INSERT INTO friends (user_id, friend_id)
+                        VALUES (?, ?)
+                    """, (session["user_id"], friend_id))
                     conn.commit()
                     flash("Friend added successfully.")
         else:
-            flash("No user found with that email.")
+            flash("User not found.")
 
         conn.close()
         return redirect(url_for("friends"))
 
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT u.id, u.name, u.email
         FROM friends f
         JOIN users u ON f.friend_id = u.id
         WHERE f.user_id = ?
-        """,
-        (session["user_id"],)
-    )
+    """, (session["user_id"],))
     friend_list = cursor.fetchall()
 
     user_ids = [session["user_id"]] + [friend[0] for friend in friend_list]
+
     leaderboard = []
 
-    for user_id in user_ids:
-        cursor.execute("SELECT name FROM users WHERE id = ?", (user_id,))
-        user_name = cursor.fetchone()[0]
+    for uid in user_ids:
+        cursor.execute("SELECT name FROM users WHERE id = ?", (uid,))
+        user_row = cursor.fetchone()
 
-        cursor.execute(
-            """
+        if user_row is None:
+            continue
+
+        user_name = user_row[0]
+
+        cursor.execute("""
             SELECT COUNT(*)
             FROM habit_completions
             WHERE user_id = ? AND completion_date = ?
-            """,
-            (user_id, today)
-        )
-        completed_today = cursor.fetchone()[0]
+        """, (uid, today))
 
-        leaderboard.append((user_name, completed_today))
+        count = cursor.fetchone()[0]
+        leaderboard.append((user_name, count))
 
     leaderboard.sort(key=lambda x: x[1], reverse=True)
 
@@ -542,6 +636,42 @@ def friends():
         friend_list=friend_list,
         leaderboard=leaderboard
     )
+
+
+@app.route("/api/search_users")
+def search_users():
+    if "user_id" not in session:
+        return jsonify({"users": []})
+
+    query = request.args.get("q", "")
+
+    if query.strip() == "":
+        return jsonify({"users": []})
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT id, name, email
+        FROM users
+        WHERE name LIKE ?
+        AND id != ?
+        LIMIT 5
+    """, (f"%{query}%", session["user_id"]))
+
+    users = cursor.fetchall()
+    conn.close()
+
+    result = []
+
+    for user in users:
+        result.append({
+            "id": user[0],
+            "name": user[1],
+            "email": user[2]
+        })
+
+    return jsonify({"users": result})
 
 
 @app.route("/profile")
@@ -557,6 +687,12 @@ def profile():
         (session["user_id"],)
     )
     user = cursor.fetchone()
+
+    if user is None:
+        conn.close()
+        session.clear()
+        flash("Your session expired. Please login again.")
+        return redirect(url_for("login"))
 
     cursor.execute(
         "SELECT COUNT(*) FROM habits WHERE user_id = ?",
@@ -579,55 +715,72 @@ def profile():
         completed_habits=completed_habits
     )
 
-
-@app.route("/calendar")
-def calendar():
+@app.route("/habit/<int:habit_id>")
+def habit_detail(habit_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
     today = date.today()
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    # Get habit info
+    cursor.execute("""
+        SELECT id, habit_name, category, priority,
+               target_value, target_unit, notes, created_date
+        FROM habits
+        WHERE id = ? AND user_id = ?
+    """, (habit_id, session["user_id"]))
+
+    habit = cursor.fetchone()
+
+    if habit is None:
+        flash("Habit not found.")
+        return redirect(url_for("dashboard"))
+
+    # Get completions
+    cursor.execute("""
+        SELECT completion_date
+        FROM habit_completions
+        WHERE habit_id = ? AND user_id = ?
+    """, (habit_id, session["user_id"]))
+
+    completions = cursor.fetchall()
+    completion_set = set([c[0] for c in completions])
+
+    # ---- 7 DAY TREND ----
+    chart_labels = []
+    chart_values = []
+
+    for i in range(6, -1, -1):
+        d = date.fromordinal(today.toordinal() - i)
+        d_str = d.isoformat()
+
+        chart_labels.append(d.strftime("%a"))
+
+        if d_str in completion_set:
+            chart_values.append(1)
+        else:
+            chart_values.append(0)
+
+    # ---- MONTH CALENDAR ----
     year = today.year
     month = today.month
 
     month_name = today.strftime("%B %Y")
     month_days = cal.monthcalendar(year, month)
 
-    conn = sqlite3.connect("habit_tracker.db")
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        SELECT id, habit_name, category, priority, created_date
-        FROM habits
-        WHERE user_id = ?
-        """,
-        (session["user_id"],)
-    )
-    habits = cursor.fetchall()
-
-    cursor.execute(
-        """
-        SELECT habit_id, completion_date
-        FROM habit_completions
-        WHERE user_id = ?
-        """,
-        (session["user_id"],)
-    )
-    completions = cursor.fetchall()
-
     conn.close()
 
-    completed_set = set()
-
-    for habit_id, completion_date in completions:
-        completed_set.add((habit_id, completion_date))
-
     return render_template(
-        "calendar.html",
-        month_name=month_name,
+        "habit_detail.html",
+        habit=habit,
+        completion_set=completion_set,
+        chart_labels=chart_labels,
+        chart_values=chart_values,
         month_days=month_days,
-        habits=habits,
-        completed_set=completed_set,
+        month_name=month_name,
         year=year,
         month=month
     )
