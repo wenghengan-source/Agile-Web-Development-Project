@@ -13,81 +13,132 @@
 
 <div class="container mt-4">
 
-    <div class="card p-4 mb-4">
-        <h2>Friends & Competition</h2>
-        <p class="text-muted">
-            Add friends and compare your daily completed habits.
-        </p>
+    <div class="friends-hero">
+        <div>
+            <span class="friends-badge">Social Motivation</span>
+            <h1>Friends & Challenge</h1>
+            <p>Add friends, compare daily progress, and stay motivated together.</p>
+        </div>
 
-        {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="alert alert-info">
-                    {{ messages[0] }}
-                </div>
-            {% endif %}
-        {% endwith %}
+        <a href="/dashboard" class="btn btn-light">Back to Dashboard</a>
+    </div>
 
-        <form method="POST">
-            <div class="row">
-                <div class="col-md-8">
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-info mt-4">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <div class="row mt-4">
+
+        <div class="col-lg-4 mb-4">
+            <div class="friend-card friend-add-card">
+                <div class="friend-card-icon">＋</div>
+
+                <h3>Add Friend</h3>
+                <p class="text-muted">
+                    Connect with a friend using their email address.
+                </p>
+
+                <form method="POST">
                     <input
                         type="email"
                         name="friend_email"
-                        class="form-control"
-                        placeholder="Enter friend email"
+                        class="form-control mb-3"
+                        placeholder="friend@example.com"
                         required
                     >
-                </div>
 
-                <div class="col-md-4">
                     <button class="btn btn-primary w-100">
                         Add Friend
                     </button>
-                </div>
+                </form>
             </div>
-        </form>
+        </div>
+
+        <div class="col-lg-8 mb-4">
+            <div class="friend-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h3>Your Friends</h3>
+                        <p class="text-muted mb-0">People you are competing with.</p>
+                    </div>
+
+                    <span class="friend-count">
+                        {{ friend_list|length }} Friends
+                    </span>
+                </div>
+
+                {% if friend_list %}
+                    <div class="friend-grid">
+                        {% for friend in friend_list %}
+                            <div class="friend-profile-card">
+                                <div class="friend-avatar">
+                                    {{ friend[1][0] }}
+                                </div>
+
+                                <h5>{{ friend[1] }}</h5>
+                                <p>{{ friend[2] }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-friends-box">
+                        <h4>No friends yet</h4>
+                        <p>Add your first friend and start competing together.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 
-    <div class="card p-4 mb-4">
-        <h3>Your Friends</h3>
-
-        {% if friend_list %}
-            <ul class="list-group">
-                {% for friend in friend_list %}
-                    <li class="list-group-item">
-                        <strong>{{ friend[1] }}</strong><br>
-                        <small>{{ friend[2] }}</small>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No friends added yet.</p>
-        {% endif %}
-    </div>
-
-    <div class="card p-4">
-        <h3>Today's Leaderboard 🏆</h3>
+    <div class="friend-card leaderboard-card">
+        <div class="leaderboard-header">
+            <div>
+                <span class="friends-badge">Daily Competition</span>
+                <h3>Today’s Leaderboard 🏆</h3>
+                <p class="text-muted mb-0">
+                    Ranking is based on completed habits today.
+                </p>
+            </div>
+        </div>
 
         {% if leaderboard %}
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Rank</th>
-                        <th>Name</th>
-                        <th>Completed Habits Today</th>
-                    </tr>
-                </thead>
+            <div class="leaderboard-list mt-4">
+                {% for user in leaderboard %}
+                    <div class="leaderboard-item {% if loop.index == 1 %}top-rank{% endif %}">
+                        <div class="leaderboard-rank">
+                            {% if loop.index == 1 %}
+                                🥇
+                            {% elif loop.index == 2 %}
+                                🥈
+                            {% elif loop.index == 3 %}
+                                🥉
+                            {% else %}
+                                #{{ loop.index }}
+                            {% endif %}
+                        </div>
 
-                <tbody>
-                    {% for user in leaderboard %}
-                        <tr>
-                            <td>#{{ loop.index }}</td>
-                            <td>{{ user[0] }}</td>
-                            <td>{{ user[1] }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                        <div class="leaderboard-user">
+                            <div class="friend-avatar small">
+                                {{ user[0][0] }}
+                            </div>
+
+                            <div>
+                                <h5>{{ user[0] }}</h5>
+                                <p>{{ user[1] }} completed habits today</p>
+                            </div>
+                        </div>
+
+                        <div class="leaderboard-score">
+                            {{ user[1] }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
         {% else %}
             <p>No leaderboard data available.</p>
         {% endif %}
