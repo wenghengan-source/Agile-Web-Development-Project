@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ habit[1] }} - Habit Detail</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="dashboard-body">
+
+<div class="container mt-4">
+
+    <div class="habit-detail-hero">
+        <div>
+            <span class="habit-detail-badge">Habit Detail</span>
+            <h1>{{ habit[1] }}</h1>
+            <p>Track your goal, completion history, and personal progress trend.</p>
+        </div>
+
+        <div>
+            <a href="/dashboard" class="btn btn-light">Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="habit-detail-grid mt-4">
+
+        <div class="habit-detail-stat">
+            <span>Category</span>
+            <h3>{{ habit[2] }}</h3>
+        </div>
+
+        <div class="habit-detail-stat">
+            <span>Priority</span>
+            <h3>{{ habit[3] }}</h3>
+        </div>
+
+        <div class="habit-detail-stat">
+            <span>Goal</span>
+            <h3>{{ habit[4] }} {{ habit[5] }}</h3>
+        </div>
+
+        <div class="habit-detail-stat">
+            <span>Created</span>
+            <h3>{{ habit[7] }}</h3>
+        </div>
+
+    </div>
+
+    {% if habit[6] %}
+        <div class="habit-detail-card mt-4">
+            <h3>Notes</h3>
+            <p>{{ habit[6] }}</p>
+        </div>
+    {% endif %}
+
+    <div class="habit-detail-card mt-4">
+        <div class="habit-detail-section-title">
+            <div>
+                <h3>7-Day Completion Trend</h3>
+                <p>1 means completed, 0 means not completed.</p>
+            </div>
+
+            <span>Last 7 Days</span>
+        </div>
+
+        <canvas id="habitDetailChart" height="90"></canvas>
+    </div>
+
+    <div class="habit-detail-card mt-4 mb-5">
+        <div class="habit-detail-section-title">
+            <div>
+                <h3>{{ month_name }}</h3>
+                <p>Calendar view for this specific habit.</p>
+            </div>
+
+            <span>Monthly History</span>
+        </div>
+
+        <table class="table habit-detail-calendar">
+            <thead>
+                <tr>
+                    <th>Mon</th>
+                    <th>Tue</th>
+                    <th>Wed</th>
+                    <th>Thu</th>
+                    <th>Fri</th>
+                    <th>Sat</th>
+                    <th>Sun</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for week in month_days %}
+                    <tr>
+                        {% for day in week %}
+                            <td class="{% if day == 0 %}empty-day{% endif %}">
+                                {% if day != 0 %}
+                                    <strong>{{ day }}</strong>
+
+                                    {% set full_date = "%04d-%02d-%02d"|format(year, month, day) %}
+
+                                    {% if full_date >= habit[7] %}
+                                        {% if full_date in completion_set %}
+                                            <div class="habit-day-status done">Completed</div>
+                                        {% else %}
+                                            <div class="habit-day-status pending">Pending</div>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const labels = {{ chart_labels | tojson }};
+    const values = {{ chart_values | tojson }};
+
+    const ctx = document.getElementById("habitDetailChart");
+
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "{{ habit[1] }}",
+                data: values,
+                borderWidth: 4,
+                tension: 0.35,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 1,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            return value === 1 ? "Done" : "Not Done";
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
