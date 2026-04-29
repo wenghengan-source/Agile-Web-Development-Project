@@ -13,23 +13,74 @@
 
 <div class="container mt-4">
 
-    <div class="card p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Profile</h2>
-            <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
+    <div class="profile-hero">
+        <div class="profile-avatar">
+            {{ user[0][0] }}
         </div>
 
-        <h4>User Information</h4>
+        <div>
+            <span class="profile-badge">User Profile</span>
+            <h1>{{ user[0] }}</h1>
+            <p>{{ user[1] }}</p>
+        </div>
 
-        <p><strong>Name:</strong> {{ user[0] }}</p>
-        <p><strong>Email:</strong> {{ user[1] }}</p>
+        <a href="/dashboard" class="btn btn-light">Back to Dashboard</a>
+    </div>
 
-        <hr>
+    <div class="profile-grid mt-4">
 
-        <h4>Habit Summary</h4>
+        <div class="profile-stat-card">
+            <div class="profile-stat-icon">📋</div>
+            <span>Total Habits</span>
+            <h2>{{ total_habits }}</h2>
+        </div>
 
-        <p><strong>Total Habits:</strong> {{ total_habits }}</p>
-        <p><strong>Total Completed Records:</strong> {{ completed_habits }}</p>
+        <div class="profile-stat-card">
+            <div class="profile-stat-icon">✅</div>
+            <span>Total Completed Records</span>
+            <h2>{{ completed_habits }}</h2>
+        </div>
+
+        <div class="profile-stat-card">
+            <div class="profile-stat-icon">🔥</div>
+            <span>Motivation</span>
+            <h2>Keep Going</h2>
+        </div>
+
+    </div>
+
+    <div class="profile-card mt-4">
+        <h3>Account Information</h3>
+
+        <div class="profile-info-row">
+            <span>Name</span>
+            <strong>{{ user[0] }}</strong>
+        </div>
+
+        <div class="profile-info-row">
+            <span>Email</span>
+            <strong>{{ user[1] }}</strong>
+        </div>
+    </div>
+
+    <div class="profile-card mt-4 mb-5">
+        <h3>Progress Summary</h3>
+
+        <p class="text-muted">
+            This summary shows your current habit tracking activity and completed records.
+        </p>
+
+        <div class="profile-progress-box">
+            <div>
+                <h4>{{ total_habits }}</h4>
+                <p>Habits Created</p>
+            </div>
+
+            <div>
+                <h4>{{ completed_habits }}</h4>
+                <p>Completion Records</p>
+            </div>
+        </div>
     </div>
 
 </div>
