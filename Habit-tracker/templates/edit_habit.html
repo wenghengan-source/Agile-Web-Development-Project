@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Habit - Habit Tracker</title>
+    <title>Edit Goal - Habit Tracker</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -12,47 +12,108 @@
 <body class="dashboard-body">
 
 <div class="container mt-4">
-    <div class="card p-4 mx-auto" style="max-width: 650px;">
-        <h2>Edit Habit</h2>
-        <p class="text-muted">Update your habit details.</p>
 
+    <div class="edit-habit-hero">
+        <div>
+            <span class="edit-habit-badge">Edit Goal</span>
+            <h1>Update Your Habit</h1>
+            <p>Change your habit details, target, priority, and notes.</p>
+        </div>
+
+        <a href="/dashboard" class="btn btn-light">Back to Dashboard</a>
+    </div>
+
+    <div class="edit-habit-card mt-4">
         <form method="POST">
-            <div class="mb-3">
-                <label>Habit Name</label>
-                <input type="text" name="habit_name" class="form-control" value="{{ habit[1] }}" required>
+
+            <div class="mb-4">
+                <label class="form-label">Habit / Goal Name</label>
+                <input
+                    type="text"
+                    name="habit_name"
+                    class="form-control edit-input"
+                    value="{{ habit[1] }}"
+                    required
+                >
             </div>
 
-            <div class="mb-3">
-                <label>Category</label>
-                <select name="category" class="form-control">
-                    <option value="Health">Health</option>
-                    <option value="Study">Study</option>
-                    <option value="Work">Work</option>
-                    <option value="Personal">Personal</option>
-                    <option value="General">General</option>
-                </select>
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <label class="form-label">Category</label>
+                    <select name="category" class="form-control edit-input">
+                        <option value="Health" {% if habit[2] == "Health" %}selected{% endif %}>Health</option>
+                        <option value="Fitness" {% if habit[2] == "Fitness" %}selected{% endif %}>Fitness</option>
+                        <option value="Study" {% if habit[2] == "Study" %}selected{% endif %}>Study</option>
+                        <option value="Work" {% if habit[2] == "Work" %}selected{% endif %}>Work</option>
+                        <option value="Personal" {% if habit[2] == "Personal" %}selected{% endif %}>Personal</option>
+                        <option value="General" {% if habit[2] == "General" %}selected{% endif %}>General</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <label class="form-label">Priority</label>
+                    <select name="priority" class="form-control edit-input">
+                        <option value="High" {% if habit[3] == "High" %}selected{% endif %}>High</option>
+                        <option value="Medium" {% if habit[3] == "Medium" %}selected{% endif %}>Medium</option>
+                        <option value="Low" {% if habit[3] == "Low" %}selected{% endif %}>Low</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="mb-3">
-                <label>Priority</label>
-                <select name="priority" class="form-control">
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
-                </select>
+            <div class="edit-goal-box mb-4">
+                <h4>Goal Target</h4>
+                <p>Set a clear measurable target for this habit.</p>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Target Number</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            name="target_value"
+                            class="form-control edit-input"
+                            value="{{ habit[4] }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Target Unit</label>
+                        <select name="target_unit" class="form-control edit-input">
+                            <option value="times" {% if habit[5] == "times" %}selected{% endif %}>Times</option>
+                            <option value="minutes" {% if habit[5] == "minutes" %}selected{% endif %}>Minutes</option>
+                            <option value="hours" {% if habit[5] == "hours" %}selected{% endif %}>Hours</option>
+                            <option value="steps" {% if habit[5] == "steps" %}selected{% endif %}>Steps</option>
+                            <option value="km" {% if habit[5] == "km" %}selected{% endif %}>Kilometres</option>
+                            <option value="litres" {% if habit[5] == "litres" %}selected{% endif %}>Litres</option>
+                            <option value="pages" {% if habit[5] == "pages" %}selected{% endif %}>Pages</option>
+                            <option value="tasks" {% if habit[5] == "tasks" %}selected{% endif %}>Tasks</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
-            <div class="mb-3">
-                <label>Notes</label>
-                <textarea name="notes" class="form-control" rows="3">{{ habit[4] }}</textarea>
+            <div class="mb-4">
+                <label class="form-label">Notes</label>
+                <textarea
+                    name="notes"
+                    class="form-control edit-input"
+                    rows="4"
+                >{{ habit[6] }}</textarea>
             </div>
 
-            <p><strong>Created Date:</strong> {{ habit[5] }}</p>
+            <div class="edit-created-box mb-4">
+                <strong>Created Date:</strong> {{ habit[7] }}
+            </div>
 
-            <button class="btn btn-primary">Save Changes</button>
-            <a href="/dashboard" class="btn btn-secondary">Cancel</a>
+            <div class="d-flex gap-2">
+                <button class="btn btn-primary">Save Changes</button>
+                <a href="/dashboard" class="btn btn-secondary">Cancel</a>
+            </div>
+
         </form>
     </div>
+
 </div>
 
 </body>
