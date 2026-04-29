@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Habit - Habit Tracker</title>
+    <title>Set a Goal - Habit Tracker</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
@@ -12,42 +12,70 @@
 <body class="dashboard-body">
 
 <div class="container mt-4">
-    <div class="card p-4 mx-auto" style="max-width: 650px;">
-        <h2>Add New Habit</h2>
-        <p class="text-muted">Create a new habit to track every day.</p>
+    <div class="card p-4 mx-auto" style="max-width: 750px;">
+        <h2>Set a New Goal</h2>
+        <p class="text-muted">Create a habit with a clear target and unit.</p>
 
         <form method="POST">
             <div class="mb-3">
-                <label>Habit Name</label>
-                <input type="text" name="habit_name" class="form-control" required>
+                <label>Habit / Goal Name</label>
+                <input type="text" name="habit_name" class="form-control" placeholder="e.g. Drink Water, Walk, Study" required>
             </div>
 
-            <div class="mb-3">
-                <label>Category</label>
-                <select name="category" class="form-control">
-                    <option value="Health">Health</option>
-                    <option value="Study">Study</option>
-                    <option value="Work">Work</option>
-                    <option value="Personal">Personal</option>
-                    <option value="General">General</option>
-                </select>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label>Category</label>
+                    <select name="category" class="form-control">
+                        <option value="Health">Health</option>
+                        <option value="Fitness">Fitness</option>
+                        <option value="Study">Study</option>
+                        <option value="Work">Work</option>
+                        <option value="Personal">Personal</option>
+                        <option value="General">General</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label>Priority</label>
+                    <select name="priority" class="form-control">
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                    </select>
+                </div>
             </div>
 
-            <div class="mb-3">
-                <label>Priority</label>
-                <select name="priority" class="form-control">
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
-                </select>
+            <div class="card p-3 mb-3 bg-light">
+                <h5>Goal Target</h5>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label>Target Number</label>
+                        <input type="number" step="0.1" name="target_value" class="form-control" placeholder="e.g. 2, 8000, 30" required>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label>Unit</label>
+                        <select name="target_unit" class="form-control">
+                            <option value="times">Times</option>
+                            <option value="minutes">Minutes</option>
+                            <option value="hours">Hours</option>
+                            <option value="steps">Steps</option>
+                            <option value="km">Kilometres</option>
+                            <option value="litres">Litres</option>
+                            <option value="pages">Pages</option>
+                            <option value="tasks">Tasks</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <div class="mb-3">
                 <label>Notes</label>
-                <textarea name="notes" class="form-control" rows="3"></textarea>
+                <textarea name="notes" class="form-control" rows="3" placeholder="Optional notes about this goal..."></textarea>
             </div>
 
-            <button class="btn btn-primary">Save Habit</button>
+            <button class="btn btn-primary">Save Goal</button>
             <a href="/dashboard" class="btn btn-secondary">Cancel</a>
         </form>
     </div>
