@@ -13,14 +13,32 @@
 
 <div class="container mt-4">
 
-    <div class="card p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>{{ month_name }}</h2>
-            <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
+    <div class="calendar-header-card">
+        <div>
+            <h1>Habit Calendar</h1>
+            <p>View each habit’s completion trend and monthly history.</p>
         </div>
 
-        <table class="table table-bordered calendar-table text-center">
-            <thead class="table-primary">
+        <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
+    </div>
+
+    <div class="calendar-wrapper mb-4">
+        <div class="calendar-title">
+            <h2>Habit Trend Line</h2>
+            <span>Last 7 Days</span>
+        </div>
+
+        <canvas id="habitTrendChart" height="100"></canvas>
+    </div>
+
+    <div class="calendar-wrapper">
+        <div class="calendar-title">
+            <h2>{{ month_name }}</h2>
+            <span>Monthly Overview</span>
+        </div>
+
+        <table class="table calendar-table-pro">
+            <thead>
                 <tr>
                     <th>Mon</th>
                     <th>Tue</th>
@@ -36,23 +54,23 @@
                 {% for week in month_days %}
                     <tr>
                         {% for day in week %}
-                            <td class="calendar-cell">
+                            <td class="{% if day == 0 %}empty-day{% endif %}">
                                 {% if day != 0 %}
-                                    <strong>{{ day }}</strong>
+                                    <div class="calendar-day-number">{{ day }}</div>
+
+                                    {% set full_date = "%04d-%02d-%02d"|format(year, month, day) %}
 
                                     {% for habit in habits %}
-                                        {% set created_day = habit[4].split("-")[2]|int %}
-
-                                        {% if day >= created_day %}
-                                            <div class="calendar-habit">
-                                                {{ habit[1] }}
-
-                                                {% set full_date = year ~ "-" ~ "%02d"|format(month) ~ "-" ~ "%02d"|format(day) %}
+                                        {% if full_date >= habit[4] %}
+                                            <div class="calendar-habit-card">
+                                                <div class="calendar-habit-name">
+                                                    {{ habit[1] }}
+                                                </div>
 
                                                 {% if (habit[0], full_date) in completed_set %}
-                                                    <div class="text-success">✓ Done</div>
+                                                    <span class="calendar-status done">Completed</span>
                                                 {% else %}
-                                                    <div class="text-muted">Pending</div>
+                                                    <span class="calendar-status pending">Pending</span>
                                                 {% endif %}
                                             </div>
                                         {% endif %}
@@ -63,11 +81,55 @@
                     </tr>
                 {% endfor %}
             </tbody>
-
         </table>
     </div>
 
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const labels = {{ chart_labels | tojson }};
+    const habitLines = {{ habit_lines | tojson }};
+
+    const datasets = habitLines.map(habit => ({
+        label: habit.label,
+        data: habit.data,
+        borderWidth: 3,
+        tension: 0.35,
+        fill: false
+    }));
+
+    const ctx = document.getElementById("habitTrendChart");
+
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: true
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 1,
+                    ticks: {
+                        stepSize: 1,
+                        callback: function(value) {
+                            return value === 1 ? "Done" : "Not Done";
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
 
 </body>
 </html>
