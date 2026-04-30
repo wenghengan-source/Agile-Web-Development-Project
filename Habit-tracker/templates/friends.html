@@ -21,13 +21,17 @@
             <a class="btn btn-light btn-sm" href="/calendar">Calendar</a>
             <a class="btn btn-light btn-sm" href="/friends">Friends</a>
             <a class="btn btn-light btn-sm" href="/stats">Stats</a>
+            <a class="btn btn-light btn-sm" href="/stats_custom">Stats (Custom)</a>
             <a class="btn btn-light btn-sm" href="/profile">Profile</a>
+            <a class="btn btn-light btn-sm" href="/profile_custom">Profile (Custom)</a>
+            <a class="btn btn-light btn-sm" href="/reward">Rewards</a>
             <a class="btn btn-danger btn-sm" href="/logout">Logout</a>
         </div>
     </div>
 </nav>
 
 <div class="container mt-4">
+>>>>>>> 7cb3bc2 (feat: add templates (contact/profile_custom/stats_custom/reward), modal messaging, messages table and routes)
 
     <div class="friends-hero">
         <div>
@@ -89,16 +93,27 @@
 
                 {% if friend_list %}
                     <div class="friend-grid">
-                        {% for friend in friend_list %}
-                            <div class="friend-profile-card">
-                                <div class="friend-avatar">
-                                    {{ friend[1][0] }}
-                                </div>
+                                                {% for friend in friend_list %}
+                                                        <div class="friend-profile-card">
+                                                                <div class="friend-avatar">
+                                                                        {{ friend[1][0] }}
+                                                                </div>
 
-                                <h5>{{ friend[1] }}</h5>
-                                <p>{{ friend[2] }}</p>
-                            </div>
-                        {% endfor %}
+                                                                <h5>{{ friend[1] }}</h5>
+                                                                <p>{{ friend[2] }}</p>
+                                                                <div class="mt-2">
+                                                                    <button
+                                                                        class="btn btn-sm btn-outline-primary"
+                                                                        data-bs-toggle="modal"
+                                                                        data-bs-target="#sendMessageModal"
+                                                                        data-recipient-email="{{ friend[2] }}"
+                                                                        data-recipient-name="{{ friend[1] }}"
+                                                                    >
+                                                                        Send Message
+                                                                    </button>
+                                                                </div>
+                                                        </div>
+                                                {% endfor %}
                     </div>
                 {% else %}
                     <div class="empty-friends-box">
@@ -161,6 +176,61 @@
     </div>
 
 </div>
+
+<!-- Send Message Modal -->
+<div class="modal fade" id="sendMessageModal" tabindex="-1" aria-labelledby="sendMessageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="sendMessageModalLabel">Send Message</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="/contact">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="modal_name" class="form-label">Your Name</label>
+                        <input type="text" class="form-control" id="modal_name" name="name" value="{{ session.user_name if session.user_name is defined else '' }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="modal_email" class="form-label">Your Email</label>
+                        <input type="email" class="form-control" id="modal_email" name="email" value="{{ user[1] if user is defined and user else '' }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="modal_to" class="form-label">To</label>
+                        <input type="text" class="form-control" id="modal_to" readonly>
+                        <input type="hidden" id="modal_to_email" name="to_email">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="modal_message" class="form-label">Message</label>
+                        <textarea class="form-control" id="modal_message" name="message" rows="5" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    var sendMessageModal = document.getElementById('sendMessageModal')
+    sendMessageModal.addEventListener('show.bs.modal', function (event) {
+        var button = event.relatedTarget
+        var recipientEmail = button.getAttribute('data-recipient-email')
+        var recipientName = button.getAttribute('data-recipient-name')
+
+        var modalTo = sendMessageModal.querySelector('#modal_to')
+        var modalToEmail = sendMessageModal.querySelector('#modal_to_email')
+
+        modalTo.value = recipientName || recipientEmail
+        modalToEmail.value = recipientEmail
+    })
+</script>
 
 </body>
 </html>

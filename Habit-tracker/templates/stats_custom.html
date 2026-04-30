@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Progress Stats</h2>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-body">
+        <h5 class="card-title">Summary</h5>
+        <p>Total completions: <strong>{{ total_completed }}</strong></p>
+        <p>Current streak: <strong>{{ current_streak }}</strong></p>
+        <p>Average progress: <strong>{{ average_progress }}%</strong></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Best Day</h5>
+        <p class="mb-0">{{ best_day.label }} — Completed: {{ best_day.completed }}, Goal: {{ best_day.goal }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <h5>Weekly Progress</h5>
+    <canvas id="weeklyChart" height="160"></canvas>
+
+    <div class="mt-3">
+      {% for day in weekly_progress %}
+        <div class="mb-2">
+          <div class="d-flex justify-content-between">
+            <div>{{ day.label }}</div>
+            <div>{{ day.completed }}/{{ day.goal }} ({{ day.percentage }}%)</div>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" role="progressbar" style="width: {{ day.percentage }}%;" aria-valuenow="{{ day.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const labels = [{% for day in weekly_progress %}'{{ day.label }}'{% if not loop.last %}, {% endif %}{% endfor %}];
+  const values = [{% for day in weekly_progress %}{{ day.percentage }}{% if not loop.last %}, {% endif %}{% endfor %}];
+
+  const ctx = document.getElementById('weeklyChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Progress (%)',
+        data: values,
+        backgroundColor: 'rgba(13,110,253,0.6)'
+      }]
+    },
+    options: {
+      scales: {
+        y: { beginAtZero: true, max: 100 }
+      }
+    }
+  });
+</script>
+
+{% endblock %}

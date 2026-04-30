@@ -270,6 +270,18 @@ def init_db():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender_id INTEGER,
+            sender_name TEXT,
+            sender_email TEXT,
+            recipient_email TEXT NOT NULL,
+            message TEXT NOT NULL,
+            created_date TEXT NOT NULL
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -1031,28 +1043,40 @@ def stats():
     )
     total_habits = cursor.fetchone()[0]
 
-    cursor.execute(
-        "SELECT id, created_date, schedule FROM habits WHERE user_id = ?",
-        (session["user_id"],)
-    )
-    user_habits = cursor.fetchall()
-
-    cursor.execute(
-        """
-        SELECT habit_id, completion_date
-        FROM habit_completions
-        WHERE user_id = ?
-        """,
-        (session["user_id"],)
-    )
-    completion_records = set(cursor.fetchall())
-
+<<<<<<< HEAD
+    # Use SQL queries per-day for completed and goal counts (incoming changes)
     weekly_progress = []
     active_days = 0
 
     for week_day in week_dates:
         day_string = week_day.isoformat()
 
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM habit_completions
+            WHERE user_id = ? AND completion_date = ?
+            """,
+            (session["user_id"], day_string)
+        )
+        completed = cursor.fetchone()[0]
+
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM habits
+            WHERE user_id = ? AND created_date <= ?
+            """,
+            (session["user_id"], day_string)
+        )
+        goal = cursor.fetchone()[0]
+    weekly_progress = []
+    active_days = 0
+
+    for week_day in week_dates:
+        day_string = week_day.isoformat()
+
+<<<<<<< HEAD
         scheduled_habit_ids = [
             habit_id
             for habit_id, created_date, schedule in user_habits
@@ -1065,6 +1089,27 @@ def stats():
             for habit_id in scheduled_habit_ids
             if (habit_id, day_string) in completion_records
         )
+=======
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM habit_completions
+            WHERE user_id = ? AND completion_date = ?
+            """,
+            (session["user_id"], day_string)
+        )
+        completed = cursor.fetchone()[0]
+
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM habits
+            WHERE user_id = ? AND created_date <= ?
+            """,
+            (session["user_id"], day_string)
+        )
+        goal = cursor.fetchone()[0]
+>>>>>>> 7cb3bc2 (feat: add templates (contact/profile_custom/stats_custom/reward), modal messaging, messages table and routes)
 
         if goal > 0:
             active_days += 1
@@ -1175,6 +1220,214 @@ def profile():
         completed_habits=completed_habits,
         goals=goals
     )
+<<<<<<< HEAD
+=======
+
+
+@app.route("/contact", methods=["GET", "POST"])
+def contact():
+    if request.method == "POST":
+        name = request.form.get("name")
+        email = request.form.get("email")
+        message = request.form.get("message")
+        to_email = request.form.get("to_email")
+
+        # Simple handling: record as a flash message (could be replaced with email or database storage)
+        created = date.today().isoformat()
+
+        conn = sqlite3.connect("habit_tracker.db")
+        cursor = conn.cursor()
+        try:
+            sender_id = session.get("user_id")
+            sender_name = session.get("user_name")
+
+            cursor.execute(
+                "INSERT INTO messages (sender_id, sender_name, sender_email, recipient_email, message, created_date) VALUES (?, ?, ?, ?, ?, ?)",
+                (sender_id, sender_name, email, to_email or '', message, created)
+            )
+            conn.commit()
+            if to_email:
+                flash(f"Message sent to {to_email} — thank you!")
+            else:
+                flash("Thank you, your message has been received.")
+        except Exception:
+            flash("Failed to save message. Please try again.")
+        finally:
+            conn.close()
+
+        return redirect(url_for("contact"))
+
+    # 支持通过查询参数预填收件人
+    to_email = request.args.get("to_email")
+    to_name = request.args.get("to_name")
+
+    return render_template("contact.html", to_email=to_email, to_name=to_name)
+
+
+@app.route("/profile_custom")
+def profile_custom():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT name, email FROM users WHERE id = ?",
+        (session["user_id"],)
+    )
+    user = cursor.fetchone()
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM habits WHERE user_id = ?",
+        (session["user_id"],)
+    )
+    total_habits = cursor.fetchone()[0]
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM habit_completions WHERE user_id = ?",
+        (session["user_id"],)
+    )
+    completed_habits = cursor.fetchone()[0]
+
+    cursor.execute(
+        "SELECT habit_name FROM habits WHERE user_id = ? ORDER BY created_date DESC, id DESC LIMIT 4",
+        (session["user_id"],)
+    )
+    goals = [row[0] for row in cursor.fetchall()]
+
+    conn.close()
+
+    return render_template(
+        "profile_custom.html",
+        user=user,
+        total_habits=total_habits,
+        completed_habits=completed_habits,
+        goals=goals
+    )
+
+
+@app.route("/stats_custom")
+def stats_custom():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    today = date.today()
+    week_dates = [today - timedelta(days=offset) for offset in range(6, -1, -1)]
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM habit_completions WHERE user_id = ?",
+        (session["user_id"],)
+    )
+    total_completed = cursor.fetchone()[0]
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM habits WHERE user_id = ?",
+        (session["user_id"],)
+    )
+    total_habits = cursor.fetchone()[0]
+
+    weekly_progress = []
+    active_days = 0
+
+    for week_day in week_dates:
+        day_string = week_day.isoformat()
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM habit_completions WHERE user_id = ? AND completion_date = ?",
+            (session["user_id"], day_string)
+        )
+        completed = cursor.fetchone()[0]
+
+        cursor.execute(
+            "SELECT COUNT(*) FROM habits WHERE user_id = ? AND created_date <= ?",
+            (session["user_id"], day_string)
+        )
+        goal = cursor.fetchone()[0]
+
+        if goal > 0:
+            active_days += 1
+
+        percentage = 0 if goal == 0 else int((completed / goal) * 100)
+
+        weekly_progress.append({
+            "label": week_day.strftime("%a"),
+            "completed": completed,
+            "goal": goal,
+            "percentage": percentage
+        })
+
+    average_progress = 0
+    if active_days > 0:
+        average_progress = int(sum(day["percentage"] for day in weekly_progress) / active_days)
+
+    best_day = {"label": "No data", "completed": 0, "goal": 0}
+    if weekly_progress:
+        best_day = max(weekly_progress, key=lambda item: (item["percentage"], item["completed"]))
+
+    conn.close()
+
+    return render_template(
+        "stats_custom.html",
+        total_completed=total_completed,
+        current_streak=0,
+        average_progress=average_progress,
+        total_habits=total_habits,
+        weekly_progress=weekly_progress,
+        best_day=best_day
+    )
+
+
+@app.route("/reward")
+def reward():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM habit_completions WHERE user_id = ?",
+        (session["user_id"],)
+    )
+    points = cursor.fetchone()[0]
+
+    conn.close()
+
+    return render_template("reward.html", points=points)
+
+
+@app.route("/claim_reward", methods=["POST"])
+def claim_reward():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    tier = request.form.get("tier")
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT COUNT(*) FROM habit_completions WHERE user_id = ?",
+        (session["user_id"],)
+    )
+    points = cursor.fetchone()[0]
+    conn.close()
+
+    thresholds = {"bronze": 50, "silver": 100, "gold": 200}
+    required = thresholds.get(tier, None)
+
+    if required is None:
+        flash("Invalid reward tier.")
+    elif points >= required:
+        flash(f"Reward '{tier}' claimed. Congratulations!")
+    else:
+        flash(f"Not enough points for {tier} reward. Need {required} points.")
+
+    return redirect(url_for("reward"))
+>>>>>>> 7cb3bc2 (feat: add templates (contact/profile_custom/stats_custom/reward), modal messaging, messages table and routes)
 
 @app.route("/habit/<int:habit_id>")
 def habit_detail(habit_id):
