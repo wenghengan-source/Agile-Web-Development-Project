@@ -8,6 +8,40 @@ import calendar as cal
 app = Flask(__name__)
 app.secret_key = "habit_tracker_secret_key"
 
+WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+def ensure_column_exists(cursor, table_name, column_name, column_definition):
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    existing_columns = [column[1] for column in cursor.fetchall()]
+
+    if column_name not in existing_columns:
+        cursor.execute(
+            f"ALTER TABLE {table_name} "
+            f"ADD COLUMN {column_name} {column_definition}"
+        )
+
+
+def parse_schedule(schedule_value):
+    if not schedule_value:
+        return []
+
+    return [
+        day.strip()
+        for day in schedule_value.split(",")
+        if day.strip()
+    ]
+
+
+def is_habit_scheduled_for_date(schedule_value, target_date):
+    scheduled_days = parse_schedule(schedule_value)
+
+    # Empty schedules represent legacy habits and should behave as daily.
+    if not scheduled_days:
+        return True
+
+    return target_date.strftime("%a") in scheduled_days
+
 
 def init_db():
     conn = sqlite3.connect("habit_tracker.db")
@@ -28,6 +62,7 @@ def init_db():
             user_id INTEGER NOT NULL,
             habit_name TEXT NOT NULL,
             category TEXT,
+            schedule TEXT,
             priority TEXT,
             target_value TEXT,
             target_unit TEXT,
@@ -36,6 +71,8 @@ def init_db():
             streak INTEGER DEFAULT 0
         )
     """)
+
+    ensure_column_exists(cursor, "habits", "schedule", "TEXT")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS habit_completions (
@@ -314,6 +351,7 @@ def new_habit():
         habit_name = request.form["habit_name"]
         category = request.form["category"]
         priority = request.form["priority"]
+        schedule = ",".join(request.form.getlist("schedule"))
         target_value = request.form["target_value"]
         target_unit = request.form["target_unit"]
         notes = request.form["notes"]
@@ -324,12 +362,13 @@ def new_habit():
 
         cursor.execute("""
             INSERT INTO habits
-            (user_id, habit_name, category, priority, target_value, target_unit, notes, created_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (user_id, habit_name, category, schedule, priority, target_value, target_unit, notes, created_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             session["user_id"],
             habit_name,
             category,
+            schedule,
             priority,
             target_value,
             target_unit,
@@ -439,7 +478,7 @@ def edit_habit(habit_id):
         return redirect(url_for("dashboard"))
 
     cursor.execute("""
-        SELECT id, habit_name, category, priority, target_value, target_unit, notes, created_date
+        SELECT id, habit_name, category, schedule, priority, target_value, target_unit, notes, created_date
         FROM habits
         WHERE id = ? AND user_id = ?
     """, (habit_id, session["user_id"]))
@@ -451,7 +490,13 @@ def edit_habit(habit_id):
         flash("Habit not found.")
         return redirect(url_for("dashboard"))
 
-    return render_template("edit_habit.html", habit=habit)
+    selected_schedule = parse_schedule(habit[3])
+
+    return render_template(
+        "edit_habit.html",
+        habit=habit,
+        selected_schedule=selected_schedule
+    )
 
 
 @app.route("/delete_habit/<int:habit_id>")
