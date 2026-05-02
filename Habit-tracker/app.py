@@ -779,31 +779,40 @@ def stats():
     )
     total_habits = cursor.fetchone()[0]
 
+    cursor.execute(
+        "SELECT id, created_date, schedule FROM habits WHERE user_id = ?",
+        (session["user_id"],)
+    )
+    user_habits = cursor.fetchall()
+
+    cursor.execute(
+        """
+        SELECT habit_id, completion_date
+        FROM habit_completions
+        WHERE user_id = ?
+        """,
+        (session["user_id"],)
+    )
+    completion_records = set(cursor.fetchall())
+
     weekly_progress = []
     active_days = 0
 
     for week_day in week_dates:
         day_string = week_day.isoformat()
 
-        cursor.execute(
-            """
-            SELECT COUNT(*)
-            FROM habit_completions
-            WHERE user_id = ? AND completion_date = ?
-            """,
-            (session["user_id"], day_string)
+        scheduled_habit_ids = [
+            habit_id
+            for habit_id, created_date, schedule in user_habits
+            if created_date <= day_string
+            and is_habit_scheduled_for_date(schedule, week_day)
+        ]
+        goal = len(scheduled_habit_ids)
+        completed = sum(
+            1
+            for habit_id in scheduled_habit_ids
+            if (habit_id, day_string) in completion_records
         )
-        completed = cursor.fetchone()[0]
-
-        cursor.execute(
-            """
-            SELECT COUNT(*)
-            FROM habits
-            WHERE user_id = ? AND created_date <= ?
-            """,
-            (session["user_id"], day_string)
-        )
-        goal = cursor.fetchone()[0]
 
         if goal > 0:
             active_days += 1
@@ -928,7 +937,7 @@ def habit_detail(habit_id):
     # Get habit info
     cursor.execute("""
         SELECT id, habit_name, category, priority,
-               target_value, target_unit, notes, created_date
+               target_value, target_unit, notes, created_date, schedule
         FROM habits
         WHERE id = ? AND user_id = ?
     """, (habit_id, session["user_id"]))
@@ -959,7 +968,11 @@ def habit_detail(habit_id):
 
         chart_labels.append(d.strftime("%a"))
 
-        if d_str in completion_set:
+        if d_str < habit[7]:
+            chart_values.append(None)
+        elif not is_habit_scheduled_for_date(habit[8], d):
+            chart_values.append(None)
+        elif d_str in completion_set:
             chart_values.append(1)
         else:
             chart_values.append(0)
@@ -981,6 +994,8 @@ def habit_detail(habit_id):
         chart_values=chart_values,
         month_days=month_days,
         month_name=month_name,
+        date=date,
+        is_habit_scheduled_for_date=is_habit_scheduled_for_date,
         year=year,
         month=month
     )

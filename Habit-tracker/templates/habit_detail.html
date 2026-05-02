@@ -102,7 +102,7 @@
 
                                     {% set full_date = "%04d-%02d-%02d"|format(year, month, day) %}
 
-                                    {% if full_date >= habit[7] %}
+                                    {% if full_date >= habit[7] and is_habit_scheduled_for_date(habit[8], date(year, month, day)) %}
                                         {% if full_date in completion_set %}
                                             <div class="habit-day-status done">Completed</div>
                                         {% else %}
