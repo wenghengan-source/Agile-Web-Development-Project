@@ -545,7 +545,7 @@ def calendar():
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT id, habit_name, category, priority, created_date
+        SELECT id, habit_name, category, priority, created_date, schedule
         FROM habits
         WHERE user_id = ?
     """, (session["user_id"],))
@@ -573,11 +573,19 @@ def calendar():
     for habit in habits:
         habit_id = habit[0]
         habit_name = habit[1]
+        created_date = habit[4]
+        schedule = habit[5]
 
         data = []
 
         for day_string in last_7_days:
-            if (habit_id, day_string) in completed_set:
+            day_date = date.fromisoformat(day_string)
+
+            if day_string < created_date:
+                data.append(None)
+            elif not is_habit_scheduled_for_date(schedule, day_date):
+                data.append(None)
+            elif (habit_id, day_string) in completed_set:
                 data.append(1)
             else:
                 data.append(0)
@@ -587,6 +595,26 @@ def calendar():
             "data": data
         })
 
+    calendar_habits_by_date = {}
+
+    for week in month_days:
+        for day in week:
+            if day == 0:
+                continue
+
+            current_date = date(year, month, day)
+            full_date = current_date.isoformat()
+            visible_habits = []
+
+            for habit in habits:
+                if (
+                    full_date >= habit[4]
+                    and is_habit_scheduled_for_date(habit[5], current_date)
+                ):
+                    visible_habits.append(habit)
+
+            calendar_habits_by_date[full_date] = visible_habits
+
     conn.close()
 
     return render_template(
@@ -595,6 +623,7 @@ def calendar():
         month_days=month_days,
         habits=habits,
         completed_set=completed_set,
+        calendar_habits_by_date=calendar_habits_by_date,
         year=year,
         month=month,
         chart_labels=chart_labels,
