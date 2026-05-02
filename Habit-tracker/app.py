@@ -180,7 +180,8 @@ def dashboard():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    today = date.today().isoformat()
+    today_date = date.today()
+    today = today_date.isoformat()
 
     quotes = [
         "Small progress is still progress.",
@@ -200,7 +201,7 @@ def dashboard():
                    WHEN c.id IS NOT NULL THEN 'Completed'
                    ELSE 'Not Completed'
                END,
-               h.target_value, h.target_unit
+               h.target_value, h.target_unit, h.schedule
         FROM habits h
         LEFT JOIN habit_completions c
         ON h.id = c.habit_id
@@ -209,7 +210,10 @@ def dashboard():
         ORDER BY h.id DESC
     """, (today, session["user_id"]))
 
-    habits = cursor.fetchall()
+    habits = [
+        habit for habit in cursor.fetchall()
+        if is_habit_scheduled_for_date(habit[10], today_date)
+    ]
 
     total = len(habits)
     completed = len([h for h in habits if h[7] == "Completed"])
@@ -452,6 +456,7 @@ def edit_habit(habit_id):
     if request.method == "POST":
         habit_name = request.form["habit_name"]
         category = request.form["category"]
+        schedule = ",".join(request.form.getlist("schedule"))
         priority = request.form["priority"]
         target_value = request.form["target_value"]
         target_unit = request.form["target_unit"]
@@ -459,11 +464,12 @@ def edit_habit(habit_id):
 
         cursor.execute("""
             UPDATE habits
-            SET habit_name = ?, category = ?, priority = ?, target_value = ?, target_unit = ?, notes = ?
+            SET habit_name = ?, category = ?, schedule = ?, priority = ?, target_value = ?, target_unit = ?, notes = ?
             WHERE id = ? AND user_id = ?
         """, (
             habit_name,
             category,
+            schedule,
             priority,
             target_value,
             target_unit,
