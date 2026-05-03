@@ -43,6 +43,35 @@ def is_habit_scheduled_for_date(schedule_value, target_date):
     return target_date.strftime("%a") in scheduled_days
 
 
+def get_active_habits_for_user(user_id, target_date):
+    day_string = target_date.isoformat()
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT h.id, h.habit_name, h.category, h.priority,
+               h.notes, h.created_date, h.streak,
+               CASE
+                   WHEN c.id IS NOT NULL THEN 'Completed'
+                   ELSE 'Not Completed'
+               END,
+               h.target_value, h.target_unit, h.schedule
+        FROM habits h
+        LEFT JOIN habit_completions c
+        ON h.id = c.habit_id
+        AND c.completion_date = ?
+        WHERE h.user_id = ?
+        ORDER BY h.id DESC
+    """, (day_string, user_id))
+
+    habits = [
+        habit for habit in cursor.fetchall()
+        if is_habit_scheduled_for_date(habit[10], target_date)
+    ]
+    conn.close()
+    return habits
+
+
 def init_db():
     conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
@@ -191,34 +220,15 @@ def dashboard():
         "Consistency beats motivation."
     ]
 
-    conn = sqlite3.connect("habit_tracker.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT h.id, h.habit_name, h.category, h.priority,
-               h.notes, h.created_date, h.streak,
-               CASE
-                   WHEN c.id IS NOT NULL THEN 'Completed'
-                   ELSE 'Not Completed'
-               END,
-               h.target_value, h.target_unit, h.schedule
-        FROM habits h
-        LEFT JOIN habit_completions c
-        ON h.id = c.habit_id
-        AND c.completion_date = ?
-        WHERE h.user_id = ?
-        ORDER BY h.id DESC
-    """, (today, session["user_id"]))
-
-    habits = [
-        habit for habit in cursor.fetchall()
-        if is_habit_scheduled_for_date(habit[10], today_date)
-    ]
+    habits = get_active_habits_for_user(session["user_id"], today_date)
 
     total = len(habits)
     completed = len([h for h in habits if h[7] == "Completed"])
     percentage = int((completed / total) * 100) if total > 0 else 0
     reminders = [h for h in habits if h[7] == "Not Completed"]
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
 
     cursor.execute(
         "SELECT weight, height, age, goal FROM health_profile WHERE user_id = ?",
@@ -271,6 +281,21 @@ def dashboard():
         bmi=bmi,
         today_steps=today_steps,
         today_videos=today_videos
+    )
+
+
+@app.route("/active_habits")
+def active_habits():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    today_date = date.today()
+    habits = get_active_habits_for_user(session["user_id"], today_date)
+
+    return render_template(
+        "active_habits.html",
+        habits=habits,
+        today_label=today_date.strftime("%A, %d %B %Y")
     )
 
 
