@@ -242,74 +242,7 @@
                     + Add Goal
                 </a>
             </div>
-
-            {% if habits %}
-                <div class="habit-list">
-
-                    {% for habit in habits %}
-                        <div class="habit-item">
-
-                            <div>
-                                <h5>
-                                    <a href="/habit/{{ habit[0] }}" class="habit-link">
-                                        {{ habit[1] }}
-                                    </a>
-                                </h5>
-
-                                <span class="badge bg-primary">{{ habit[2] }}</span>
-                                <span class="badge bg-secondary">{{ habit[3] }}</span>
-
-                                {% if habit[7] == "Completed" %}
-                                    <span class="badge bg-success">Completed</span>
-                                {% else %}
-                                    <span class="badge bg-warning text-dark">Not Completed</span>
-                                {% endif %}
-
-                                {% if habit[8] and habit[9] %}
-                                    <p class="mt-2 mb-1">
-                                        <strong>Goal:</strong> {{ habit[8] }} {{ habit[9] }}
-                                    </p>
-                                {% endif %}
-
-                                <p class="text-muted mt-2">
-                                    Created: {{ habit[5] }} |
-                                    Streak: {{ habit[6] }} days
-                                </p>
-
-                                {% if habit[4] %}
-                                    <p><strong>Notes:</strong> {{ habit[4] }}</p>
-                                {% endif %}
-                            </div>
-
-                            <div class="habit-actions">
-                                <a href="/habit/{{ habit[0] }}" class="btn btn-primary btn-sm">
-                                    Details
-                                </a>
-
-                                <a href="/complete_habit/{{ habit[0] }}" class="btn btn-success btn-sm">
-                                    Complete
-                                </a>
-
-                                <a href="/reset_habit/{{ habit[0] }}" class="btn btn-warning btn-sm">
-                                    Reset
-                                </a>
-
-                                <a href="/edit_habit/{{ habit[0] }}" class="btn btn-info btn-sm">
-                                    Edit
-                                </a>
-
-                                <a href="/delete_habit/{{ habit[0] }}" class="btn btn-danger btn-sm">
-                                    Delete
-                                </a>
-                            </div>
-
-                        </div>
-                    {% endfor %}
-
-                </div>
-            {% else %}
-                <p>No habits found yet.</p>
-            {% endif %}
+            {% include "_habit_list.html" %}
         </section>
 
     </main>
