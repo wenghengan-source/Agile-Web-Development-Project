@@ -32,7 +32,7 @@
         <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
             <div>
                 <h1 class="mb-2">Active Habits Today</h1>
-                <p class="text-muted mb-1">All habits scheduled for today in one place.</p>
+                <p class="text-muted mb-1">See both today’s active habits and the ones that are resting today.</p>
                 <small class="text-muted">{{ today_label }}</small>
             </div>
 
@@ -56,7 +56,7 @@
             </div>
 
             <p class="text-muted mb-0">
-                Showing {{ habits|length }} habit{% if habits|length != 1 %}s{% endif %}
+                Showing {{ active_habits|length }} active habit{% if active_habits|length != 1 %}s{% endif %} and {{ total_inactive }} not active today
             </p>
         </div>
 
@@ -90,23 +90,47 @@
             </div>
         </form>
 
-        {% if habits %}
-            {% include "_habit_list.html" %}
-        {% else %}
-            <div class="text-center py-5">
-                {% if status_filter == "completed" %}
-                    <h4>No completed active habits yet</h4>
-                    <p class="text-muted">Complete one of today’s habits to see it here.</p>
-                {% elif status_filter == "incomplete" %}
-                    <h4>No incomplete active habits right now</h4>
-                    <p class="text-muted">Nice work. Everything active for today has been completed.</p>
-                {% else %}
-                    <h4>No active habits for today</h4>
-                    <p class="text-muted">Add a new habit or wait for one of your scheduled habits to become active.</p>
-                    <a href="/new_habit" class="btn btn-primary">Create a Habit</a>
-                {% endif %}
+        <div class="mb-5">
+            <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+                <div>
+                    <h3 class="mb-1">Active Today</h3>
+                    <p class="text-muted mb-0">These habits are due today based on their schedules.</p>
+                </div>
             </div>
-        {% endif %}
+
+            {% set habits = active_habits %}
+            {% if habits %}
+                {% include "_habit_list.html" %}
+            {% else %}
+                <div class="text-center py-5">
+                    {% if status_filter == "completed" %}
+                        <h4>No completed active habits yet</h4>
+                        <p class="text-muted">Complete one of today’s habits to see it here.</p>
+                    {% elif status_filter == "incomplete" %}
+                        <h4>No incomplete active habits right now</h4>
+                        <p class="text-muted">Nice work. Everything active for today has been completed.</p>
+                    {% else %}
+                        <h4>No active habits for today</h4>
+                        <p class="text-muted">Add a new habit or wait for one of your scheduled habits to become active.</p>
+                        <a href="/new_habit" class="btn btn-primary">Create a Habit</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <div>
+            <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+                <div>
+                    <h3 class="mb-1">Not Active Today</h3>
+                    <p class="text-muted mb-0">These habits are in your tracker, but they are not scheduled for today.</p>
+                </div>
+                <span class="badge bg-light text-dark border">{{ total_inactive }} hidden from today’s goals</span>
+            </div>
+
+            {% set habits = inactive_habits %}
+            {% set empty_message = "No non-active habits matched your current search." %}
+            {% include "_habit_list.html" %}
+        </div>
     </div>
 </div>
 

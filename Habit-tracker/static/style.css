@@ -477,6 +477,33 @@ h1, h2, h3, h4, h5 {
     gap: 8px;
 }
 
+.habit-schedule-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.habit-schedule-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.habit-schedule-chip {
+    display: inline-flex;
+    align-items: center;
+    background: #eef4ff;
+    color: #1d4ed8;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
 /* =======================================================
    PROFESSIONAL CALENDAR PAGE
 ======================================================= */

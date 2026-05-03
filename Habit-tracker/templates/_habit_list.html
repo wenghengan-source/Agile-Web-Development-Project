@@ -24,6 +24,13 @@
                         </p>
                     {% endif %}
 
+                    <div class="habit-schedule-row">
+                        <span class="habit-schedule-label">Schedule</span>
+                        <span class="habit-schedule-chip">
+                            {{ format_schedule_label(habit[10]) }}
+                        </span>
+                    </div>
+
                     <p class="text-muted mt-2">
                         Created: {{ habit[5] }} |
                         Streak: {{ habit[6] }} days
@@ -61,7 +68,11 @@
                         Edit
                     </a>
 
-                    <a href="/delete_habit/{{ habit[0] }}" class="btn btn-danger btn-sm">
+                    <a
+                        href="/delete_habit/{{ habit[0] }}"
+                        class="btn btn-danger btn-sm"
+                        onclick='return confirm({{ ("Delete the habit " ~ habit[1] ~ "? This cannot be undone.") | tojson }});'
+                    >
                         Delete
                     </a>
                 </div>

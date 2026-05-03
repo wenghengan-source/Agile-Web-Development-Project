@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+import os
 import sqlite3
 import random
 from datetime import date
@@ -9,6 +10,11 @@ app = Flask(__name__)
 app.secret_key = "habit_tracker_secret_key"
 
 WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+DB_PATH = os.environ.get("HABIT_TRACKER_DB", "habit_tracker.db")
+
+
+def get_db_connection():
+    return sqlite3.connect(DB_PATH)
 
 
 def ensure_column_exists(cursor, table_name, column_name, column_definition):
@@ -43,9 +49,18 @@ def is_habit_scheduled_for_date(schedule_value, target_date):
     return target_date.strftime("%a") in scheduled_days
 
 
-def get_active_habits_for_user(user_id, target_date):
+def format_schedule_label(schedule_value):
+    scheduled_days = parse_schedule(schedule_value)
+
+    if not scheduled_days:
+        return "Every day"
+
+    return ", ".join(scheduled_days)
+
+
+def get_habits_for_user_with_today_status(user_id, target_date):
     day_string = target_date.isoformat()
-    conn = sqlite3.connect("habit_tracker.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -64,16 +79,20 @@ def get_active_habits_for_user(user_id, target_date):
         ORDER BY h.id DESC
     """, (day_string, user_id))
 
-    habits = [
-        habit for habit in cursor.fetchall()
-        if is_habit_scheduled_for_date(habit[10], target_date)
-    ]
+    habits = cursor.fetchall()
     conn.close()
     return habits
 
 
+def get_active_habits_for_user(user_id, target_date):
+    return [
+        habit for habit in get_habits_for_user_with_today_status(user_id, target_date)
+        if is_habit_scheduled_for_date(habit[10], target_date)
+    ]
+
+
 def init_db():
-    conn = sqlite3.connect("habit_tracker.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -156,7 +175,7 @@ def register():
         email = request.form["email"]
         password = request.form["password"]
 
-        conn = sqlite3.connect("habit_tracker.db")
+        conn = get_db_connection()
         cursor = conn.cursor()
 
         try:
@@ -182,7 +201,7 @@ def login():
         email = request.form["email"]
         password = request.form["password"]
 
-        conn = sqlite3.connect("habit_tracker.db")
+        conn = get_db_connection()
         cursor = conn.cursor()
 
         cursor.execute(
@@ -228,7 +247,7 @@ def dashboard():
     reminders = [h for h in habits if h[7] == "Not Completed"]
     preview_habits = habits[:3]
 
-    conn = sqlite3.connect("habit_tracker.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
@@ -279,6 +298,7 @@ def dashboard():
         reminders=reminders,
         preview_habits=preview_habits,
         quote=random.choice(quotes),
+        format_schedule_label=format_schedule_label,
         health_profile=health_profile,
         bmi=bmi,
         today_steps=today_steps,
@@ -292,52 +312,74 @@ def active_habits():
         return redirect(url_for("login"))
 
     today_date = date.today()
-    all_habits = get_active_habits_for_user(session["user_id"], today_date)
+    all_habits = get_habits_for_user_with_today_status(session["user_id"], today_date)
     status_filter = request.args.get("status", "all").lower()
     search_query = request.args.get("q", "").strip()
     sort_by = request.args.get("sort", "priority")
 
-    if status_filter == "completed":
-        habits = [habit for habit in all_habits if habit[7] == "Completed"]
-    elif status_filter == "incomplete":
-        habits = [habit for habit in all_habits if habit[7] != "Completed"]
-    else:
-        status_filter = "all"
-        habits = all_habits
-
     if search_query:
         lowered_query = search_query.lower()
-        habits = [
-            habit for habit in habits
+        all_habits = [
+            habit for habit in all_habits
             if lowered_query in habit[1].lower()
         ]
 
     priority_rank = {"High": 0, "Medium": 1, "Low": 2}
 
     if sort_by == "name":
-        habits = sorted(habits, key=lambda habit: habit[1].lower())
+        all_habits = sorted(all_habits, key=lambda habit: habit[1].lower())
     elif sort_by == "streak":
-        habits = sorted(habits, key=lambda habit: (-habit[6], habit[1].lower()))
+        all_habits = sorted(all_habits, key=lambda habit: (-habit[6], habit[1].lower()))
     else:
         sort_by = "priority"
-        habits = sorted(
-            habits,
+        all_habits = sorted(
+            all_habits,
             key=lambda habit: (
                 priority_rank.get(habit[3], 99),
                 habit[1].lower()
             )
         )
 
+    active_habits = [
+        habit for habit in all_habits
+        if is_habit_scheduled_for_date(habit[10], today_date)
+    ]
+    inactive_habits = [
+        habit for habit in all_habits
+        if not is_habit_scheduled_for_date(habit[10], today_date)
+    ]
+
+    if status_filter == "completed":
+        active_habits = [habit for habit in active_habits if habit[7] == "Completed"]
+    elif status_filter == "incomplete":
+        active_habits = [habit for habit in active_habits if habit[7] != "Completed"]
+    else:
+        status_filter = "all"
+
     return render_template(
         "active_habits.html",
-        habits=habits,
+        active_habits=active_habits,
+        inactive_habits=inactive_habits,
         today_label=today_date.strftime("%A, %d %B %Y"),
         status_filter=status_filter,
         search_query=search_query,
         sort_by=sort_by,
-        total_active=len(all_habits),
-        completed_active=len([habit for habit in all_habits if habit[7] == "Completed"]),
-        incomplete_active=len([habit for habit in all_habits if habit[7] != "Completed"])
+        format_schedule_label=format_schedule_label,
+        total_active=len([
+            habit for habit in all_habits
+            if is_habit_scheduled_for_date(habit[10], today_date)
+        ]),
+        completed_active=len([
+            habit for habit in all_habits
+            if is_habit_scheduled_for_date(habit[10], today_date)
+            and habit[7] == "Completed"
+        ]),
+        incomplete_active=len([
+            habit for habit in all_habits
+            if is_habit_scheduled_for_date(habit[10], today_date)
+            and habit[7] != "Completed"
+        ]),
+        total_inactive=len(inactive_habits)
     )
 
 
@@ -351,7 +393,7 @@ def update_health():
     age = request.form["age"]
     goal = request.form["goal"]
 
-    conn = sqlite3.connect("habit_tracker.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
@@ -386,7 +428,7 @@ def update_steps():
     steps = request.form["steps"]
     today = date.today().isoformat()
 
-    conn = sqlite3.connect("habit_tracker.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
@@ -428,7 +470,7 @@ def new_habit():
         notes = request.form["notes"]
         created_date = date.today().isoformat()
 
-        conn = sqlite3.connect("habit_tracker.db")
+        conn = get_db_connection()
         cursor = conn.cursor()
 
         cursor.execute("""
@@ -462,7 +504,7 @@ def complete_habit(habit_id):
 
     today = date.today().isoformat()
 
-    conn = sqlite3.connect("habit_tracker.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -498,7 +540,7 @@ def reset_habit(habit_id):
 
     today = date.today().isoformat()
 
-    conn = sqlite3.connect("habit_tracker.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -517,7 +559,7 @@ def edit_habit(habit_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    conn = sqlite3.connect("habit_tracker.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     if request.method == "POST":
@@ -577,7 +619,7 @@ def delete_habit(habit_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    conn = sqlite3.connect("habit_tracker.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
@@ -608,7 +650,7 @@ def calendar():
     month_name = today.strftime("%B %Y")
     month_days = cal.monthcalendar(year, month)
 
-    conn = sqlite3.connect("habit_tracker.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -705,7 +747,7 @@ def friends():
 
     today = date.today().isoformat()
 
-    conn = sqlite3.connect("habit_tracker.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     if request.method == "POST":
@@ -796,7 +838,7 @@ def search_users():
     if query.strip() == "":
         return jsonify({"users": []})
 
-    conn = sqlite3.connect("habit_tracker.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -831,7 +873,7 @@ def stats():
     week_dates = [today - timedelta(days=offset) for offset in range(6, -1, -1)]
     week_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-    conn = sqlite3.connect("habit_tracker.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
@@ -942,7 +984,7 @@ def profile():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    conn = sqlite3.connect("habit_tracker.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute(
@@ -998,7 +1040,7 @@ def habit_detail(habit_id):
 
     today = date.today()
 
-    conn = sqlite3.connect("habit_tracker.db")
+    conn = get_db_connection()
     cursor = conn.cursor()
 
     # Get habit info
