@@ -234,15 +234,32 @@
         <section class="dash-card mt-4">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
-                    <h3>Your Habits Today</h3>
-                    <p class="text-muted mb-0">Click a habit name to view details, history, and trend.</p>
+                    <h3>Active Habits Preview</h3>
+                    <p class="text-muted mb-0">A quick look at today’s active habits. Open the full page to manage everything.</p>
                 </div>
 
-                <a href="/new_habit" class="btn btn-primary">
-                    + Add Goal
-                </a>
+                <div class="d-flex gap-2">
+                    <a href="/active_habits" class="btn btn-outline-primary">
+                        View All Habits
+                    </a>
+
+                    <a href="/new_habit" class="btn btn-primary">
+                        + Add Goal
+                    </a>
+                </div>
             </div>
+
+            {% set habits = preview_habits %}
+            {% set empty_message = "No active habits for today." %}
             {% include "_habit_list.html" %}
+
+            {% if total > preview_habits|length %}
+                <div class="text-end mt-3">
+                    <a href="/active_habits" class="btn btn-link">
+                        View {{ total - preview_habits|length }} more active habit{% if total - preview_habits|length != 1 %}s{% endif %}
+                    </a>
+                </div>
+            {% endif %}
         </section>
 
     </main>

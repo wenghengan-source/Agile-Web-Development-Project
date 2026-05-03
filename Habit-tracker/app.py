@@ -226,6 +226,7 @@ def dashboard():
     completed = len([h for h in habits if h[7] == "Completed"])
     percentage = int((completed / total) * 100) if total > 0 else 0
     reminders = [h for h in habits if h[7] == "Not Completed"]
+    preview_habits = habits[:3]
 
     conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
@@ -276,6 +277,7 @@ def dashboard():
         completed=completed,
         percentage=percentage,
         reminders=reminders,
+        preview_habits=preview_habits,
         quote=random.choice(quotes),
         health_profile=health_profile,
         bmi=bmi,
