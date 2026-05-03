@@ -294,6 +294,8 @@ def active_habits():
     today_date = date.today()
     all_habits = get_active_habits_for_user(session["user_id"], today_date)
     status_filter = request.args.get("status", "all").lower()
+    search_query = request.args.get("q", "").strip()
+    sort_by = request.args.get("sort", "priority")
 
     if status_filter == "completed":
         habits = [habit for habit in all_habits if habit[7] == "Completed"]
@@ -303,11 +305,36 @@ def active_habits():
         status_filter = "all"
         habits = all_habits
 
+    if search_query:
+        lowered_query = search_query.lower()
+        habits = [
+            habit for habit in habits
+            if lowered_query in habit[1].lower()
+        ]
+
+    priority_rank = {"High": 0, "Medium": 1, "Low": 2}
+
+    if sort_by == "name":
+        habits = sorted(habits, key=lambda habit: habit[1].lower())
+    elif sort_by == "streak":
+        habits = sorted(habits, key=lambda habit: (-habit[6], habit[1].lower()))
+    else:
+        sort_by = "priority"
+        habits = sorted(
+            habits,
+            key=lambda habit: (
+                priority_rank.get(habit[3], 99),
+                habit[1].lower()
+            )
+        )
+
     return render_template(
         "active_habits.html",
         habits=habits,
         today_label=today_date.strftime("%A, %d %B %Y"),
         status_filter=status_filter,
+        search_query=search_query,
+        sort_by=sort_by,
         total_active=len(all_habits),
         completed_active=len([habit for habit in all_habits if habit[7] == "Completed"]),
         incomplete_active=len([habit for habit in all_habits if habit[7] != "Completed"])
