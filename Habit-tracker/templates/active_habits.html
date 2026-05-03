@@ -42,13 +42,39 @@
             </div>
         </div>
 
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+            <div class="d-flex flex-wrap gap-2">
+                <a href="/active_habits?status=all" class="btn {% if status_filter == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    All ({{ total_active }})
+                </a>
+                <a href="/active_habits?status=completed" class="btn {% if status_filter == 'completed' %}btn-success{% else %}btn-outline-success{% endif %}">
+                    Completed ({{ completed_active }})
+                </a>
+                <a href="/active_habits?status=incomplete" class="btn {% if status_filter == 'incomplete' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                    Incomplete ({{ incomplete_active }})
+                </a>
+            </div>
+
+            <p class="text-muted mb-0">
+                Showing {{ habits|length }} habit{% if habits|length != 1 %}s{% endif %}
+            </p>
+        </div>
+
         {% if habits %}
             {% include "_habit_list.html" %}
         {% else %}
             <div class="text-center py-5">
-                <h4>No active habits for today</h4>
-                <p class="text-muted">Add a new habit or wait for one of your scheduled habits to become active.</p>
-                <a href="/new_habit" class="btn btn-primary">Create a Habit</a>
+                {% if status_filter == "completed" %}
+                    <h4>No completed active habits yet</h4>
+                    <p class="text-muted">Complete one of today’s habits to see it here.</p>
+                {% elif status_filter == "incomplete" %}
+                    <h4>No incomplete active habits right now</h4>
+                    <p class="text-muted">Nice work. Everything active for today has been completed.</p>
+                {% else %}
+                    <h4>No active habits for today</h4>
+                    <p class="text-muted">Add a new habit or wait for one of your scheduled habits to become active.</p>
+                    <a href="/new_habit" class="btn btn-primary">Create a Habit</a>
+                {% endif %}
             </div>
         {% endif %}
     </div>

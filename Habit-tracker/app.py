@@ -292,12 +292,25 @@ def active_habits():
         return redirect(url_for("login"))
 
     today_date = date.today()
-    habits = get_active_habits_for_user(session["user_id"], today_date)
+    all_habits = get_active_habits_for_user(session["user_id"], today_date)
+    status_filter = request.args.get("status", "all").lower()
+
+    if status_filter == "completed":
+        habits = [habit for habit in all_habits if habit[7] == "Completed"]
+    elif status_filter == "incomplete":
+        habits = [habit for habit in all_habits if habit[7] != "Completed"]
+    else:
+        status_filter = "all"
+        habits = all_habits
 
     return render_template(
         "active_habits.html",
         habits=habits,
-        today_label=today_date.strftime("%A, %d %B %Y")
+        today_label=today_date.strftime("%A, %d %B %Y"),
+        status_filter=status_filter,
+        total_active=len(all_habits),
+        completed_active=len([habit for habit in all_habits if habit[7] == "Completed"]),
+        incomplete_active=len([habit for habit in all_habits if habit[7] != "Completed"])
     )
 
 
