@@ -68,13 +68,16 @@
                         Edit
                     </a>
 
-                    <a
-                        href="/delete_habit/{{ habit[0] }}"
-                        class="btn btn-danger btn-sm"
-                        onclick='return confirm({{ ("Delete the habit " ~ habit[1] ~ "? This cannot be undone.") | tojson }});'
+                    <form
+                        method="POST"
+                        action="/delete_habit/{{ habit[0] }}"
+                        class="habit-action-form"
+                        onsubmit='return confirm({{ ("Delete the habit " ~ habit[1] ~ "? This cannot be undone.") | tojson }});'
                     >
-                        Delete
-                    </a>
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            Delete
+                        </button>
+                    </form>
                 </div>
             </div>
         {% endfor %}

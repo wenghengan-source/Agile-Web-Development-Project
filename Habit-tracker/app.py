@@ -606,7 +606,7 @@ def edit_habit(habit_id):
     )
 
 
-@app.route("/delete_habit/<int:habit_id>")
+@app.route("/delete_habit/<int:habit_id>", methods=["POST"])
 def delete_habit(habit_id):
     if "user_id" not in session:
         return redirect(url_for("login"))

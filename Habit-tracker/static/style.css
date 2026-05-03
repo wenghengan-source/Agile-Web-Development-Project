@@ -477,6 +477,10 @@ h1, h2, h3, h4, h5 {
     gap: 8px;
 }
 
+.habit-action-form {
+    margin: 0;
+}
+
 .habit-schedule-row {
     display: flex;
     flex-wrap: wrap;
