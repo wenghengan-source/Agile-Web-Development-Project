@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-import os
 import sqlite3
 import random
 from datetime import date
@@ -10,13 +9,6 @@ app = Flask(__name__)
 app.secret_key = "habit_tracker_secret_key"
 
 WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-DB_PATH = os.environ.get("HABIT_TRACKER_DB", "habit_tracker.db")
-
-
-def get_db_connection():
-    return sqlite3.connect(DB_PATH)
-
-
 def ensure_column_exists(cursor, table_name, column_name, column_definition):
     cursor.execute(f"PRAGMA table_info({table_name})")
     existing_columns = [column[1] for column in cursor.fetchall()]
@@ -60,7 +52,7 @@ def format_schedule_label(schedule_value):
 
 def get_habits_for_user_with_today_status(user_id, target_date):
     day_string = target_date.isoformat()
-    conn = get_db_connection()
+    conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -92,7 +84,7 @@ def get_active_habits_for_user(user_id, target_date):
 
 
 def init_db():
-    conn = get_db_connection()
+    conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -175,7 +167,7 @@ def register():
         email = request.form["email"]
         password = request.form["password"]
 
-        conn = get_db_connection()
+        conn = sqlite3.connect("habit_tracker.db")
         cursor = conn.cursor()
 
         try:
@@ -201,7 +193,7 @@ def login():
         email = request.form["email"]
         password = request.form["password"]
 
-        conn = get_db_connection()
+        conn = sqlite3.connect("habit_tracker.db")
         cursor = conn.cursor()
 
         cursor.execute(
@@ -247,7 +239,7 @@ def dashboard():
     reminders = [h for h in habits if h[7] == "Not Completed"]
     preview_habits = habits[:3]
 
-    conn = get_db_connection()
+    conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
     cursor.execute(
@@ -393,7 +385,7 @@ def update_health():
     age = request.form["age"]
     goal = request.form["goal"]
 
-    conn = get_db_connection()
+    conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
     cursor.execute(
@@ -428,7 +420,7 @@ def update_steps():
     steps = request.form["steps"]
     today = date.today().isoformat()
 
-    conn = get_db_connection()
+    conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
     cursor.execute(
@@ -470,7 +462,7 @@ def new_habit():
         notes = request.form["notes"]
         created_date = date.today().isoformat()
 
-        conn = get_db_connection()
+        conn = sqlite3.connect("habit_tracker.db")
         cursor = conn.cursor()
 
         cursor.execute("""
@@ -504,7 +496,7 @@ def complete_habit(habit_id):
 
     today = date.today().isoformat()
 
-    conn = get_db_connection()
+    conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -540,7 +532,7 @@ def reset_habit(habit_id):
 
     today = date.today().isoformat()
 
-    conn = get_db_connection()
+    conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -559,7 +551,7 @@ def edit_habit(habit_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    conn = get_db_connection()
+    conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
     if request.method == "POST":
@@ -619,7 +611,7 @@ def delete_habit(habit_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    conn = get_db_connection()
+    conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
     cursor.execute(
@@ -650,7 +642,7 @@ def calendar():
     month_name = today.strftime("%B %Y")
     month_days = cal.monthcalendar(year, month)
 
-    conn = get_db_connection()
+    conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -747,7 +739,7 @@ def friends():
 
     today = date.today().isoformat()
 
-    conn = get_db_connection()
+    conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
     if request.method == "POST":
@@ -838,7 +830,7 @@ def search_users():
     if query.strip() == "":
         return jsonify({"users": []})
 
-    conn = get_db_connection()
+    conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
     cursor.execute("""
@@ -873,7 +865,7 @@ def stats():
     week_dates = [today - timedelta(days=offset) for offset in range(6, -1, -1)]
     week_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
-    conn = get_db_connection()
+    conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
     cursor.execute(
@@ -984,7 +976,7 @@ def profile():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    conn = get_db_connection()
+    conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
     cursor.execute(
@@ -1040,7 +1032,7 @@ def habit_detail(habit_id):
 
     today = date.today()
 
-    conn = get_db_connection()
+    conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
     # Get habit info
