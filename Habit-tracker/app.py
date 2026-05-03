@@ -8,6 +8,40 @@ import calendar as cal
 app = Flask(__name__)
 app.secret_key = "habit_tracker_secret_key"
 
+WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+
+def ensure_column_exists(cursor, table_name, column_name, column_definition):
+    cursor.execute(f"PRAGMA table_info({table_name})")
+    existing_columns = [column[1] for column in cursor.fetchall()]
+
+    if column_name not in existing_columns:
+        cursor.execute(
+            f"ALTER TABLE {table_name} "
+            f"ADD COLUMN {column_name} {column_definition}"
+        )
+
+
+def parse_schedule(schedule_value):
+    if not schedule_value:
+        return []
+
+    return [
+        day.strip()
+        for day in schedule_value.split(",")
+        if day.strip()
+    ]
+
+
+def is_habit_scheduled_for_date(schedule_value, target_date):
+    scheduled_days = parse_schedule(schedule_value)
+
+    # Empty schedules represent legacy habits and should behave as daily.
+    if not scheduled_days:
+        return True
+
+    return target_date.strftime("%a") in scheduled_days
+
 
 def init_db():
     conn = sqlite3.connect("habit_tracker.db")
@@ -28,6 +62,7 @@ def init_db():
             user_id INTEGER NOT NULL,
             habit_name TEXT NOT NULL,
             category TEXT,
+            schedule TEXT,
             priority TEXT,
             target_value TEXT,
             target_unit TEXT,
@@ -36,6 +71,8 @@ def init_db():
             streak INTEGER DEFAULT 0
         )
     """)
+
+    ensure_column_exists(cursor, "habits", "schedule", "TEXT")
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS habit_completions (
@@ -143,7 +180,8 @@ def dashboard():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    today = date.today().isoformat()
+    today_date = date.today()
+    today = today_date.isoformat()
 
     quotes = [
         "Small progress is still progress.",
@@ -163,7 +201,7 @@ def dashboard():
                    WHEN c.id IS NOT NULL THEN 'Completed'
                    ELSE 'Not Completed'
                END,
-               h.target_value, h.target_unit
+               h.target_value, h.target_unit, h.schedule
         FROM habits h
         LEFT JOIN habit_completions c
         ON h.id = c.habit_id
@@ -172,7 +210,10 @@ def dashboard():
         ORDER BY h.id DESC
     """, (today, session["user_id"]))
 
-    habits = cursor.fetchall()
+    habits = [
+        habit for habit in cursor.fetchall()
+        if is_habit_scheduled_for_date(habit[10], today_date)
+    ]
 
     total = len(habits)
     completed = len([h for h in habits if h[7] == "Completed"])
@@ -314,6 +355,7 @@ def new_habit():
         habit_name = request.form["habit_name"]
         category = request.form["category"]
         priority = request.form["priority"]
+        schedule = ",".join(request.form.getlist("schedule"))
         target_value = request.form["target_value"]
         target_unit = request.form["target_unit"]
         notes = request.form["notes"]
@@ -324,12 +366,13 @@ def new_habit():
 
         cursor.execute("""
             INSERT INTO habits
-            (user_id, habit_name, category, priority, target_value, target_unit, notes, created_date)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            (user_id, habit_name, category, schedule, priority, target_value, target_unit, notes, created_date)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             session["user_id"],
             habit_name,
             category,
+            schedule,
             priority,
             target_value,
             target_unit,
@@ -413,6 +456,7 @@ def edit_habit(habit_id):
     if request.method == "POST":
         habit_name = request.form["habit_name"]
         category = request.form["category"]
+        schedule = ",".join(request.form.getlist("schedule"))
         priority = request.form["priority"]
         target_value = request.form["target_value"]
         target_unit = request.form["target_unit"]
@@ -420,11 +464,12 @@ def edit_habit(habit_id):
 
         cursor.execute("""
             UPDATE habits
-            SET habit_name = ?, category = ?, priority = ?, target_value = ?, target_unit = ?, notes = ?
+            SET habit_name = ?, category = ?, schedule = ?, priority = ?, target_value = ?, target_unit = ?, notes = ?
             WHERE id = ? AND user_id = ?
         """, (
             habit_name,
             category,
+            schedule,
             priority,
             target_value,
             target_unit,
@@ -439,7 +484,7 @@ def edit_habit(habit_id):
         return redirect(url_for("dashboard"))
 
     cursor.execute("""
-        SELECT id, habit_name, category, priority, target_value, target_unit, notes, created_date
+        SELECT id, habit_name, category, schedule, priority, target_value, target_unit, notes, created_date
         FROM habits
         WHERE id = ? AND user_id = ?
     """, (habit_id, session["user_id"]))
@@ -451,7 +496,13 @@ def edit_habit(habit_id):
         flash("Habit not found.")
         return redirect(url_for("dashboard"))
 
-    return render_template("edit_habit.html", habit=habit)
+    selected_schedule = parse_schedule(habit[3])
+
+    return render_template(
+        "edit_habit.html",
+        habit=habit,
+        selected_schedule=selected_schedule
+    )
 
 
 @app.route("/delete_habit/<int:habit_id>")
@@ -494,7 +545,7 @@ def calendar():
     cursor = conn.cursor()
 
     cursor.execute("""
-        SELECT id, habit_name, category, priority, created_date
+        SELECT id, habit_name, category, priority, created_date, schedule
         FROM habits
         WHERE user_id = ?
     """, (session["user_id"],))
@@ -522,11 +573,19 @@ def calendar():
     for habit in habits:
         habit_id = habit[0]
         habit_name = habit[1]
+        created_date = habit[4]
+        schedule = habit[5]
 
         data = []
 
         for day_string in last_7_days:
-            if (habit_id, day_string) in completed_set:
+            day_date = date.fromisoformat(day_string)
+
+            if day_string < created_date:
+                data.append(None)
+            elif not is_habit_scheduled_for_date(schedule, day_date):
+                data.append(None)
+            elif (habit_id, day_string) in completed_set:
                 data.append(1)
             else:
                 data.append(0)
@@ -536,6 +595,26 @@ def calendar():
             "data": data
         })
 
+    calendar_habits_by_date = {}
+
+    for week in month_days:
+        for day in week:
+            if day == 0:
+                continue
+
+            current_date = date(year, month, day)
+            full_date = current_date.isoformat()
+            visible_habits = []
+
+            for habit in habits:
+                if (
+                    full_date >= habit[4]
+                    and is_habit_scheduled_for_date(habit[5], current_date)
+                ):
+                    visible_habits.append(habit)
+
+            calendar_habits_by_date[full_date] = visible_habits
+
     conn.close()
 
     return render_template(
@@ -544,6 +623,7 @@ def calendar():
         month_days=month_days,
         habits=habits,
         completed_set=completed_set,
+        calendar_habits_by_date=calendar_habits_by_date,
         year=year,
         month=month,
         chart_labels=chart_labels,
@@ -699,31 +779,40 @@ def stats():
     )
     total_habits = cursor.fetchone()[0]
 
+    cursor.execute(
+        "SELECT id, created_date, schedule FROM habits WHERE user_id = ?",
+        (session["user_id"],)
+    )
+    user_habits = cursor.fetchall()
+
+    cursor.execute(
+        """
+        SELECT habit_id, completion_date
+        FROM habit_completions
+        WHERE user_id = ?
+        """,
+        (session["user_id"],)
+    )
+    completion_records = set(cursor.fetchall())
+
     weekly_progress = []
     active_days = 0
 
     for week_day in week_dates:
         day_string = week_day.isoformat()
 
-        cursor.execute(
-            """
-            SELECT COUNT(*)
-            FROM habit_completions
-            WHERE user_id = ? AND completion_date = ?
-            """,
-            (session["user_id"], day_string)
+        scheduled_habit_ids = [
+            habit_id
+            for habit_id, created_date, schedule in user_habits
+            if created_date <= day_string
+            and is_habit_scheduled_for_date(schedule, week_day)
+        ]
+        goal = len(scheduled_habit_ids)
+        completed = sum(
+            1
+            for habit_id in scheduled_habit_ids
+            if (habit_id, day_string) in completion_records
         )
-        completed = cursor.fetchone()[0]
-
-        cursor.execute(
-            """
-            SELECT COUNT(*)
-            FROM habits
-            WHERE user_id = ? AND created_date <= ?
-            """,
-            (session["user_id"], day_string)
-        )
-        goal = cursor.fetchone()[0]
 
         if goal > 0:
             active_days += 1
@@ -848,7 +937,7 @@ def habit_detail(habit_id):
     # Get habit info
     cursor.execute("""
         SELECT id, habit_name, category, priority,
-               target_value, target_unit, notes, created_date
+               target_value, target_unit, notes, created_date, schedule
         FROM habits
         WHERE id = ? AND user_id = ?
     """, (habit_id, session["user_id"]))
@@ -879,7 +968,11 @@ def habit_detail(habit_id):
 
         chart_labels.append(d.strftime("%a"))
 
-        if d_str in completion_set:
+        if d_str < habit[7]:
+            chart_values.append(None)
+        elif not is_habit_scheduled_for_date(habit[8], d):
+            chart_values.append(None)
+        elif d_str in completion_set:
             chart_values.append(1)
         else:
             chart_values.append(0)
@@ -901,6 +994,8 @@ def habit_detail(habit_id):
         chart_values=chart_values,
         month_days=month_days,
         month_name=month_name,
+        date=date,
+        is_habit_scheduled_for_date=is_habit_scheduled_for_date,
         year=year,
         month=month
     )

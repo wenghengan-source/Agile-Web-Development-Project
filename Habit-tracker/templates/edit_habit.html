@@ -68,10 +68,52 @@
                 <div class="col-md-6 mb-4">
                     <label class="form-label">Priority</label>
                     <select name="priority" class="form-control edit-input">
-                        <option value="High" {% if habit[3] == "High" %}selected{% endif %}>High</option>
-                        <option value="Medium" {% if habit[3] == "Medium" %}selected{% endif %}>Medium</option>
-                        <option value="Low" {% if habit[3] == "Low" %}selected{% endif %}>Low</option>
+                        <option value="High" {% if habit[4] == "High" %}selected{% endif %}>High</option>
+                        <option value="Medium" {% if habit[4] == "Medium" %}selected{% endif %}>Medium</option>
+                        <option value="Low" {% if habit[4] == "Low" %}selected{% endif %}>Low</option>
                     </select>
+                </div>
+            </div>
+
+            <div class="edit-goal-box mb-4">
+                <h4>Habit Schedule</h4>
+                <p>Choose the days this habit should appear. Leave all unchecked for an everyday habit.</p>
+
+                <div class="weekday-selector">
+                    <label class="weekday-option">
+                        <input type="checkbox" name="schedule" value="Mon" {% if "Mon" in selected_schedule %}checked{% endif %}>
+                        <span>Mon</span>
+                    </label>
+
+                    <label class="weekday-option">
+                        <input type="checkbox" name="schedule" value="Tue" {% if "Tue" in selected_schedule %}checked{% endif %}>
+                        <span>Tue</span>
+                    </label>
+
+                    <label class="weekday-option">
+                        <input type="checkbox" name="schedule" value="Wed" {% if "Wed" in selected_schedule %}checked{% endif %}>
+                        <span>Wed</span>
+                    </label>
+
+                    <label class="weekday-option">
+                        <input type="checkbox" name="schedule" value="Thu" {% if "Thu" in selected_schedule %}checked{% endif %}>
+                        <span>Thu</span>
+                    </label>
+
+                    <label class="weekday-option">
+                        <input type="checkbox" name="schedule" value="Fri" {% if "Fri" in selected_schedule %}checked{% endif %}>
+                        <span>Fri</span>
+                    </label>
+
+                    <label class="weekday-option">
+                        <input type="checkbox" name="schedule" value="Sat" {% if "Sat" in selected_schedule %}checked{% endif %}>
+                        <span>Sat</span>
+                    </label>
+
+                    <label class="weekday-option">
+                        <input type="checkbox" name="schedule" value="Sun" {% if "Sun" in selected_schedule %}checked{% endif %}>
+                        <span>Sun</span>
+                    </label>
                 </div>
             </div>
 
@@ -87,7 +129,7 @@
                             step="0.1"
                             name="target_value"
                             class="form-control edit-input"
-                            value="{{ habit[4] }}"
+                            value="{{ habit[5] }}"
                             required
                         >
                     </div>
@@ -95,14 +137,14 @@
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Target Unit</label>
                         <select name="target_unit" class="form-control edit-input">
-                            <option value="times" {% if habit[5] == "times" %}selected{% endif %}>Times</option>
-                            <option value="minutes" {% if habit[5] == "minutes" %}selected{% endif %}>Minutes</option>
-                            <option value="hours" {% if habit[5] == "hours" %}selected{% endif %}>Hours</option>
-                            <option value="steps" {% if habit[5] == "steps" %}selected{% endif %}>Steps</option>
-                            <option value="km" {% if habit[5] == "km" %}selected{% endif %}>Kilometres</option>
-                            <option value="litres" {% if habit[5] == "litres" %}selected{% endif %}>Litres</option>
-                            <option value="pages" {% if habit[5] == "pages" %}selected{% endif %}>Pages</option>
-                            <option value="tasks" {% if habit[5] == "tasks" %}selected{% endif %}>Tasks</option>
+                            <option value="times" {% if habit[6] == "times" %}selected{% endif %}>Times</option>
+                            <option value="minutes" {% if habit[6] == "minutes" %}selected{% endif %}>Minutes</option>
+                            <option value="hours" {% if habit[6] == "hours" %}selected{% endif %}>Hours</option>
+                            <option value="steps" {% if habit[6] == "steps" %}selected{% endif %}>Steps</option>
+                            <option value="km" {% if habit[6] == "km" %}selected{% endif %}>Kilometres</option>
+                            <option value="litres" {% if habit[6] == "litres" %}selected{% endif %}>Litres</option>
+                            <option value="pages" {% if habit[6] == "pages" %}selected{% endif %}>Pages</option>
+                            <option value="tasks" {% if habit[6] == "tasks" %}selected{% endif %}>Tasks</option>
                         </select>
                     </div>
                 </div>
@@ -114,11 +156,11 @@
                     name="notes"
                     class="form-control edit-input"
                     rows="4"
-                >{{ habit[6] }}</textarea>
+                >{{ habit[7] }}</textarea>
             </div>
 
             <div class="edit-created-box mb-4">
-                <strong>Created Date:</strong> {{ habit[7] }}
+                <strong>Created Date:</strong> {{ habit[8] }}
             </div>
 
             <div class="d-flex gap-2">

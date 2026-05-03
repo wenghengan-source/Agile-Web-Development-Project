@@ -1422,6 +1422,29 @@ h1, h2, h3, h4, h5 {
     border-radius: 12px;
 }
 
+.weekday-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.weekday-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border: 1px solid #dbe3f0;
+    border-radius: 999px;
+    padding: 10px 14px;
+    font-weight: 600;
+    color: #1f2937;
+    cursor: pointer;
+}
+
+.weekday-option input {
+    margin: 0;
+}
+
 @media (max-width: 900px) {
     .stats-metric-grid {
         grid-template-columns: 1fr;

@@ -75,20 +75,18 @@
 
                                     {% set full_date = "%04d-%02d-%02d"|format(year, month, day) %}
 
-                                    {% for habit in habits %}
-                                        {% if full_date >= habit[4] %}
-                                            <div class="calendar-habit-card">
-                                                <div class="calendar-habit-name">
-                                                    {{ habit[1] }}
-                                                </div>
-
-                                                {% if (habit[0], full_date) in completed_set %}
-                                                    <span class="calendar-status done">Completed</span>
-                                                {% else %}
-                                                    <span class="calendar-status pending">Pending</span>
-                                                {% endif %}
+                                    {% for habit in calendar_habits_by_date.get(full_date, []) %}
+                                        <div class="calendar-habit-card">
+                                            <div class="calendar-habit-name">
+                                                {{ habit[1] }}
                                             </div>
-                                        {% endif %}
+
+                                            {% if (habit[0], full_date) in completed_set %}
+                                                <span class="calendar-status done">Completed</span>
+                                            {% else %}
+                                                <span class="calendar-status pending">Pending</span>
+                                            {% endif %}
+                                        </div>
                                     {% endfor %}
                                 {% endif %}
                             </td>
