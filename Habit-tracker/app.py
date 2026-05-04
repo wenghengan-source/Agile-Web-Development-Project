@@ -126,6 +126,38 @@ def recalculate_habit_streak(cursor, habit_id, user_id, reference_date=None):
     return streak
 
 
+def attach_calculated_streaks(cursor, habits, user_id, reference_date=None):
+    if not habits:
+        return habits
+
+    cursor.execute(
+        """
+        SELECT habit_id, completion_date
+        FROM habit_completions
+        WHERE user_id = ?
+        """,
+        (user_id,)
+    )
+
+    completion_map = {}
+    for habit_id, completion_date in cursor.fetchall():
+        completion_map.setdefault(habit_id, set()).add(completion_date)
+
+    habits_with_streaks = []
+    for habit in habits:
+        calculated_streak = calculate_habit_streak(
+            habit[10],
+            habit[5],
+            completion_map.get(habit[0], set()),
+            reference_date
+        )
+        habit_values = list(habit)
+        habit_values[6] = calculated_streak
+        habits_with_streaks.append(tuple(habit_values))
+
+    return habits_with_streaks
+
+
 def get_habits_for_user_with_today_status(user_id, target_date):
     day_string = target_date.isoformat()
     conn = sqlite3.connect("habit_tracker.db")
@@ -148,6 +180,7 @@ def get_habits_for_user_with_today_status(user_id, target_date):
     """, (day_string, user_id))
 
     habits = cursor.fetchall()
+    habits = attach_calculated_streaks(cursor, habits, user_id, target_date)
     conn.close()
     return habits
 
