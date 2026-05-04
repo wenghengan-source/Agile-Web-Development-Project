@@ -119,6 +119,38 @@ def recalculate_habit_streak(cursor, habit_id, user_id, reference_date=None):
     return streak
 
 
+def attach_calculated_streaks(cursor, habits, user_id, reference_date=None):
+    if not habits:
+        return habits
+
+    cursor.execute(
+        """
+        SELECT habit_id, completion_date
+        FROM habit_completions
+        WHERE user_id = ?
+        """,
+        (user_id,)
+    )
+
+    completion_map = {}
+    for habit_id, completion_date in cursor.fetchall():
+        completion_map.setdefault(habit_id, set()).add(completion_date)
+
+    habits_with_streaks = []
+    for habit in habits:
+        calculated_streak = calculate_habit_streak(
+            habit[10],
+            habit[5],
+            completion_map.get(habit[0], set()),
+            reference_date
+        )
+        habit_values = list(habit)
+        habit_values[6] = calculated_streak
+        habits_with_streaks.append(tuple(habit_values))
+
+    return habits_with_streaks
+
+
 def init_db():
     conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
@@ -290,6 +322,12 @@ def dashboard():
         habit for habit in cursor.fetchall()
         if is_habit_scheduled_for_date(habit[10], today_date)
     ]
+    habits = attach_calculated_streaks(
+        cursor,
+        habits,
+        session["user_id"],
+        today_date
+    )
 
     total = len(habits)
     completed = len([h for h in habits if h[7] == "Completed"])
@@ -511,6 +549,8 @@ def reset_habit(habit_id):
         WHERE habit_id = ? AND user_id = ? AND completion_date = ?
     """, (habit_id, session["user_id"], today))
 
+    recalculate_habit_streak(cursor, habit_id, session["user_id"])
+
     conn.commit()
     conn.close()
 
@@ -549,6 +589,8 @@ def edit_habit(habit_id):
             habit_id,
             session["user_id"]
         ))
+
+        recalculate_habit_streak(cursor, habit_id, session["user_id"])
 
         conn.commit()
         conn.close()
