@@ -62,6 +62,13 @@
                     >
                     <button type="submit" class="btn btn-light btn-sm">Go</button>
                 </form>
+
+                <a
+                    class="calendar-today-link {% if is_today_selected %}disabled{% endif %}"
+                    href="{{ url_for('calendar', view=view_mode, date=today_value) }}"
+                >
+                    Jump to today
+                </a>
             </div>
         </div>
 
@@ -80,7 +87,12 @@
     {% if view_mode == "daily" %}
         <div class="calendar-wrapper">
             <div class="calendar-title">
-                <h2>{{ selected_date_label }}</h2>
+                <div class="calendar-heading-group">
+                    <h2>{{ selected_date_label }}</h2>
+                    {% if is_today_selected %}
+                        <span class="calendar-today-chip">Today</span>
+                    {% endif %}
+                </div>
                 <span>Daily Overview</span>
             </div>
 
@@ -135,9 +147,14 @@
                     {% for week in month_days %}
                         <tr>
                             {% for day in week %}
-                                <td class="{% if day == 0 %}empty-day{% endif %}">
+                                <td class="{% if day == 0 %}empty-day{% endif %}{% if day != 0 and '%04d-%02d-%02d'|format(year, month, day) == today_value %} today-cell{% endif %}">
                                     {% if day != 0 %}
-                                        <div class="calendar-day-number">{{ day }}</div>
+                                        <div class="calendar-day-header">
+                                            <div class="calendar-day-number">{{ day }}</div>
+                                            {% if "%04d-%02d-%02d"|format(year, month, day) == today_value %}
+                                                <span class="calendar-today-badge">Today</span>
+                                            {% endif %}
+                                        </div>
 
                                         {% set full_date = "%04d-%02d-%02d"|format(year, month, day) %}
 

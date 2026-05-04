@@ -865,6 +865,8 @@ def calendar():
     return render_template(
         "calendar.html",
         view_mode=view_mode,
+        today_value=today.isoformat(),
+        is_today_selected=(selected_date == today),
         selected_date=selected_date,
         selected_date_label=selected_date.strftime("%A, %d %B %Y"),
         selected_date_value=selected_date.isoformat(),
