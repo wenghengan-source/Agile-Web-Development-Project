@@ -9,8 +9,6 @@ app = Flask(__name__)
 app.secret_key = "habit_tracker_secret_key"
 
 WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-
-
 def ensure_column_exists(cursor, table_name, column_name, column_definition):
     cursor.execute(f"PRAGMA table_info({table_name})")
     existing_columns = [column[1] for column in cursor.fetchall()]
@@ -41,6 +39,48 @@ def is_habit_scheduled_for_date(schedule_value, target_date):
         return True
 
     return target_date.strftime("%a") in scheduled_days
+
+
+def format_schedule_label(schedule_value):
+    scheduled_days = parse_schedule(schedule_value)
+
+    if not scheduled_days:
+        return "Every day"
+
+    return ", ".join(scheduled_days)
+
+
+def get_habits_for_user_with_today_status(user_id, target_date):
+    day_string = target_date.isoformat()
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT h.id, h.habit_name, h.category, h.priority,
+               h.notes, h.created_date, h.streak,
+               CASE
+                   WHEN c.id IS NOT NULL THEN 'Completed'
+                   ELSE 'Not Completed'
+               END,
+               h.target_value, h.target_unit, h.schedule
+        FROM habits h
+        LEFT JOIN habit_completions c
+        ON h.id = c.habit_id
+        AND c.completion_date = ?
+        WHERE h.user_id = ?
+        ORDER BY h.id DESC
+    """, (day_string, user_id))
+
+    habits = cursor.fetchall()
+    conn.close()
+    return habits
+
+
+def get_active_habits_for_user(user_id, target_date):
+    return [
+        habit for habit in get_habits_for_user_with_today_status(user_id, target_date)
+        if is_habit_scheduled_for_date(habit[10], target_date)
+    ]
 
 
 def init_db():
@@ -191,34 +231,16 @@ def dashboard():
         "Consistency beats motivation."
     ]
 
-    conn = sqlite3.connect("habit_tracker.db")
-    cursor = conn.cursor()
-
-    cursor.execute("""
-        SELECT h.id, h.habit_name, h.category, h.priority,
-               h.notes, h.created_date, h.streak,
-               CASE
-                   WHEN c.id IS NOT NULL THEN 'Completed'
-                   ELSE 'Not Completed'
-               END,
-               h.target_value, h.target_unit, h.schedule
-        FROM habits h
-        LEFT JOIN habit_completions c
-        ON h.id = c.habit_id
-        AND c.completion_date = ?
-        WHERE h.user_id = ?
-        ORDER BY h.id DESC
-    """, (today, session["user_id"]))
-
-    habits = [
-        habit for habit in cursor.fetchall()
-        if is_habit_scheduled_for_date(habit[10], today_date)
-    ]
+    habits = get_active_habits_for_user(session["user_id"], today_date)
 
     total = len(habits)
     completed = len([h for h in habits if h[7] == "Completed"])
     percentage = int((completed / total) * 100) if total > 0 else 0
     reminders = [h for h in habits if h[7] == "Not Completed"]
+    preview_habits = habits[:3]
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
 
     cursor.execute(
         "SELECT weight, height, age, goal FROM health_profile WHERE user_id = ?",
@@ -266,11 +288,90 @@ def dashboard():
         completed=completed,
         percentage=percentage,
         reminders=reminders,
+        preview_habits=preview_habits,
         quote=random.choice(quotes),
+        format_schedule_label=format_schedule_label,
         health_profile=health_profile,
         bmi=bmi,
         today_steps=today_steps,
         today_videos=today_videos
+    )
+
+
+@app.route("/active_habits")
+def active_habits():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    today_date = date.today()
+    all_habits = get_habits_for_user_with_today_status(session["user_id"], today_date)
+    status_filter = request.args.get("status", "all").lower()
+    search_query = request.args.get("q", "").strip()
+    sort_by = request.args.get("sort", "priority")
+
+    if search_query:
+        lowered_query = search_query.lower()
+        all_habits = [
+            habit for habit in all_habits
+            if lowered_query in habit[1].lower()
+        ]
+
+    priority_rank = {"High": 0, "Medium": 1, "Low": 2}
+
+    if sort_by == "name":
+        all_habits = sorted(all_habits, key=lambda habit: habit[1].lower())
+    elif sort_by == "streak":
+        all_habits = sorted(all_habits, key=lambda habit: (-habit[6], habit[1].lower()))
+    else:
+        sort_by = "priority"
+        all_habits = sorted(
+            all_habits,
+            key=lambda habit: (
+                priority_rank.get(habit[3], 99),
+                habit[1].lower()
+            )
+        )
+
+    active_habits = [
+        habit for habit in all_habits
+        if is_habit_scheduled_for_date(habit[10], today_date)
+    ]
+    inactive_habits = [
+        habit for habit in all_habits
+        if not is_habit_scheduled_for_date(habit[10], today_date)
+    ]
+
+    if status_filter == "completed":
+        active_habits = [habit for habit in active_habits if habit[7] == "Completed"]
+    elif status_filter == "incomplete":
+        active_habits = [habit for habit in active_habits if habit[7] != "Completed"]
+    else:
+        status_filter = "all"
+
+    return render_template(
+        "active_habits.html",
+        active_habits=active_habits,
+        inactive_habits=inactive_habits,
+        today_label=today_date.strftime("%A, %d %B %Y"),
+        status_filter=status_filter,
+        search_query=search_query,
+        sort_by=sort_by,
+        format_schedule_label=format_schedule_label,
+        total_active=len([
+            habit for habit in all_habits
+            if is_habit_scheduled_for_date(habit[10], today_date)
+        ]),
+        completed_active=len([
+            habit for habit in all_habits
+            if is_habit_scheduled_for_date(habit[10], today_date)
+            and habit[7] == "Completed"
+        ]),
+        incomplete_active=len([
+            habit for habit in all_habits
+            if is_habit_scheduled_for_date(habit[10], today_date)
+            and habit[7] != "Completed"
+        ]),
+        total_inactive=len(inactive_habits)
     )
 
 
@@ -505,7 +606,7 @@ def edit_habit(habit_id):
     )
 
 
-@app.route("/delete_habit/<int:habit_id>")
+@app.route("/delete_habit/<int:habit_id>", methods=["POST"])
 def delete_habit(habit_id):
     if "user_id" not in session:
         return redirect(url_for("login"))

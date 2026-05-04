@@ -1,0 +1,87 @@
+{% if habits %}
+    <div class="habit-list">
+        {% for habit in habits %}
+            <div class="habit-item {% if habit[7] == 'Completed' %}habit-item-completed{% endif %}">
+                <div>
+                    <h5>
+                        <a href="/habit/{{ habit[0] }}" class="habit-link">
+                            {{ habit[1] }}
+                        </a>
+                    </h5>
+
+                    <span class="badge bg-primary">{{ habit[2] }}</span>
+                    <span class="badge bg-secondary">{{ habit[3] }}</span>
+
+                    {% if habit[7] == "Completed" %}
+                        <span class="badge bg-success">Completed</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">Not Completed</span>
+                    {% endif %}
+
+                    {% if habit[8] and habit[9] %}
+                        <p class="mt-2 mb-1">
+                            <strong>Goal:</strong> {{ habit[8] }} {{ habit[9] }}
+                        </p>
+                    {% endif %}
+
+                    <div class="habit-schedule-row">
+                        <span class="habit-schedule-label">Schedule</span>
+                        <span class="habit-schedule-chip">
+                            {{ format_schedule_label(habit[10]) }}
+                        </span>
+                    </div>
+
+                    <p class="text-muted mt-2">
+                        Created: {{ habit[5] }} |
+                        Streak: {{ habit[6] }} days
+                    </p>
+
+                    {% if habit[4] %}
+                        <p><strong>Notes:</strong> {{ habit[4] }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="habit-actions">
+                    <a href="/habit/{{ habit[0] }}" class="btn btn-primary btn-sm">
+                        Details
+                    </a>
+
+                    {% if habit[7] == "Completed" %}
+                        <span class="btn btn-success btn-sm disabled" aria-disabled="true">
+                            Completed
+                        </span>
+
+                        <a href="/reset_habit/{{ habit[0] }}" class="btn btn-outline-warning btn-sm">
+                            Mark Incomplete
+                        </a>
+                    {% else %}
+                        <a href="/complete_habit/{{ habit[0] }}" class="btn btn-success btn-sm">
+                            Complete
+                        </a>
+
+                        <span class="btn btn-outline-secondary btn-sm disabled" aria-disabled="true">
+                            Not Completed
+                        </span>
+                    {% endif %}
+
+                    <a href="/edit_habit/{{ habit[0] }}" class="btn btn-info btn-sm">
+                        Edit
+                    </a>
+
+                    <form
+                        method="POST"
+                        action="/delete_habit/{{ habit[0] }}"
+                        class="habit-action-form"
+                        onsubmit='return confirm({{ ("Delete the habit " ~ habit[1] ~ "? This cannot be undone.") | tojson }});'
+                    >
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <p>{{ empty_message | default("No habits found yet.") }}</p>
+{% endif %}
