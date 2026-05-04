@@ -867,6 +867,7 @@ def calendar():
         view_mode=view_mode,
         selected_date=selected_date,
         selected_date_label=selected_date.strftime("%A, %d %B %Y"),
+        selected_date_value=selected_date.isoformat(),
         month_name=month_name,
         month_days=month_days,
         habits=habits,

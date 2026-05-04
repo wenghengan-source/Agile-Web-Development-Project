@@ -533,6 +533,65 @@ h1, h2, h3, h4, h5 {
     margin: 8px 0 0;
 }
 
+.calendar-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.calendar-mode-toggle {
+    display: inline-flex;
+    gap: 8px;
+    padding: 6px;
+    border-radius: 999px;
+    background: #e7f1ff;
+}
+
+.calendar-mode-pill {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 800;
+    padding: 10px 16px;
+    border-radius: 999px;
+    transition: 0.2s ease;
+}
+
+.calendar-mode-pill:hover {
+    background: rgba(37,99,235,0.08);
+    color: #1d4ed8;
+}
+
+.calendar-mode-pill.active {
+    background: #2563eb;
+    color: white;
+}
+
+.calendar-date-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.calendar-date-label {
+    color: #4b5563;
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.calendar-date-input {
+    min-height: 42px;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    padding: 0 12px;
+    font-weight: 700;
+    color: #111827;
+}
+
 .calendar-wrapper {
     background: rgba(255,255,255,0.98);
     border-radius: 26px;
@@ -603,6 +662,11 @@ h1, h2, h3, h4, h5 {
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
+.calendar-habit-card-wide {
+    padding: 16px 18px;
+    margin-bottom: 0;
+}
+
 .calendar-habit-name {
     font-size: 13px;
     font-weight: 700;
@@ -662,6 +726,12 @@ h1, h2, h3, h4, h5 {
     .calendar-header-card {
         flex-direction: column;
         gap: 15px;
+        align-items: flex-start;
+    }
+
+    .calendar-controls,
+    .calendar-date-form {
+        width: 100%;
         align-items: flex-start;
     }
 }

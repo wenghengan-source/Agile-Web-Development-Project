@@ -32,7 +32,37 @@
     <div class="calendar-header-card">
         <div>
             <h1>Habit Calendar</h1>
-            <p>View each habit’s completion trend and monthly history.</p>
+            <p>View each habit's completion trend and calendar history.</p>
+
+            <div class="calendar-controls">
+                <div class="calendar-mode-toggle" role="tablist" aria-label="Calendar view mode">
+                    <a
+                        class="calendar-mode-pill {% if view_mode == 'monthly' %}active{% endif %}"
+                        href="{{ url_for('calendar', view='monthly', date=selected_date_value) }}"
+                    >
+                        Monthly
+                    </a>
+                    <a
+                        class="calendar-mode-pill {% if view_mode == 'daily' %}active{% endif %}"
+                        href="{{ url_for('calendar', view='daily', date=selected_date_value) }}"
+                    >
+                        Daily
+                    </a>
+                </div>
+
+                <form class="calendar-date-form" method="get" action="{{ url_for('calendar') }}">
+                    <input type="hidden" name="view" value="{{ view_mode }}">
+                    <label for="calendar-date" class="calendar-date-label">Selected date</label>
+                    <input
+                        id="calendar-date"
+                        class="calendar-date-input"
+                        type="date"
+                        name="date"
+                        value="{{ selected_date_value }}"
+                    >
+                    <button type="submit" class="btn btn-light btn-sm">Go</button>
+                </form>
+            </div>
         </div>
 
         <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
@@ -58,11 +88,11 @@
                 <div class="row g-3">
                     {% for habit in daily_habits %}
                         <div class="col-12">
-                            <div class="calendar-habit-card d-flex justify-content-between align-items-center">
+                            <div class="calendar-habit-card calendar-habit-card-wide d-flex justify-content-between align-items-center">
                                 <div>
                                     <div class="calendar-habit-name">{{ habit.name }}</div>
                                     <small class="text-muted">
-                                        {{ habit.category }} • {{ habit.priority }} priority
+                                        {{ habit.category }} - {{ habit.priority }} priority
                                     </small>
                                 </div>
 
@@ -113,9 +143,7 @@
 
                                         {% for habit in calendar_habits_by_date.get(full_date, []) %}
                                             <div class="calendar-habit-card">
-                                                <div class="calendar-habit-name">
-                                                    {{ habit[1] }}
-                                                </div>
+                                                <div class="calendar-habit-name">{{ habit[1] }}</div>
 
                                                 {% if (habit[0], full_date) in completed_set %}
                                                     <span class="calendar-status done">Completed</span>
@@ -124,14 +152,14 @@
                                                 {% endif %}
                                             </div>
                                         {% endfor %}
-                                {% endif %}
-                            </td>
-                        {% endfor %}
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     {% endif %}
 
 </div>
