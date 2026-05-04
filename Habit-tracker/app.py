@@ -43,6 +43,82 @@ def is_habit_scheduled_for_date(schedule_value, target_date):
     return target_date.strftime("%a") in scheduled_days
 
 
+def calculate_habit_streak(
+    schedule_value,
+    created_date,
+    completion_dates,
+    reference_date=None
+):
+    if reference_date is None:
+        reference_date = date.today()
+
+    if isinstance(created_date, str):
+        created_date = date.fromisoformat(created_date)
+
+    if reference_date < created_date:
+        return 0
+
+    completion_set = set(completion_dates)
+    streak = 0
+    streak_date = reference_date
+
+    while streak_date >= created_date:
+        if not is_habit_scheduled_for_date(schedule_value, streak_date):
+            streak_date -= timedelta(days=1)
+            continue
+
+        if streak_date.isoformat() not in completion_set:
+            break
+
+        streak += 1
+        streak_date -= timedelta(days=1)
+
+    return streak
+
+
+def recalculate_habit_streak(cursor, habit_id, user_id, reference_date=None):
+    cursor.execute(
+        """
+        SELECT schedule, created_date
+        FROM habits
+        WHERE id = ? AND user_id = ?
+        """,
+        (habit_id, user_id)
+    )
+    habit = cursor.fetchone()
+
+    if habit is None:
+        return 0
+
+    cursor.execute(
+        """
+        SELECT completion_date
+        FROM habit_completions
+        WHERE habit_id = ? AND user_id = ?
+        """,
+        (habit_id, user_id)
+    )
+    completion_dates = [row[0] for row in cursor.fetchall()]
+
+    streak = calculate_habit_streak(
+        habit[0],
+        habit[1],
+        completion_dates,
+        reference_date
+    )
+
+    cursor.execute(
+        """
+        UPDATE habits
+        SET streak = ?
+        WHERE id = ? AND user_id = ?
+        """,
+        (streak, habit_id, user_id)
+    )
+
+    return streak
+
+
 def init_db():
     conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
@@ -412,11 +488,7 @@ def complete_habit(habit_id):
             VALUES (?, ?, ?)
         """, (habit_id, session["user_id"], today))
 
-        cursor.execute("""
-            UPDATE habits
-            SET streak = streak + 1
-            WHERE id = ? AND user_id = ?
-        """, (habit_id, session["user_id"]))
+    recalculate_habit_streak(cursor, habit_id, session["user_id"])
 
     conn.commit()
     conn.close()
