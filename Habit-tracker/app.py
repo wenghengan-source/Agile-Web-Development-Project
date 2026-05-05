@@ -50,6 +50,16 @@ def format_schedule_label(schedule_value):
     return ", ".join(scheduled_days)
 
 
+def parse_optional_date(date_value, fallback_date):
+    if not date_value:
+        return fallback_date
+
+    try:
+        return date.fromisoformat(date_value)
+    except ValueError:
+        return fallback_date
+
+
 def calculate_habit_streak(
     schedule_value,
     created_date,
@@ -745,10 +755,13 @@ def calendar():
         return redirect(url_for("login"))
 
     today = date.today()
-    year = today.year
-    month = today.month
+    requested_view = request.args.get("view", "monthly").lower()
+    view_mode = requested_view if requested_view in {"monthly", "daily"} else "monthly"
+    selected_date = parse_optional_date(request.args.get("date"), today)
+    year = selected_date.year
+    month = selected_date.month
 
-    month_name = today.strftime("%B %Y")
+    month_name = selected_date.strftime("%B %Y")
     month_days = cal.monthcalendar(year, month)
 
     conn = sqlite3.connect("habit_tracker.db")
@@ -774,13 +787,36 @@ def calendar():
     last_7_days = []
 
     for i in range(6, -1, -1):
-        day = date.fromordinal(today.toordinal() - i)
+        day = date.fromordinal(selected_date.toordinal() - i)
         chart_labels.append(day.strftime("%a"))
         last_7_days.append(day.isoformat())
 
-    habit_lines = []
+    daily_habits = []
 
     for habit in habits:
+        if (
+            habit[4] <= selected_date.isoformat()
+            and is_habit_scheduled_for_date(habit[5], selected_date)
+        ):
+            daily_habits.append({
+                "id": habit[0],
+                "name": habit[1],
+                "category": habit[2],
+                "priority": habit[3],
+                "completed": (habit[0], selected_date.isoformat()) in completed_set
+            })
+
+    habits_for_chart = habits
+    if view_mode == "daily":
+        daily_habit_ids = {habit["id"] for habit in daily_habits}
+        habits_for_chart = [
+            habit for habit in habits
+            if habit[0] in daily_habit_ids
+        ]
+
+    habit_lines = []
+
+    for habit in habits_for_chart:
         habit_id = habit[0]
         habit_name = habit[1]
         created_date = habit[4]
@@ -824,16 +860,22 @@ def calendar():
                     visible_habits.append(habit)
 
             calendar_habits_by_date[full_date] = visible_habits
-
     conn.close()
 
     return render_template(
         "calendar.html",
+        view_mode=view_mode,
+        today_value=today.isoformat(),
+        is_today_selected=(selected_date == today),
+        selected_date=selected_date,
+        selected_date_label=selected_date.strftime("%A, %d %B %Y"),
+        selected_date_value=selected_date.isoformat(),
         month_name=month_name,
         month_days=month_days,
         habits=habits,
         completed_set=completed_set,
         calendar_habits_by_date=calendar_habits_by_date,
+        daily_habits=daily_habits,
         year=year,
         month=month,
         chart_labels=chart_labels,

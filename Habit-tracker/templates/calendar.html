@@ -32,7 +32,44 @@
     <div class="calendar-header-card">
         <div>
             <h1>Habit Calendar</h1>
-            <p>View each habit’s completion trend and monthly history.</p>
+            <p>View each habit's completion trend and calendar history.</p>
+
+            <div class="calendar-controls">
+                <div class="calendar-mode-toggle" role="tablist" aria-label="Calendar view mode">
+                    <a
+                        class="calendar-mode-pill {% if view_mode == 'monthly' %}active{% endif %}"
+                        href="{{ url_for('calendar', view='monthly', date=selected_date_value) }}"
+                    >
+                        Monthly
+                    </a>
+                    <a
+                        class="calendar-mode-pill {% if view_mode == 'daily' %}active{% endif %}"
+                        href="{{ url_for('calendar', view='daily', date=selected_date_value) }}"
+                    >
+                        Daily
+                    </a>
+                </div>
+
+                <form class="calendar-date-form" method="get" action="{{ url_for('calendar') }}">
+                    <input type="hidden" name="view" value="{{ view_mode }}">
+                    <label for="calendar-date" class="calendar-date-label">Selected date</label>
+                    <input
+                        id="calendar-date"
+                        class="calendar-date-input"
+                        type="date"
+                        name="date"
+                        value="{{ selected_date_value }}"
+                    >
+                    <button type="submit" class="btn btn-light btn-sm">Go</button>
+                </form>
+
+                <a
+                    class="calendar-today-link {% if is_today_selected %}disabled{% endif %}"
+                    href="{{ url_for('calendar', view=view_mode, date=today_value) }}"
+                >
+                    Jump to today
+                </a>
+            </div>
         </div>
 
         <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
@@ -47,56 +84,100 @@
         <canvas id="habitTrendChart" height="100"></canvas>
     </div>
 
-    <div class="calendar-wrapper">
-        <div class="calendar-title">
-            <h2>{{ month_name }}</h2>
-            <span>Monthly Overview</span>
+    {% if view_mode == "daily" %}
+        <div class="calendar-wrapper">
+            <div class="calendar-title">
+                <div class="calendar-heading-group">
+                    <h2>{{ selected_date_label }}</h2>
+                    {% if is_today_selected %}
+                        <span class="calendar-today-chip">Today</span>
+                    {% endif %}
+                </div>
+                <span>Daily Overview</span>
+            </div>
+
+            {% if daily_habits %}
+                <div class="row g-3">
+                    {% for habit in daily_habits %}
+                        <div class="col-12">
+                            <div class="calendar-habit-card calendar-habit-card-wide d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="calendar-habit-name">{{ habit.name }}</div>
+                                    <small class="text-muted">
+                                        {{ habit.category }} - {{ habit.priority }} priority
+                                    </small>
+                                </div>
+
+                                {% if habit.completed %}
+                                    <span class="calendar-status done">Completed</span>
+                                {% else %}
+                                    <span class="calendar-status pending">Pending</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-light border">
+                    No habits are scheduled for {{ selected_date_label }}.
+                </div>
+            {% endif %}
         </div>
+    {% else %}
+        <div class="calendar-wrapper">
+            <div class="calendar-title">
+                <h2>{{ month_name }}</h2>
+                <span>Monthly Overview</span>
+            </div>
 
-        <table class="table calendar-table-pro">
-            <thead>
-                <tr>
-                    <th>Mon</th>
-                    <th>Tue</th>
-                    <th>Wed</th>
-                    <th>Thu</th>
-                    <th>Fri</th>
-                    <th>Sat</th>
-                    <th>Sun</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                {% for week in month_days %}
+            <table class="table calendar-table-pro">
+                <thead>
                     <tr>
-                        {% for day in week %}
-                            <td class="{% if day == 0 %}empty-day{% endif %}">
-                                {% if day != 0 %}
-                                    <div class="calendar-day-number">{{ day }}</div>
+                        <th>Mon</th>
+                        <th>Tue</th>
+                        <th>Wed</th>
+                        <th>Thu</th>
+                        <th>Fri</th>
+                        <th>Sat</th>
+                        <th>Sun</th>
+                    </tr>
+                </thead>
 
-                                    {% set full_date = "%04d-%02d-%02d"|format(year, month, day) %}
-
-                                    {% for habit in calendar_habits_by_date.get(full_date, []) %}
-                                        <div class="calendar-habit-card">
-                                            <div class="calendar-habit-name">
-                                                {{ habit[1] }}
-                                            </div>
-
-                                            {% if (habit[0], full_date) in completed_set %}
-                                                <span class="calendar-status done">Completed</span>
-                                            {% else %}
-                                                <span class="calendar-status pending">Pending</span>
+                <tbody>
+                    {% for week in month_days %}
+                        <tr>
+                            {% for day in week %}
+                                <td class="{% if day == 0 %}empty-day{% endif %}{% if day != 0 and '%04d-%02d-%02d'|format(year, month, day) == today_value %} today-cell{% endif %}">
+                                    {% if day != 0 %}
+                                        <div class="calendar-day-header">
+                                            <div class="calendar-day-number">{{ day }}</div>
+                                            {% if "%04d-%02d-%02d"|format(year, month, day) == today_value %}
+                                                <span class="calendar-today-badge">Today</span>
                                             {% endif %}
                                         </div>
-                                    {% endfor %}
-                                {% endif %}
-                            </td>
-                        {% endfor %}
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+
+                                        {% set full_date = "%04d-%02d-%02d"|format(year, month, day) %}
+
+                                        {% for habit in calendar_habits_by_date.get(full_date, []) %}
+                                            <div class="calendar-habit-card">
+                                                <div class="calendar-habit-name">{{ habit[1] }}</div>
+
+                                                {% if (habit[0], full_date) in completed_set %}
+                                                    <span class="calendar-status done">Completed</span>
+                                                {% else %}
+                                                    <span class="calendar-status pending">Pending</span>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
 
 </div>
 
