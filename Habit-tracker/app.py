@@ -233,6 +233,50 @@ def should_rank_dashboard_category(scheduled_days):
     return scheduled_days >= DASHBOARD_TOP_CATEGORY_MIN_SCHEDULED_DAYS
 
 
+def select_top_dashboard_habit(habit_summaries):
+    """Pick the top habit using the dashboard's fair ranking rules."""
+    eligible_habits = [
+        habit for habit in habit_summaries
+        if habit["rank_eligible"]
+    ]
+
+    if not eligible_habits:
+        return {
+            "has_data": False,
+            "name": "No top habit yet",
+            "summary": (
+                "Need at least "
+                f"{DASHBOARD_TOP_HABIT_MIN_SCHEDULED_DAYS} scheduled check-ins "
+                "this week to rank habits fairly."
+            ),
+            "detail": "One-off habits do not lead the dashboard."
+        }
+
+    top_habit = sorted(
+        eligible_habits,
+        key=lambda habit: (
+            -habit["weekly_rate"],
+            -habit["current_streak"],
+            -habit["scheduled_days"],
+            -habit["completed_days"],
+            habit["name"].lower()
+        )
+    )[0]
+
+    return {
+        "has_data": True,
+        "name": top_habit["name"],
+        "summary": (
+            f"{top_habit['weekly_rate']}% this week "
+            f"({top_habit['completed_days']}/{top_habit['scheduled_days']})"
+        ),
+        "detail": (
+            f"{top_habit['current_streak']}-day current streak in "
+            f"{top_habit['category']}"
+        )
+    }
+
+
 def classify_dashboard_habit_risk(
     *,
     scheduled_today,
@@ -540,6 +584,7 @@ def build_progress_snapshot(user_id, reference_date=None):
         ),
         "has_scheduled_data": active_days > 0,
         "best_day": best_day,
+        "top_habit": select_top_dashboard_habit(habit_summaries),
         "habit_summaries": habit_summaries,
         "category_summaries": category_summaries
     }

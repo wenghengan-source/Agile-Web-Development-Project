@@ -436,6 +436,13 @@ h1, h2, h3, h4, h5 {
     color: rgba(255,255,255,0.82);
 }
 
+.weekly-insight-note {
+    display: block;
+    margin-top: 10px;
+    font-size: 14px;
+    color: rgba(255,255,255,0.70);
+}
+
 /* Cards */
 
 .dash-card {

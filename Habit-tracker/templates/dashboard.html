@@ -99,16 +99,14 @@
                     </p>
                 </div>
 
-                {% if progress_snapshot.best_day.goal > 0 %}
-                    <div class="weekly-insight-detail">
-                        <span class="weekly-insight-detail-label">Best day</span>
-                        <strong>{{ progress_snapshot.best_day.label }}</strong>
-                        <span>
-                            {{ progress_snapshot.best_day.completed }}/{{ progress_snapshot.best_day.goal }}
-                            habits completed
-                        </span>
-                    </div>
-                {% endif %}
+                <div class="weekly-insight-detail">
+                    <span class="weekly-insight-detail-label">Top habit</span>
+                    <strong>{{ progress_snapshot.top_habit.name }}</strong>
+                    <span>{{ progress_snapshot.top_habit.summary }}</span>
+                    <span class="weekly-insight-note">
+                        {{ progress_snapshot.top_habit.detail }}
+                    </span>
+                </div>
             {% else %}
                 <div class="weekly-insight-empty">
                     <strong>No scheduled habit data yet</strong>
