@@ -78,6 +78,14 @@
                     <span>Daily movement</span>
                 </div>
             </div>
+            <div class="summary-card red">
+                <div class="summary-icon">!</div>
+                <div>
+                    <p>At Risk</p>
+                    <h2>{{ progress_snapshot.at_risk.count }}</h2>
+                    <span>{{ progress_snapshot.at_risk.summary }}</span>
+                </div>
+            </div>
         </div>
 
         <section class="weekly-insight-card">

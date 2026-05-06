@@ -331,7 +331,7 @@ h1, h2, h3, h4, h5 {
 
 .summary-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
     gap: 18px;
     margin-bottom: 22px;
 }
@@ -369,6 +369,11 @@ h1, h2, h3, h4, h5 {
 
 .summary-card.orange .summary-icon {
     background: #ffedd5;
+}
+
+.summary-card.red .summary-icon {
+    background: #fee2e2;
+    color: #b91c1c;
 }
 
 .weekly-insight-card {

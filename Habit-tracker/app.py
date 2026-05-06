@@ -277,6 +277,49 @@ def select_top_dashboard_habit(habit_summaries):
     }
 
 
+def summarize_dashboard_risk(habit_summaries):
+    """Summarize how many habits currently need attention on the dashboard."""
+    risk_counts = {
+        "due_today": 0,
+        "below_pace": 0,
+        "cooling_off": 0
+    }
+
+    for habit in habit_summaries:
+        risk_code = habit["risk_code"]
+        if risk_code in risk_counts:
+            risk_counts[risk_code] += 1
+
+    total_flagged = sum(risk_counts.values())
+    if total_flagged == 0:
+        return {
+            "count": 0,
+            "summary": "No habits flagged",
+            "detail": "Nothing is currently due, below pace, or cooling off."
+        }
+
+    if risk_counts["due_today"] > 0:
+        summary = f"{risk_counts['due_today']} due today"
+    elif risk_counts["below_pace"] > 0:
+        summary = f"{risk_counts['below_pace']} below pace"
+    else:
+        summary = f"{risk_counts['cooling_off']} cooling off"
+
+    detail_parts = []
+    if risk_counts["due_today"] > 0:
+        detail_parts.append(f"{risk_counts['due_today']} due today")
+    if risk_counts["below_pace"] > 0:
+        detail_parts.append(f"{risk_counts['below_pace']} below pace")
+    if risk_counts["cooling_off"] > 0:
+        detail_parts.append(f"{risk_counts['cooling_off']} cooling off")
+
+    return {
+        "count": total_flagged,
+        "summary": summary,
+        "detail": ", ".join(detail_parts)
+    }
+
+
 def classify_dashboard_habit_risk(
     *,
     scheduled_today,
@@ -584,6 +627,7 @@ def build_progress_snapshot(user_id, reference_date=None):
         ),
         "has_scheduled_data": active_days > 0,
         "best_day": best_day,
+        "at_risk": summarize_dashboard_risk(habit_summaries),
         "top_habit": select_top_dashboard_habit(habit_summaries),
         "habit_summaries": habit_summaries,
         "category_summaries": category_summaries
