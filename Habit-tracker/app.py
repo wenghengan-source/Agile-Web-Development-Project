@@ -320,6 +320,65 @@ def summarize_dashboard_risk(habit_summaries):
     }
 
 
+def build_dashboard_focus_items(habit_summaries):
+    """Select the most actionable habits to surface in the dashboard focus panel."""
+    risk_priority = {
+        "due_today": 0,
+        "below_pace": 1,
+        "cooling_off": 2
+    }
+    reason_labels = {
+        "due_today": "Due today",
+        "below_pace": "Below pace",
+        "cooling_off": "Cooling off"
+    }
+
+    focus_candidates = []
+    for habit in habit_summaries:
+        risk_code = habit["risk_code"]
+        if risk_code not in risk_priority:
+            continue
+
+        detail = ""
+        if risk_code == "due_today":
+            detail = (
+                f"{habit['completed_days']}/{habit['scheduled_days']} completed "
+                f"this week in {habit['category']}."
+            )
+        elif risk_code == "below_pace":
+            detail = (
+                f"{habit['weekly_rate']}% this week "
+                f"({habit['completed_days']}/{habit['scheduled_days']}) in "
+                f"{habit['category']}."
+            )
+        else:
+            detail = (
+                f"Best streak {habit['best_streak']} days, current streak "
+                f"{habit['current_streak']} in {habit['category']}."
+            )
+
+        focus_candidates.append({
+            "id": habit["id"],
+            "name": habit["name"],
+            "reason": reason_labels[risk_code],
+            "detail": detail,
+            "risk_code": risk_code,
+            "priority": risk_priority[risk_code],
+            "weekly_rate": habit["weekly_rate"],
+            "current_streak": habit["current_streak"]
+        })
+
+    return sorted(
+        focus_candidates,
+        key=lambda habit: (
+            habit["priority"],
+            habit["weekly_rate"],
+            habit["current_streak"],
+            habit["name"].lower()
+        )
+    )[:3]
+
+
 def classify_dashboard_habit_risk(
     *,
     scheduled_today,
@@ -628,6 +687,7 @@ def build_progress_snapshot(user_id, reference_date=None):
         "has_scheduled_data": active_days > 0,
         "best_day": best_day,
         "at_risk": summarize_dashboard_risk(habit_summaries),
+        "focus_items": build_dashboard_focus_items(habit_summaries),
         "top_habit": select_top_dashboard_habit(habit_summaries),
         "habit_summaries": habit_summaries,
         "category_summaries": category_summaries

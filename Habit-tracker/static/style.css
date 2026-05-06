@@ -566,6 +566,87 @@ h1, h2, h3, h4, h5 {
     color: #64748b;
 }
 
+.focus-panel-card {
+    background: rgba(255,255,255,0.97);
+    border-radius: 28px;
+    padding: 28px 30px;
+    margin-bottom: 22px;
+    box-shadow: 0 18px 36px rgba(15,23,42,0.08);
+}
+
+.focus-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 20px;
+}
+
+.focus-panel-header h3 {
+    margin-bottom: 8px;
+}
+
+.focus-panel-header p {
+    color: #64748b;
+    max-width: 560px;
+}
+
+.focus-panel-count {
+    background: #fee2e2;
+    color: #b91c1c;
+    border-radius: 999px;
+    padding: 9px 13px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.focus-panel-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.focus-panel-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 18px;
+    padding: 18px 20px;
+    border-radius: 22px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+.focus-panel-reason {
+    display: inline-block;
+    margin-bottom: 10px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.focus-panel-item h4,
+.focus-panel-empty h4 {
+    margin: 0 0 6px;
+    font-size: 19px;
+}
+
+.focus-panel-item p,
+.focus-panel-empty p {
+    color: #64748b;
+}
+
+.focus-panel-empty {
+    border-radius: 22px;
+    background: linear-gradient(135deg, #ecfeff, #f0fdf4);
+    border: 1px solid #bbf7d0;
+    padding: 24px;
+}
+
 /* Cards */
 
 .dash-card {
@@ -967,6 +1048,12 @@ h1, h2, h3, h4, h5 {
     }
 
     .weekly-trend-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .focus-panel-header,
+    .focus-panel-item {
         flex-direction: column;
         align-items: flex-start;
     }

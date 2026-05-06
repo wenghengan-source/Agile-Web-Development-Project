@@ -176,6 +176,47 @@
             {% endif %}
         </section>
 
+        <section class="focus-panel-card">
+            <div class="focus-panel-header">
+                <div>
+                    <h3>Focus this week</h3>
+                    <p class="mb-0">
+                        Review the habits that are due today, below pace, or
+                        cooling off.
+                    </p>
+                </div>
+
+                <span class="focus-panel-count">
+                    {{ progress_snapshot.at_risk.count }} flagged
+                </span>
+            </div>
+
+            {% if progress_snapshot.focus_items %}
+                <div class="focus-panel-list">
+                    {% for habit in progress_snapshot.focus_items %}
+                        <article class="focus-panel-item">
+                            <div>
+                                <span class="focus-panel-reason">{{ habit.reason }}</span>
+                                <h4>{{ habit.name }}</h4>
+                                <p class="mb-0">{{ habit.detail }}</p>
+                            </div>
+
+                            <a href="/active_habits" class="btn btn-sm btn-outline-primary">
+                                Review
+                            </a>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="focus-panel-empty">
+                    <h4>Strong week so far</h4>
+                    <p class="mb-0">
+                        Nothing is currently due, below pace, or losing momentum.
+                    </p>
+                </div>
+            {% endif %}
+        </section>
+
         <div class="dashboard-grid">
 
             <section class="dash-card">
