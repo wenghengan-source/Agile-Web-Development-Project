@@ -80,6 +80,46 @@
             </div>
         </div>
 
+        <section class="weekly-insight-card">
+            <div class="weekly-insight-copy">
+                <span class="hero-badge">Weekly Insight</span>
+                <h2>Weekly completion</h2>
+                <p>
+                    This dashboard score averages your completion rate across days
+                    that had scheduled habits.
+                </p>
+            </div>
+
+            {% if progress_snapshot.has_scheduled_data %}
+                <div class="weekly-insight-metric">
+                    <p class="weekly-insight-label">This week</p>
+                    <h3>{{ progress_snapshot.weekly_average }}%</h3>
+                    <p class="weekly-insight-trend mb-0">
+                        {{ progress_snapshot.weekly_change_summary }}
+                    </p>
+                </div>
+
+                {% if progress_snapshot.best_day.goal > 0 %}
+                    <div class="weekly-insight-detail">
+                        <span class="weekly-insight-detail-label">Best day</span>
+                        <strong>{{ progress_snapshot.best_day.label }}</strong>
+                        <span>
+                            {{ progress_snapshot.best_day.completed }}/{{ progress_snapshot.best_day.goal }}
+                            habits completed
+                        </span>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="weekly-insight-empty">
+                    <strong>No scheduled habit data yet</strong>
+                    <span>
+                        Add or schedule a few habits and your weekly completion score
+                        will start showing here.
+                    </span>
+                </div>
+            {% endif %}
+        </section>
+
         <div class="dashboard-grid">
 
             <section class="dash-card">

@@ -371,6 +371,71 @@ h1, h2, h3, h4, h5 {
     background: #ffedd5;
 }
 
+.weekly-insight-card {
+    background: linear-gradient(135deg, rgba(37,99,235,0.96), rgba(29,78,216,0.90));
+    color: white;
+    border-radius: 28px;
+    padding: 28px 30px;
+    margin-bottom: 22px;
+    display: grid;
+    grid-template-columns: 1.25fr 0.75fr 0.7fr;
+    gap: 22px;
+    align-items: center;
+    box-shadow: 0 20px 44px rgba(37,99,235,0.20);
+}
+
+.weekly-insight-copy h2 {
+    margin-bottom: 10px;
+}
+
+.weekly-insight-copy p {
+    margin-bottom: 0;
+    color: rgba(255,255,255,0.82);
+    max-width: 520px;
+}
+
+.weekly-insight-metric,
+.weekly-insight-detail,
+.weekly-insight-empty {
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 22px;
+    padding: 20px 22px;
+}
+
+.weekly-insight-label,
+.weekly-insight-detail-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.72);
+}
+
+.weekly-insight-metric h3 {
+    font-size: 40px;
+    margin-bottom: 8px;
+}
+
+.weekly-insight-trend {
+    color: white;
+    font-weight: 700;
+}
+
+.weekly-insight-detail strong,
+.weekly-insight-empty strong {
+    display: block;
+    font-size: 24px;
+    margin-bottom: 6px;
+}
+
+.weekly-insight-detail span,
+.weekly-insight-empty span {
+    color: rgba(255,255,255,0.82);
+}
+
 /* Cards */
 
 .dash-card {
@@ -764,6 +829,10 @@ h1, h2, h3, h4, h5 {
 @media (max-width: 1000px) {
     .summary-grid,
     .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .weekly-insight-card {
         grid-template-columns: 1fr;
     }
 
