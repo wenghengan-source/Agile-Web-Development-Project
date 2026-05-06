@@ -126,6 +126,56 @@
             {% endif %}
         </section>
 
+        <section class="weekly-trend-card">
+            <div class="weekly-trend-header">
+                <div>
+                    <h3>Weekly trend</h3>
+                    <p class="mb-0">
+                        A 7-day view of completed habits versus the habits that were
+                        scheduled each day this week.
+                    </p>
+                </div>
+
+                {% if progress_snapshot.has_scheduled_data and progress_snapshot.best_day.goal > 0 %}
+                    <div class="weekly-trend-badge">
+                        <span>Best day</span>
+                        <strong>{{ progress_snapshot.best_day.label }}</strong>
+                        <small>
+                            {{ progress_snapshot.best_day.completed }}/{{ progress_snapshot.best_day.goal }}
+                            completed
+                        </small>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if progress_snapshot.has_scheduled_data %}
+                <div class="weekly-bars">
+                    {% for day in progress_snapshot.weekly_progress %}
+                        <div class="weekly-bar-group">
+                            <div class="weekly-bar-track">
+                                <div
+                                    class="weekly-bar-fill {% if day.goal == 0 %}empty{% elif day.percentage == 0 %}zero{% endif %}"
+                                    style="height: {% if day.goal == 0 %}0{% elif day.percentage == 0 %}12px{% else %}{{ day.percentage }}%{% endif %};"
+                                    title="{{ day.percentage }}% ({{ day.completed }}/{{ day.goal }})"
+                                ></div>
+                            </div>
+                            <p class="weekly-bar-percent">{{ day.percentage }}%</p>
+                            <p class="weekly-bar-value">{{ day.completed }}/{{ day.goal }}</p>
+                            <p class="weekly-bar-label mb-0">{{ day.label }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="weekly-trend-empty">
+                    <strong>No weekly trend yet</strong>
+                    <span>
+                        Once your habits have scheduled check-ins, this chart will
+                        start showing how each day is tracking.
+                    </span>
+                </div>
+            {% endif %}
+        </section>
+
         <div class="dashboard-grid">
 
             <section class="dash-card">
