@@ -338,6 +338,7 @@ def login():
         if user:
             session["user_id"] = user[0]
             session["user_name"] = user[1]
+            session["user_email"] = user[2]
             return redirect(url_for("dashboard"))
         else:
             flash("Invalid email or password.")
@@ -905,6 +906,13 @@ def friends():
     conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
+    # Provide current user info to template (used by modal sender fields)
+    cursor.execute(
+        "SELECT name, email FROM users WHERE id = ?",
+        (session["user_id"],)
+    )
+    user = cursor.fetchone()
+
     if request.method == "POST":
         friend_email = request.form["friend_email"]
 
@@ -979,7 +987,8 @@ def friends():
     return render_template(
         "friends.html",
         friend_list=friend_list,
-        leaderboard=leaderboard
+        leaderboard=leaderboard,
+        user=user
     )
 
 
@@ -1224,6 +1233,50 @@ def profile():
 =======
 
 
+@app.route("/edit_profile", methods=["GET", "POST"])
+def edit_profile():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+        name = request.form.get("name")
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        if password:
+            cursor.execute(
+                "UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?",
+                (name, email, password, session["user_id"])
+            )
+        else:
+            cursor.execute(
+                "UPDATE users SET name = ?, email = ? WHERE id = ?",
+                (name, email, session["user_id"])
+            )
+
+        conn.commit()
+        conn.close()
+
+        # Update session values
+        session["user_name"] = name
+        session["user_email"] = email
+
+        flash("Profile updated.")
+        return redirect(url_for("profile_custom"))
+
+    cursor.execute(
+        "SELECT name, email FROM users WHERE id = ?",
+        (session["user_id"],)
+    )
+    user = cursor.fetchone()
+    conn.close()
+
+    return render_template("edit_profile.html", user=user)
+
+
 @app.route("/contact", methods=["GET", "POST"])
 def contact():
     if request.method == "POST":
@@ -1261,7 +1314,19 @@ def contact():
     to_email = request.args.get("to_email")
     to_name = request.args.get("to_name")
 
-    return render_template("contact.html", to_email=to_email, to_name=to_name)
+    # If user is logged in, provide their name/email to template (so sender fields are correct)
+    user = None
+    if "user_id" in session:
+        conn = sqlite3.connect("habit_tracker.db")
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT name, email FROM users WHERE id = ?",
+            (session["user_id"],)
+        )
+        user = cursor.fetchone()
+        conn.close()
+
+    return render_template("contact.html", to_email=to_email, to_name=to_name, user=user)
 
 
 @app.route("/profile_custom")
@@ -1368,12 +1433,33 @@ def stats_custom():
     if weekly_progress:
         best_day = max(weekly_progress, key=lambda item: (item["percentage"], item["completed"]))
 
+    # Compute current streak (reuse logic from /stats)
+    cursor.execute(
+        """
+        SELECT completion_date
+        FROM habit_completions
+        WHERE user_id = ?
+        GROUP BY completion_date
+        ORDER BY completion_date DESC
+        """,
+        (session["user_id"],)
+    )
+    completion_days = [row[0] for row in cursor.fetchall()]
+
+    current_streak = 0
+    streak_cursor = today
+    completion_set = set(completion_days)
+
+    while streak_cursor.isoformat() in completion_set:
+        current_streak += 1
+        streak_cursor -= timedelta(days=1)
+
     conn.close()
 
     return render_template(
         "stats_custom.html",
         total_completed=total_completed,
-        current_streak=0,
+        current_streak=current_streak,
         average_progress=average_progress,
         total_habits=total_habits,
         weekly_progress=weekly_progress,

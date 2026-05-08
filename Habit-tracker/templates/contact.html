@@ -13,19 +13,19 @@
       {% endif %}
     {% endwith %}
 
-    <p class="text-muted">有任何问题或建议，请填写下表，我们会尽快回复。</p>
+    <p class="text-muted">If you have questions or feedback, please fill the form and we'll get back to you.</p>
 
     <form method="post" action="/contact" class="needs-validation" novalidate>
       <div class="mb-3">
         <label for="name" class="form-label">Name</label>
         <input type="text" class="form-control" id="name" name="name" required value="{{ session.user_name if session.user_name is defined else '' }}">
-        <div class="invalid-feedback">请输入你的姓名。</div>
+        <div class="invalid-feedback">Please enter your name.</div>
       </div>
 
         <div class="mb-3">
           <label for="email" class="form-label">Your Email</label>
-          <input type="email" class="form-control" id="email" name="email" required value="{{ to_email if to_email is defined and to_email else (user[1] if user is defined and user else '') }}">
-          <div class="invalid-feedback">请输入有效的邮箱地址。</div>
+          <input type="email" class="form-control" id="email" name="email" required value="{{ user[1] if user else (to_email if to_email else '') }}">
+          <div class="invalid-feedback">Please enter a valid email address.</div>
         </div>
 
         {% if to_name or to_email %}
@@ -41,7 +41,7 @@
       <div class="mb-3">
         <label for="message" class="form-label">Message</label>
         <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
-        <div class="invalid-feedback">请输入留言内容。</div>
+        <div class="invalid-feedback">Please enter a message.</div>
       </div>
 
       <button type="submit" class="btn btn-primary">Send Message</button>
