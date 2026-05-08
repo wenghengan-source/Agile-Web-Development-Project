@@ -35,7 +35,7 @@
         <div class="dashboard-top">
             <div>
                 <h1>Welcome back, {{ session["user_name"] }} 👋</h1>
-                <p>Stay consistent and crush your goals today.</p>
+                <p>Your habits, momentum, and daily check-ins are all in one place.</p>
             </div>
 
             <div class="date-pill">
@@ -68,9 +68,9 @@
 
                     <span class="split-card-detail">
                         {% if total > 0 %}
-                            {{ completed }}/{{ total }} active habits are done today.
+                            {{ completed }}/{{ total }} active habits are checked off today.
                         {% else %}
-                            No active habits are scheduled today.
+                            Nothing is scheduled for today yet.
                         {% endif %}
                     </span>
                 </div>
@@ -79,13 +79,13 @@
             <div class="summary-card blue summary-card-stacked">
                 <div class="summary-icon">📈</div>
                 <div>
-                    <p>Completion Rate</p>
+                    <p>Weekly Completion</p>
                     <h2>{{ progress_snapshot.weekly_average }}%</h2>
                     <span>
                         {% if progress_snapshot.has_scheduled_data %}
-                            Across scheduled habits this week. {{ progress_snapshot.weekly_change_summary }}
+                            Based on scheduled habits from Sunday through today. {{ progress_snapshot.weekly_change_summary }}
                         {% else %}
-                            Weekly momentum will appear once habits are scheduled.
+                            Weekly progress will appear once this week has scheduled check-ins.
                         {% endif %}
                     </span>
                 </div>
@@ -98,8 +98,8 @@
                     <div>
                         <h3>Weekly trend</h3>
                         <p class="mb-0">
-                            A Sun-Sat view of completed habits versus the habits that
-                            were scheduled each day this week.
+                            A Sunday-to-Saturday view of what was scheduled and what
+                            got done this week.
                         </p>
                     </div>
 
@@ -140,8 +140,8 @@
                     <div class="weekly-trend-empty">
                         <strong>No weekly trend yet</strong>
                         <span>
-                            Once your habits have scheduled check-ins, this chart will
-                            start showing how each day is tracking.
+                            This chart will start filling in once this week has scheduled
+                            habit check-ins to measure against.
                         </span>
                     </div>
                 {% endif %}
@@ -152,15 +152,22 @@
                 <div>
                     <h3>Focus this week</h3>
                     <p class="mb-0">
-                        The three habits most worth attention right now.
+                        The habits most worth a quick check-in right now.
                     </p>
                 </div>
             </div>
 
                 <div class="focus-panel-highlight">
-                    <span class="focus-panel-highlight-label">Leading this week</span>
+                    <span class="focus-panel-highlight-label">
+                        {% if progress_snapshot.top_habit.has_data %}Leading this week{% else %}Top habit preview{% endif %}
+                    </span>
                     <strong>{{ progress_snapshot.top_habit.name }}</strong>
-                    <small>{{ progress_snapshot.top_habit.summary }}</small>
+                    <small>
+                        {{ progress_snapshot.top_habit.summary }}
+                        {% if not progress_snapshot.top_habit.has_data %}
+                            {{ progress_snapshot.top_habit.detail }}
+                        {% endif %}
+                    </small>
                 </div>
 
                 {% if progress_snapshot.focus_items %}
@@ -181,9 +188,9 @@
                     </div>
                 {% else %}
                     <div class="focus-panel-empty">
-                        <h4>Strong week so far</h4>
+                        <h4>Nothing urgent right now</h4>
                         <p class="mb-0">
-                            Nothing is currently due, below pace, or losing momentum.
+                            Your habits are on track right now, so this space will stay quiet until something needs attention.
                         </p>
                     </div>
                 {% endif %}
@@ -214,11 +221,11 @@
                     </div>
 
                     <p class="text-muted mb-0">
-                        Open your active habits to check off or adjust what is left for today.
+                        Visit Active Habits to finish today's check-ins or update what still needs attention.
                     </p>
                 {% else %}
                     <p class="mb-0">
-                        No active habits are scheduled today. Add one or update a schedule to get started.
+                        Nothing is scheduled for today yet. Add a habit or adjust a schedule to start building today's snapshot.
                     </p>
                 {% endif %}
             </section>
@@ -361,7 +368,7 @@
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <div>
                     <h3>Active Habits Preview</h3>
-                    <p class="text-muted mb-0">A quick look at today’s active habits. Open the full page to manage everything.</p>
+                    <p class="text-muted mb-0">A quick look at today's active habits. Open the full page to manage everything.</p>
                 </div>
 
                 <div class="d-flex gap-2">
@@ -376,7 +383,7 @@
             </div>
 
             {% set habits = preview_habits %}
-            {% set empty_message = "No active habits for today." %}
+            {% set empty_message = "No active habits are scheduled for today yet." %}
             {% include "_habit_list.html" %}
 
             {% if total > preview_habits|length %}
@@ -394,3 +401,4 @@
 
 </body>
 </html>
+

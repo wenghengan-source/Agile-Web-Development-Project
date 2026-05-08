@@ -235,19 +235,19 @@ def summarize_week_over_week_change(
 ):
     """Describe weekly movement using the same scheduled-day completion rule."""
     if current_active_days == 0:
-        return "No scheduled habits this week yet."
+        return "No scheduled check-ins yet this week."
 
     if previous_active_days == 0:
-        return "First active week with scheduled habit data."
+        return "This is the first week with enough scheduled data to compare."
 
     delta = current_average - previous_average
     if delta > 0:
-        return f"{delta} percentage points better than last week"
+        return f"Up {delta} points from last week"
 
     if delta < 0:
-        return f"{abs(delta)} percentage points behind last week"
+        return f"Down {abs(delta)} points from last week"
 
-    return "Matching last week"
+    return "Steady with last week"
 
 
 def should_rank_dashboard_habit(scheduled_days):
@@ -270,13 +270,13 @@ def select_top_dashboard_habit(habit_summaries):
     if not eligible_habits:
         return {
             "has_data": False,
-            "name": "No top habit yet",
+            "name": "Ranking unlocks soon",
             "summary": (
-                "Need at least "
+                "Habits need at least "
                 f"{DASHBOARD_TOP_HABIT_MIN_SCHEDULED_DAYS} scheduled check-ins "
-                "this week to rank habits fairly."
+                "this week before this card can rank them fairly."
             ),
-            "detail": "One-off habits do not lead the dashboard."
+            "detail": "Once a habit has a fuller week, the leader will appear here."
         }
 
     top_habit = sorted(
@@ -321,8 +321,8 @@ def summarize_dashboard_risk(habit_summaries):
     if total_flagged == 0:
         return {
             "count": 0,
-            "summary": "No habits flagged",
-            "detail": "Nothing is currently due, below pace, or cooling off."
+            "summary": "Everything is on track",
+            "detail": "Nothing is due, behind pace, or losing momentum right now."
         }
 
     if risk_counts["due_today"] > 0:
