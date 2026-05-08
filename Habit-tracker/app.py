@@ -135,6 +135,29 @@ def calculate_completion_day_streak(completion_dates, reference_date=None):
     return streak
 
 
+def calculate_longest_completion_day_streak(completion_dates):
+    """Track the best consecutive completion-day streak across all habits."""
+    if not completion_dates:
+        return 0
+
+    completion_days = sorted({
+        date.fromisoformat(completion_date)
+        for completion_date in completion_dates
+    })
+
+    longest_streak = 1
+    current_streak = 1
+
+    for index in range(1, len(completion_days)):
+        if completion_days[index] - completion_days[index - 1] == timedelta(days=1):
+            current_streak += 1
+            longest_streak = max(longest_streak, current_streak)
+        else:
+            current_streak = 1
+
+    return longest_streak
+
+
 def calculate_longest_habit_streak(
     schedule_value,
     created_date,
@@ -344,6 +367,103 @@ def summarize_dashboard_risk(habit_summaries):
         "count": total_flagged,
         "summary": summary,
         "detail": ", ".join(detail_parts)
+    }
+
+
+def build_streak_progress_summary(
+    current_streak,
+    personal_best_streak,
+    habit_summaries,
+    weekly_average,
+    weekly_change_summary
+):
+    """Create a dashboard-friendly streak progress summary."""
+    milestones = [3, 7, 14, 21, 30]
+    next_goal = milestones[-1]
+    for milestone in milestones:
+        if current_streak < milestone:
+            next_goal = milestone
+            break
+    else:
+        extra_weeks = max(1, ((current_streak - milestones[-1]) // 7) + 1)
+        next_goal = milestones[-1] + (extra_weeks * 7)
+
+    progress_percentage = 0
+    if next_goal > 0:
+        progress_percentage = min(100, int((current_streak / next_goal) * 100))
+
+    carrying_habit = {
+        "name": "No habit is carrying it yet",
+        "current_streak": 0,
+        "category": "Build a run first"
+    }
+    if habit_summaries:
+        carrying_habit = max(
+            habit_summaries,
+            key=lambda habit: (
+                habit["current_streak"],
+                habit["best_streak"],
+                habit["weekly_rate"],
+                habit["name"].lower()
+            )
+        )
+        if carrying_habit["current_streak"] <= 0:
+            carrying_habit = {
+                "name": "No habit is carrying it yet",
+                "current_streak": 0,
+                "category": "Build a run first"
+            }
+
+    personal_best_streak = max(personal_best_streak, current_streak)
+    if personal_best_streak <= current_streak:
+        days_to_personal_best = 0
+        personal_best_label = "Personal best matched"
+        personal_best_detail = (
+            "This run is already matching your best streak so far."
+            if current_streak > 0 else
+            "Complete a habit streak to set your first personal best."
+        )
+    else:
+        days_to_personal_best = personal_best_streak - current_streak
+        personal_best_label = "Days to personal best"
+        personal_best_detail = (
+            f"{days_to_personal_best} more day"
+            f"{'' if days_to_personal_best == 1 else 's'} to match {personal_best_streak}."
+        )
+
+    if current_streak <= 0:
+        headline = "Start a new streak"
+        detail = "Complete today's habits to start building momentum again."
+    else:
+        headline = "Momentum is building"
+        detail = (
+            f"Stay with it and push toward your {next_goal}-day milestone."
+        )
+
+    return {
+        "current": current_streak,
+        "next_goal": next_goal,
+        "progress_percentage": progress_percentage,
+        "headline": headline,
+        "detail": detail,
+        "current_label": (
+            f"{current_streak} day streak"
+            if current_streak > 0 else
+            "No streak yet"
+        ),
+        "next_milestone_label": f"{next_goal}-day milestone",
+        "personal_best": personal_best_streak,
+        "days_to_personal_best": days_to_personal_best,
+        "personal_best_label": personal_best_label,
+        "personal_best_detail": personal_best_detail,
+        "carrying_habit_name": carrying_habit["name"],
+        "carrying_habit_detail": (
+            f"{carrying_habit['current_streak']}-day streak in {carrying_habit['category']}"
+            if carrying_habit["current_streak"] > 0 else
+            "Complete a few habits in a row and one will lead here."
+        ),
+        "weekly_completion_value": weekly_average,
+        "weekly_completion_trend": weekly_change_summary
     }
 
 
@@ -698,26 +818,39 @@ def build_progress_snapshot(user_id, reference_date=None):
             key=lambda item: (item["percentage"], item["completed"])
         )
 
+    completion_day_streak = calculate_completion_day_streak(
+        completion_days,
+        reference_date
+    )
+    personal_best_streak = calculate_longest_completion_day_streak(
+        completion_days
+    )
+    weekly_change_summary = summarize_week_over_week_change(
+        weekly_average,
+        previous_week_average,
+        active_days,
+        previous_active_days
+    )
+
     return {
         "reference_date": today_string,
         "weekly_progress": weekly_progress,
         "weekly_average": weekly_average,
         "previous_week_average": previous_week_average,
-        "weekly_change_summary": summarize_week_over_week_change(
-            weekly_average,
-            previous_week_average,
-            active_days,
-            previous_active_days
-        ),
-        "current_streak": calculate_completion_day_streak(
-            completion_days,
-            reference_date
-        ),
+        "weekly_change_summary": weekly_change_summary,
+        "current_streak": completion_day_streak,
         "has_scheduled_data": active_days > 0,
         "best_day": best_day,
         "at_risk": summarize_dashboard_risk(habit_summaries),
         "focus_items": build_dashboard_focus_items(habit_summaries),
         "top_habit": select_top_dashboard_habit(habit_summaries),
+        "streak_summary": build_streak_progress_summary(
+            completion_day_streak,
+            personal_best_streak,
+            habit_summaries,
+            weekly_average,
+            weekly_change_summary
+        ),
         "habit_summaries": habit_summaries,
         "category_summaries": category_summaries
     }
