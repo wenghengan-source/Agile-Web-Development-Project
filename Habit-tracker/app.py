@@ -78,6 +78,14 @@ def get_trailing_dates(reference_date, length, trailing_offset=0):
     ]
 
 
+def get_week_dates_sunday_first(reference_date, week_offset=0):
+    """Return one calendar week in Sun-Sat order for the reference date."""
+    days_since_sunday = (reference_date.weekday() + 1) % 7
+    week_start = reference_date - timedelta(days=days_since_sunday)
+    week_start -= timedelta(days=week_offset * 7)
+    return [week_start + timedelta(days=offset) for offset in range(7)]
+
+
 def calculate_habit_streak(
     schedule_value,
     created_date,
@@ -161,12 +169,30 @@ def calculate_longest_habit_streak(
     return longest_streak
 
 
-def summarize_scheduled_progress(habits, completion_records, target_dates):
+def summarize_scheduled_progress(
+    habits,
+    completion_records,
+    target_dates,
+    available_through_date=None
+):
     """Average daily completion % across days with scheduled habits only."""
     progress = []
     active_days = 0
 
     for target_date in target_dates:
+        if (
+            available_through_date is not None
+            and target_date > available_through_date
+        ):
+            progress.append({
+                "label": target_date.strftime("%a"),
+                "completed": 0,
+                "goal": 0,
+                "percentage": 0,
+                "is_future": True
+            })
+            continue
+
         day_string = target_date.isoformat()
         scheduled_habit_ids = [
             habit_id
@@ -185,10 +211,11 @@ def summarize_scheduled_progress(habits, completion_records, target_dates):
             active_days += 1
 
         progress.append({
-            "label": WEEKDAY_NAMES[target_date.weekday()],
+            "label": target_date.strftime("%a"),
             "completed": completed,
             "goal": goal,
-            "percentage": 0 if goal == 0 else int((completed / goal) * 100)
+            "percentage": 0 if goal == 0 else int((completed / goal) * 100),
+            "is_future": False
         })
 
     average_progress = 0
@@ -215,12 +242,12 @@ def summarize_week_over_week_change(
 
     delta = current_average - previous_average
     if delta > 0:
-        return f"Up {delta} pts vs last week"
+        return f"{delta} percentage points better than last week"
 
     if delta < 0:
-        return f"Down {abs(delta)} pts vs last week"
+        return f"{abs(delta)} percentage points behind last week"
 
-    return "Flat vs last week"
+    return "Matching last week"
 
 
 def should_rank_dashboard_habit(scheduled_days):
@@ -519,12 +546,8 @@ def build_progress_snapshot(user_id, reference_date=None):
         reference_date = date.today()
 
     today_string = reference_date.isoformat()
-    week_dates = get_trailing_dates(reference_date, DASHBOARD_ANALYTICS_WINDOW_DAYS)
-    previous_week_dates = get_trailing_dates(
-        reference_date,
-        DASHBOARD_ANALYTICS_WINDOW_DAYS,
-        trailing_offset=DASHBOARD_ANALYTICS_WINDOW_DAYS
-    )
+    week_dates = get_week_dates_sunday_first(reference_date)
+    previous_week_dates = get_week_dates_sunday_first(reference_date, week_offset=1)
 
     conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
@@ -565,12 +588,14 @@ def build_progress_snapshot(user_id, reference_date=None):
     weekly_progress, weekly_average, active_days = summarize_scheduled_progress(
         progress_habits,
         completion_records,
-        week_dates
+        week_dates,
+        available_through_date=reference_date
     )
     _, previous_week_average, previous_active_days = summarize_scheduled_progress(
         progress_habits,
         completion_records,
-        previous_week_dates
+        previous_week_dates,
+        available_through_date=previous_week_dates[-1]
     )
 
     habit_summaries = []
@@ -594,6 +619,9 @@ def build_progress_snapshot(user_id, reference_date=None):
         scheduled_days = 0
         completed_days = 0
         for week_day in week_dates:
+            if week_day > reference_date:
+                continue
+
             day_string = week_day.isoformat()
             if created_date > day_string:
                 continue
@@ -663,9 +691,10 @@ def build_progress_snapshot(user_id, reference_date=None):
         })
 
     best_day = {"label": "No data", "completed": 0, "goal": 0}
-    if weekly_progress:
+    completed_week_days = [day for day in weekly_progress if not day["is_future"]]
+    if completed_week_days:
         best_day = max(
-            weekly_progress,
+            completed_week_days,
             key=lambda item: (item["percentage"], item["completed"])
         )
 
@@ -847,7 +876,6 @@ def dashboard():
 
     total = len(habits)
     completed = len([h for h in habits if h[7] == "Completed"])
-    percentage = int((completed / total) * 100) if total > 0 else 0
     reminders = [h for h in habits if h[7] == "Not Completed"]
     preview_habits = habits[:3]
 
@@ -898,7 +926,6 @@ def dashboard():
         habits=habits,
         total=total,
         completed=completed,
-        percentage=percentage,
         reminders=reminders,
         preview_habits=preview_habits,
         quote=random.choice(quotes),

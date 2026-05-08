@@ -53,184 +53,173 @@
                 </div>
             </div>
 
-            <div class="summary-card green">
+            <div class="summary-card split-card">
                 <div class="summary-icon">✓</div>
-                <div>
-                    <p>Completed Today</p>
-                    <h2>{{ completed }}</h2>
-                    <span>Keep going</span>
+                <div class="split-card-content">
+                    <p class="split-card-title">Today</p>
+
+                    <div class="split-card-metrics">
+                        <div class="split-card-metric">
+                            <span class="split-card-label">Completed</span>
+                            <strong>{{ completed }}</strong>
+                        </div>
+
+                    </div>
+
+                    <span class="split-card-detail">
+                        {% if total > 0 %}
+                            {{ completed }}/{{ total }} active habits are done today.
+                        {% else %}
+                            No active habits are scheduled today.
+                        {% endif %}
+                    </span>
                 </div>
             </div>
 
-            <div class="summary-card blue">
+            <div class="summary-card blue summary-card-stacked">
                 <div class="summary-icon">📈</div>
                 <div>
                     <p>Completion Rate</p>
-                    <h2>{{ percentage }}%</h2>
-                </div>
-            </div>
-
-            <div class="summary-card orange">
-                <div class="summary-icon">👟</div>
-                <div>
-                    <p>Steps Today</p>
-                    <h2>{{ today_steps }}</h2>
-                    <span>Daily movement</span>
-                </div>
-            </div>
-            <div class="summary-card red">
-                <div class="summary-icon">!</div>
-                <div>
-                    <p>At Risk</p>
-                    <h2>{{ progress_snapshot.at_risk.count }}</h2>
-                    <span>{{ progress_snapshot.at_risk.summary }}</span>
+                    <h2>{{ progress_snapshot.weekly_average }}%</h2>
+                    <span>
+                        {% if progress_snapshot.has_scheduled_data %}
+                            Across scheduled habits this week. {{ progress_snapshot.weekly_change_summary }}
+                        {% else %}
+                            Weekly momentum will appear once habits are scheduled.
+                        {% endif %}
+                    </span>
                 </div>
             </div>
         </div>
 
-        <section class="weekly-insight-card">
-            <div class="weekly-insight-copy">
-                <span class="hero-badge">Weekly Insight</span>
-                <h2>Weekly completion</h2>
-                <p>
-                    This dashboard score averages your completion rate across days
-                    that had scheduled habits.
-                </p>
-            </div>
+        <div class="analytics-grid">
+            <section class="weekly-trend-card">
+                <div class="weekly-trend-header">
+                    <div>
+                        <h3>Weekly trend</h3>
+                        <p class="mb-0">
+                            A Sun-Sat view of completed habits versus the habits that
+                            were scheduled each day this week.
+                        </p>
+                    </div>
 
-            {% if progress_snapshot.has_scheduled_data %}
-                <div class="weekly-insight-metric">
-                    <p class="weekly-insight-label">This week</p>
-                    <h3>{{ progress_snapshot.weekly_average }}%</h3>
-                    <p class="weekly-insight-trend mb-0">
-                        {{ progress_snapshot.weekly_change_summary }}
-                    </p>
+                    {% if progress_snapshot.has_scheduled_data and progress_snapshot.best_day.goal > 0 %}
+                        <div class="weekly-trend-badge">
+                            <span>Best day</span>
+                            <strong>{{ progress_snapshot.best_day.label }}</strong>
+                            <small>
+                                {{ progress_snapshot.best_day.completed }}/{{ progress_snapshot.best_day.goal }}
+                                completed
+                            </small>
+                        </div>
+                    {% endif %}
                 </div>
 
-                <div class="weekly-insight-detail">
-                    <span class="weekly-insight-detail-label">Top habit</span>
-                    <strong>{{ progress_snapshot.top_habit.name }}</strong>
-                    <span>{{ progress_snapshot.top_habit.summary }}</span>
-                    <span class="weekly-insight-note">
-                        {{ progress_snapshot.top_habit.detail }}
-                    </span>
-                </div>
-            {% else %}
-                <div class="weekly-insight-empty">
-                    <strong>No scheduled habit data yet</strong>
-                    <span>
-                        Add or schedule a few habits and your weekly completion score
-                        will start showing here.
-                    </span>
-                </div>
-            {% endif %}
-        </section>
-
-        <section class="weekly-trend-card">
-            <div class="weekly-trend-header">
-                <div>
-                    <h3>Weekly trend</h3>
-                    <p class="mb-0">
-                        A 7-day view of completed habits versus the habits that were
-                        scheduled each day this week.
-                    </p>
-                </div>
-
-                {% if progress_snapshot.has_scheduled_data and progress_snapshot.best_day.goal > 0 %}
-                    <div class="weekly-trend-badge">
-                        <span>Best day</span>
-                        <strong>{{ progress_snapshot.best_day.label }}</strong>
-                        <small>
-                            {{ progress_snapshot.best_day.completed }}/{{ progress_snapshot.best_day.goal }}
-                            completed
-                        </small>
+                {% if progress_snapshot.has_scheduled_data %}
+                    <div class="weekly-bars">
+                        {% for day in progress_snapshot.weekly_progress %}
+                            <div class="weekly-bar-group {% if day.is_future %}future{% endif %}">
+                                <div class="weekly-bar-track">
+                                    <div
+                                        class="weekly-bar-fill {% if day.goal == 0 %}empty{% elif day.percentage == 0 %}zero{% endif %}"
+                                        style="height: {% if day.goal == 0 %}0{% elif day.percentage == 0 %}12px{% else %}{{ day.percentage }}%{% endif %};"
+                                        title="{% if day.is_future %}Upcoming day{% else %}{{ day.percentage }}% ({{ day.completed }}/{{ day.goal }}){% endif %}"
+                                    ></div>
+                                </div>
+                                <p class="weekly-bar-percent">
+                                    {% if day.is_future %}--{% else %}{{ day.percentage }}%{% endif %}
+                                </p>
+                                <p class="weekly-bar-value">
+                                    {% if day.is_future %}Upcoming{% else %}{{ day.completed }}/{{ day.goal }}{% endif %}
+                                </p>
+                                <p class="weekly-bar-label mb-0">{{ day.label }}</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="weekly-trend-empty">
+                        <strong>No weekly trend yet</strong>
+                        <span>
+                            Once your habits have scheduled check-ins, this chart will
+                            start showing how each day is tracking.
+                        </span>
                     </div>
                 {% endif %}
-            </div>
-
-            {% if progress_snapshot.has_scheduled_data %}
-                <div class="weekly-bars">
-                    {% for day in progress_snapshot.weekly_progress %}
-                        <div class="weekly-bar-group">
-                            <div class="weekly-bar-track">
-                                <div
-                                    class="weekly-bar-fill {% if day.goal == 0 %}empty{% elif day.percentage == 0 %}zero{% endif %}"
-                                    style="height: {% if day.goal == 0 %}0{% elif day.percentage == 0 %}12px{% else %}{{ day.percentage }}%{% endif %};"
-                                    title="{{ day.percentage }}% ({{ day.completed }}/{{ day.goal }})"
-                                ></div>
-                            </div>
-                            <p class="weekly-bar-percent">{{ day.percentage }}%</p>
-                            <p class="weekly-bar-value">{{ day.completed }}/{{ day.goal }}</p>
-                            <p class="weekly-bar-label mb-0">{{ day.label }}</p>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="weekly-trend-empty">
-                    <strong>No weekly trend yet</strong>
-                    <span>
-                        Once your habits have scheduled check-ins, this chart will
-                        start showing how each day is tracking.
-                    </span>
-                </div>
-            {% endif %}
-        </section>
+            </section>
 
         <section class="focus-panel-card">
             <div class="focus-panel-header">
                 <div>
                     <h3>Focus this week</h3>
                     <p class="mb-0">
-                        Review the habits that are due today, below pace, or
-                        cooling off.
+                        The three habits most worth attention right now.
                     </p>
                 </div>
-
-                <span class="focus-panel-count">
-                    {{ progress_snapshot.at_risk.count }} flagged
-                </span>
             </div>
 
-            {% if progress_snapshot.focus_items %}
-                <div class="focus-panel-list">
-                    {% for habit in progress_snapshot.focus_items %}
-                        <article class="focus-panel-item">
-                            <div>
-                                <span class="focus-panel-reason">{{ habit.reason }}</span>
-                                <h4>{{ habit.name }}</h4>
-                                <p class="mb-0">{{ habit.detail }}</p>
-                            </div>
+                <div class="focus-panel-highlight">
+                    <span class="focus-panel-highlight-label">Leading this week</span>
+                    <strong>{{ progress_snapshot.top_habit.name }}</strong>
+                    <small>{{ progress_snapshot.top_habit.summary }}</small>
+                </div>
 
-                            <a href="/active_habits" class="btn btn-sm btn-outline-primary">
-                                Review
-                            </a>
-                        </article>
-                    {% endfor %}
-                </div>
-            {% else %}
-                <div class="focus-panel-empty">
-                    <h4>Strong week so far</h4>
-                    <p class="mb-0">
-                        Nothing is currently due, below pace, or losing momentum.
-                    </p>
-                </div>
-            {% endif %}
-        </section>
+                {% if progress_snapshot.focus_items %}
+                    <div class="focus-panel-list">
+                        {% for habit in progress_snapshot.focus_items %}
+                            <article class="focus-panel-item">
+                                <div>
+                                    <span class="focus-panel-reason">{{ habit.reason }}</span>
+                                    <h4>{{ habit.name }}</h4>
+                                    <p class="mb-0">{{ habit.detail }}</p>
+                                </div>
+
+                                <a href="/active_habits" class="btn btn-sm btn-outline-primary">
+                                    Review
+                                </a>
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="focus-panel-empty">
+                        <h4>Strong week so far</h4>
+                        <p class="mb-0">
+                            Nothing is currently due, below pace, or losing momentum.
+                        </p>
+                    </div>
+                {% endif %}
+            </section>
+        </div>
 
         <div class="dashboard-grid">
 
-            <section class="dash-card">
-                <h3>🔔 Reminder</h3>
+            <section class="dash-card today-snapshot-card">
+                <h3>Today snapshot</h3>
 
-                {% if reminders %}
-                    <p>You still have unfinished habits:</p>
-                    <ul>
-                        {% for reminder in reminders %}
-                            <li>{{ reminder[1] }}</li>
-                        {% endfor %}
-                    </ul>
+                {% if total > 0 %}
+                    <div class="today-snapshot-list">
+                        <div class="today-snapshot-item">
+                            <span>Remaining today</span>
+                            <strong>{{ reminders|length }}</strong>
+                        </div>
+
+                        <div class="today-snapshot-item">
+                            <span>Current streak</span>
+                            <strong>{{ progress_snapshot.current_streak }}</strong>
+                        </div>
+
+                        <div class="today-snapshot-item">
+                            <span>Weekly score</span>
+                            <strong>{{ progress_snapshot.weekly_average }}%</strong>
+                        </div>
+                    </div>
+
+                    <p class="text-muted mb-0">
+                        Open your active habits to check off or adjust what is left for today.
+                    </p>
                 {% else %}
-                    <p>Great job! Everything is completed today 🎉</p>
+                    <p class="mb-0">
+                        No active habits are scheduled today. Add one or update a schedule to get started.
+                    </p>
                 {% endif %}
             </section>
 
