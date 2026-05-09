@@ -24,7 +24,7 @@
 
         <div class="mb-3">
           <label for="email" class="form-label">Your Email</label>
-          <input type="email" class="form-control" id="email" name="email" required value="{{ user[1] if user else (to_email if to_email else '') }}">
+          <input type="email" class="form-control" id="email" name="email" required value="{{ user[1] if user else '' }}">
           <div class="invalid-feedback">Please enter a valid email address.</div>
         </div>
 

@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
+
+# SQLite DB
+habit_tracker.db
+*.sqlite3
+
+# IDE files
+.vscode/

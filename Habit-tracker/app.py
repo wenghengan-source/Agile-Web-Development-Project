@@ -1310,7 +1310,7 @@ def contact():
 
         return redirect(url_for("contact"))
 
-    # 支持通过查询参数预填收件人
+    # Support pre-filling recipient via query parameters
     to_email = request.args.get("to_email")
     to_name = request.args.get("to_name")
 
