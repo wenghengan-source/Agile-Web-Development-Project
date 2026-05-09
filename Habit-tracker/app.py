@@ -1052,8 +1052,6 @@ def stats():
     )
     total_habits = cursor.fetchone()[0]
 
-<<<<<<< HEAD
-    # Use SQL queries per-day for completed and goal counts (incoming changes)
     weekly_progress = []
     active_days = 0
 
@@ -1061,64 +1059,16 @@ def stats():
         day_string = week_day.isoformat()
 
         cursor.execute(
-            """
-            SELECT COUNT(*)
-            FROM habit_completions
-            WHERE user_id = ? AND completion_date = ?
-            """,
+            "SELECT COUNT(*) FROM habit_completions WHERE user_id = ? AND completion_date = ?",
             (session["user_id"], day_string)
         )
         completed = cursor.fetchone()[0]
 
         cursor.execute(
-            """
-            SELECT COUNT(*)
-            FROM habits
-            WHERE user_id = ? AND created_date <= ?
-            """,
+            "SELECT COUNT(*) FROM habits WHERE user_id = ? AND created_date <= ?",
             (session["user_id"], day_string)
         )
         goal = cursor.fetchone()[0]
-    weekly_progress = []
-    active_days = 0
-
-    for week_day in week_dates:
-        day_string = week_day.isoformat()
-
-<<<<<<< HEAD
-        scheduled_habit_ids = [
-            habit_id
-            for habit_id, created_date, schedule in user_habits
-            if created_date <= day_string
-            and is_habit_scheduled_for_date(schedule, week_day)
-        ]
-        goal = len(scheduled_habit_ids)
-        completed = sum(
-            1
-            for habit_id in scheduled_habit_ids
-            if (habit_id, day_string) in completion_records
-        )
-=======
-        cursor.execute(
-            """
-            SELECT COUNT(*)
-            FROM habit_completions
-            WHERE user_id = ? AND completion_date = ?
-            """,
-            (session["user_id"], day_string)
-        )
-        completed = cursor.fetchone()[0]
-
-        cursor.execute(
-            """
-            SELECT COUNT(*)
-            FROM habits
-            WHERE user_id = ? AND created_date <= ?
-            """,
-            (session["user_id"], day_string)
-        )
-        goal = cursor.fetchone()[0]
->>>>>>> 7cb3bc2 (feat: add templates (contact/profile_custom/stats_custom/reward), modal messaging, messages table and routes)
 
         if goal > 0:
             active_days += 1
@@ -1229,8 +1179,6 @@ def profile():
         completed_habits=completed_habits,
         goals=goals
     )
-<<<<<<< HEAD
-=======
 
 
 @app.route("/edit_profile", methods=["GET", "POST"])
@@ -1265,7 +1213,7 @@ def edit_profile():
         session["user_email"] = email
 
         flash("Profile updated.")
-        return redirect(url_for("profile_custom"))
+        return redirect(url_for("profile"))
 
     cursor.execute(
         "SELECT name, email FROM users WHERE id = ?",
@@ -1331,140 +1279,14 @@ def contact():
 
 @app.route("/profile_custom")
 def profile_custom():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    conn = sqlite3.connect("habit_tracker.db")
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT name, email FROM users WHERE id = ?",
-        (session["user_id"],)
-    )
-    user = cursor.fetchone()
-
-    cursor.execute(
-        "SELECT COUNT(*) FROM habits WHERE user_id = ?",
-        (session["user_id"],)
-    )
-    total_habits = cursor.fetchone()[0]
-
-    cursor.execute(
-        "SELECT COUNT(*) FROM habit_completions WHERE user_id = ?",
-        (session["user_id"],)
-    )
-    completed_habits = cursor.fetchone()[0]
-
-    cursor.execute(
-        "SELECT habit_name FROM habits WHERE user_id = ? ORDER BY created_date DESC, id DESC LIMIT 4",
-        (session["user_id"],)
-    )
-    goals = [row[0] for row in cursor.fetchall()]
-
-    conn.close()
-
-    return render_template(
-        "profile_custom.html",
-        user=user,
-        total_habits=total_habits,
-        completed_habits=completed_habits,
-        goals=goals
-    )
+    # Legacy route: redirect to canonical profile route
+    return redirect(url_for("profile"), code=302)
 
 
 @app.route("/stats_custom")
 def stats_custom():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    today = date.today()
-    week_dates = [today - timedelta(days=offset) for offset in range(6, -1, -1)]
-
-    conn = sqlite3.connect("habit_tracker.db")
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT COUNT(*) FROM habit_completions WHERE user_id = ?",
-        (session["user_id"],)
-    )
-    total_completed = cursor.fetchone()[0]
-
-    cursor.execute(
-        "SELECT COUNT(*) FROM habits WHERE user_id = ?",
-        (session["user_id"],)
-    )
-    total_habits = cursor.fetchone()[0]
-
-    weekly_progress = []
-    active_days = 0
-
-    for week_day in week_dates:
-        day_string = week_day.isoformat()
-
-        cursor.execute(
-            "SELECT COUNT(*) FROM habit_completions WHERE user_id = ? AND completion_date = ?",
-            (session["user_id"], day_string)
-        )
-        completed = cursor.fetchone()[0]
-
-        cursor.execute(
-            "SELECT COUNT(*) FROM habits WHERE user_id = ? AND created_date <= ?",
-            (session["user_id"], day_string)
-        )
-        goal = cursor.fetchone()[0]
-
-        if goal > 0:
-            active_days += 1
-
-        percentage = 0 if goal == 0 else int((completed / goal) * 100)
-
-        weekly_progress.append({
-            "label": week_day.strftime("%a"),
-            "completed": completed,
-            "goal": goal,
-            "percentage": percentage
-        })
-
-    average_progress = 0
-    if active_days > 0:
-        average_progress = int(sum(day["percentage"] for day in weekly_progress) / active_days)
-
-    best_day = {"label": "No data", "completed": 0, "goal": 0}
-    if weekly_progress:
-        best_day = max(weekly_progress, key=lambda item: (item["percentage"], item["completed"]))
-
-    # Compute current streak (reuse logic from /stats)
-    cursor.execute(
-        """
-        SELECT completion_date
-        FROM habit_completions
-        WHERE user_id = ?
-        GROUP BY completion_date
-        ORDER BY completion_date DESC
-        """,
-        (session["user_id"],)
-    )
-    completion_days = [row[0] for row in cursor.fetchall()]
-
-    current_streak = 0
-    streak_cursor = today
-    completion_set = set(completion_days)
-
-    while streak_cursor.isoformat() in completion_set:
-        current_streak += 1
-        streak_cursor -= timedelta(days=1)
-
-    conn.close()
-
-    return render_template(
-        "stats_custom.html",
-        total_completed=total_completed,
-        current_streak=current_streak,
-        average_progress=average_progress,
-        total_habits=total_habits,
-        weekly_progress=weekly_progress,
-        best_day=best_day
-    )
+    # Legacy route: redirect to canonical stats route
+    return redirect(url_for("stats"), code=302)
 
 
 @app.route("/reward")
@@ -1513,7 +1335,7 @@ def claim_reward():
         flash(f"Not enough points for {tier} reward. Need {required} points.")
 
     return redirect(url_for("reward"))
->>>>>>> 7cb3bc2 (feat: add templates (contact/profile_custom/stats_custom/reward), modal messaging, messages table and routes)
+
 
 @app.route("/habit/<int:habit_id>")
 def habit_detail(habit_id):

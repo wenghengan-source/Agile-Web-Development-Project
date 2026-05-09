@@ -75,11 +75,12 @@ def test_stats_custom_streak(app_client):
     conn.commit()
     conn.close()
 
-    resp = client.get('/stats_custom')
+    resp = client.get('/stats_custom', follow_redirects=True)
     text = resp.get_data(as_text=True)
     assert resp.status_code == 200
-    assert 'Current streak' in text
-    assert '<strong>2</strong>' in text
+    # old custom page showed 'Current streak' with <strong> markup; canonical /stats shows 'Streak momentum'
+    assert 'Streak momentum' in text
+    assert 'Streak momentum: 2' in text
 
 
 def test_contact_prefill_and_message_saved(app_client):
