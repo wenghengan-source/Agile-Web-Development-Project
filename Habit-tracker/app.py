@@ -9,6 +9,16 @@ app = Flask(__name__)
 app.secret_key = "habit_tracker_secret_key"
 
 WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+# Dashboard analytics rules are defined centrally so every future card
+# and ranking uses the same thresholds and time windows.
+DASHBOARD_ANALYTICS_WINDOW_DAYS = 7
+DASHBOARD_TOP_HABIT_MIN_SCHEDULED_DAYS = 2
+DASHBOARD_TOP_CATEGORY_MIN_SCHEDULED_DAYS = 2
+DASHBOARD_AT_RISK_RATE_THRESHOLD = 60
+DASHBOARD_STREAK_COOLDOWN_MIN_BEST_STREAK = 3
+
+
 def ensure_column_exists(cursor, table_name, column_name, column_definition):
     cursor.execute(f"PRAGMA table_info({table_name})")
     existing_columns = [column[1] for column in cursor.fetchall()]
@@ -60,6 +70,22 @@ def parse_optional_date(date_value, fallback_date):
         return fallback_date
 
 
+def get_trailing_dates(reference_date, length, trailing_offset=0):
+    """Return ascending dates for a trailing window ending before offset days."""
+    return [
+        reference_date - timedelta(days=offset)
+        for offset in range(length + trailing_offset - 1, trailing_offset - 1, -1)
+    ]
+
+
+def get_week_dates_sunday_first(reference_date, week_offset=0):
+    """Return one calendar week in Sun-Sat order for the reference date."""
+    days_since_sunday = (reference_date.weekday() + 1) % 7
+    week_start = reference_date - timedelta(days=days_since_sunday)
+    week_start -= timedelta(days=week_offset * 7)
+    return [week_start + timedelta(days=offset) for offset in range(7)]
+
+
 def calculate_habit_streak(
     schedule_value,
     created_date,
@@ -91,6 +117,438 @@ def calculate_habit_streak(
         streak_date -= timedelta(days=1)
 
     return streak
+
+
+def calculate_completion_day_streak(completion_dates, reference_date=None):
+    """Count consecutive calendar days with at least one habit completion."""
+    if reference_date is None:
+        reference_date = date.today()
+
+    completion_set = set(completion_dates)
+    streak = 0
+    streak_date = reference_date
+
+    while streak_date.isoformat() in completion_set:
+        streak += 1
+        streak_date -= timedelta(days=1)
+
+    return streak
+
+
+def calculate_longest_completion_day_streak(completion_dates):
+    """Track the best consecutive completion-day streak across all habits."""
+    if not completion_dates:
+        return 0
+
+    completion_days = sorted({
+        date.fromisoformat(completion_date)
+        for completion_date in completion_dates
+    })
+
+    longest_streak = 1
+    current_streak = 1
+
+    for index in range(1, len(completion_days)):
+        if completion_days[index] - completion_days[index - 1] == timedelta(days=1):
+            current_streak += 1
+            longest_streak = max(longest_streak, current_streak)
+        else:
+            current_streak = 1
+
+    return longest_streak
+
+
+def calculate_longest_habit_streak(
+    schedule_value,
+    created_date,
+    completion_dates,
+    reference_date=None
+):
+    """Track the best scheduled completion streak achieved by one habit."""
+    if reference_date is None:
+        reference_date = date.today()
+
+    if isinstance(created_date, str):
+        created_date = date.fromisoformat(created_date)
+
+    if reference_date < created_date:
+        return 0
+
+    completion_set = set(completion_dates)
+    longest_streak = 0
+    current_streak = 0
+    streak_date = created_date
+
+    while streak_date <= reference_date:
+        if is_habit_scheduled_for_date(schedule_value, streak_date):
+            if streak_date.isoformat() in completion_set:
+                current_streak += 1
+                longest_streak = max(longest_streak, current_streak)
+            else:
+                current_streak = 0
+
+        streak_date += timedelta(days=1)
+
+    return longest_streak
+
+
+def summarize_scheduled_progress(
+    habits,
+    completion_records,
+    target_dates,
+    available_through_date=None
+):
+    """Average daily completion % across days with scheduled habits only."""
+    progress = []
+    active_days = 0
+
+    for target_date in target_dates:
+        if (
+            available_through_date is not None
+            and target_date > available_through_date
+        ):
+            progress.append({
+                "label": target_date.strftime("%a"),
+                "completed": 0,
+                "goal": 0,
+                "percentage": 0,
+                "is_future": True
+            })
+            continue
+
+        day_string = target_date.isoformat()
+        scheduled_habit_ids = [
+            habit_id
+            for habit_id, created_date, schedule in habits
+            if created_date <= day_string
+            and is_habit_scheduled_for_date(schedule, target_date)
+        ]
+        goal = len(scheduled_habit_ids)
+        completed = sum(
+            1
+            for habit_id in scheduled_habit_ids
+            if (habit_id, day_string) in completion_records
+        )
+
+        if goal > 0:
+            active_days += 1
+
+        progress.append({
+            "label": target_date.strftime("%a"),
+            "completed": completed,
+            "goal": goal,
+            "percentage": 0 if goal == 0 else int((completed / goal) * 100),
+            "is_future": False
+        })
+
+    average_progress = 0
+    if active_days > 0:
+        average_progress = int(
+            sum(day["percentage"] for day in progress) / active_days
+        )
+
+    return progress, average_progress, active_days
+
+
+def summarize_week_over_week_change(
+    current_average,
+    previous_average,
+    current_active_days,
+    previous_active_days
+):
+    """Describe weekly movement using the same scheduled-day completion rule."""
+    if current_active_days == 0:
+        return "No scheduled check-ins yet this week."
+
+    if previous_active_days == 0:
+        return "This is the first week with enough scheduled data to compare."
+
+    delta = current_average - previous_average
+    if delta > 0:
+        return f"Up {delta} points from last week"
+
+    if delta < 0:
+        return f"Down {abs(delta)} points from last week"
+
+    return "Steady with last week"
+
+
+def should_rank_dashboard_habit(scheduled_days):
+    """Only rank habits with enough scheduled check-ins to compare fairly."""
+    return scheduled_days >= DASHBOARD_TOP_HABIT_MIN_SCHEDULED_DAYS
+
+
+def should_rank_dashboard_category(scheduled_days):
+    """Only rank categories once they have enough scheduled habit volume."""
+    return scheduled_days >= DASHBOARD_TOP_CATEGORY_MIN_SCHEDULED_DAYS
+
+
+def select_top_dashboard_habit(habit_summaries):
+    """Pick the top habit using the dashboard's fair ranking rules."""
+    eligible_habits = [
+        habit for habit in habit_summaries
+        if habit["rank_eligible"]
+    ]
+
+    if not eligible_habits:
+        return {
+            "has_data": False,
+            "name": "Ranking unlocks soon",
+            "summary": (
+                "Habits need at least "
+                f"{DASHBOARD_TOP_HABIT_MIN_SCHEDULED_DAYS} scheduled check-ins "
+                "this week before this card can rank them fairly."
+            ),
+            "detail": "Once a habit has a fuller week, the leader will appear here."
+        }
+
+    top_habit = sorted(
+        eligible_habits,
+        key=lambda habit: (
+            -habit["weekly_rate"],
+            -habit["current_streak"],
+            -habit["scheduled_days"],
+            -habit["completed_days"],
+            habit["name"].lower()
+        )
+    )[0]
+
+    return {
+        "has_data": True,
+        "name": top_habit["name"],
+        "summary": (
+            f"{top_habit['weekly_rate']}% this week "
+            f"({top_habit['completed_days']}/{top_habit['scheduled_days']})"
+        ),
+        "detail": (
+            f"{top_habit['current_streak']}-day current streak in "
+            f"{top_habit['category']}"
+        )
+    }
+
+
+def summarize_dashboard_risk(habit_summaries):
+    """Summarize how many habits currently need attention on the dashboard."""
+    risk_counts = {
+        "due_today": 0,
+        "below_pace": 0,
+        "cooling_off": 0
+    }
+
+    for habit in habit_summaries:
+        risk_code = habit["risk_code"]
+        if risk_code in risk_counts:
+            risk_counts[risk_code] += 1
+
+    total_flagged = sum(risk_counts.values())
+    if total_flagged == 0:
+        return {
+            "count": 0,
+            "summary": "Everything is on track",
+            "detail": "Nothing is due, behind pace, or losing momentum right now."
+        }
+
+    if risk_counts["due_today"] > 0:
+        summary = f"{risk_counts['due_today']} due today"
+    elif risk_counts["below_pace"] > 0:
+        summary = f"{risk_counts['below_pace']} below pace"
+    else:
+        summary = f"{risk_counts['cooling_off']} cooling off"
+
+    detail_parts = []
+    if risk_counts["due_today"] > 0:
+        detail_parts.append(f"{risk_counts['due_today']} due today")
+    if risk_counts["below_pace"] > 0:
+        detail_parts.append(f"{risk_counts['below_pace']} below pace")
+    if risk_counts["cooling_off"] > 0:
+        detail_parts.append(f"{risk_counts['cooling_off']} cooling off")
+
+    return {
+        "count": total_flagged,
+        "summary": summary,
+        "detail": ", ".join(detail_parts)
+    }
+
+
+def build_streak_progress_summary(
+    current_streak,
+    personal_best_streak,
+    habit_summaries,
+    weekly_average,
+    weekly_change_summary
+):
+    """Create a dashboard-friendly streak progress summary."""
+    milestones = [3, 7, 14, 21, 30]
+    next_goal = milestones[-1]
+    for milestone in milestones:
+        if current_streak < milestone:
+            next_goal = milestone
+            break
+    else:
+        extra_weeks = max(1, ((current_streak - milestones[-1]) // 7) + 1)
+        next_goal = milestones[-1] + (extra_weeks * 7)
+
+    progress_percentage = 0
+    if next_goal > 0:
+        progress_percentage = min(100, int((current_streak / next_goal) * 100))
+
+    carrying_habit = {
+        "name": "No habit is carrying it yet",
+        "current_streak": 0,
+        "category": "Build a run first"
+    }
+    if habit_summaries:
+        carrying_habit = max(
+            habit_summaries,
+            key=lambda habit: (
+                habit["current_streak"],
+                habit["best_streak"],
+                habit["weekly_rate"],
+                habit["name"].lower()
+            )
+        )
+        if carrying_habit["current_streak"] <= 0:
+            carrying_habit = {
+                "name": "No habit is carrying it yet",
+                "current_streak": 0,
+                "category": "Build a run first"
+            }
+
+    personal_best_streak = max(personal_best_streak, current_streak)
+    if personal_best_streak <= current_streak:
+        days_to_personal_best = 0
+        personal_best_label = "Personal best matched"
+        personal_best_detail = (
+            "This run is already matching your best streak so far."
+            if current_streak > 0 else
+            "Complete a habit streak to set your first personal best."
+        )
+    else:
+        days_to_personal_best = personal_best_streak - current_streak
+        personal_best_label = "Days to personal best"
+        personal_best_detail = (
+            f"{days_to_personal_best} more day"
+            f"{'' if days_to_personal_best == 1 else 's'} to match {personal_best_streak}."
+        )
+
+    if current_streak <= 0:
+        headline = "Start a new streak"
+        detail = "Complete today's habits to start building momentum again."
+    else:
+        headline = "Momentum is building"
+        detail = (
+            f"Stay with it and push toward your {next_goal}-day milestone."
+        )
+
+    return {
+        "current": current_streak,
+        "next_goal": next_goal,
+        "progress_percentage": progress_percentage,
+        "headline": headline,
+        "detail": detail,
+        "current_label": (
+            f"{current_streak} day streak"
+            if current_streak > 0 else
+            "No streak yet"
+        ),
+        "next_milestone_label": f"{next_goal}-day milestone",
+        "personal_best": personal_best_streak,
+        "days_to_personal_best": days_to_personal_best,
+        "personal_best_label": personal_best_label,
+        "personal_best_detail": personal_best_detail,
+        "carrying_habit_name": carrying_habit["name"],
+        "carrying_habit_detail": (
+            f"{carrying_habit['current_streak']}-day streak in {carrying_habit['category']}"
+            if carrying_habit["current_streak"] > 0 else
+            "Complete a few habits in a row and one will lead here."
+        ),
+        "weekly_completion_value": weekly_average,
+        "weekly_completion_trend": weekly_change_summary
+    }
+
+
+def build_dashboard_focus_items(habit_summaries):
+    """Select the most actionable habits to surface in the dashboard focus panel."""
+    risk_priority = {
+        "due_today": 0,
+        "below_pace": 1,
+        "cooling_off": 2
+    }
+    reason_labels = {
+        "due_today": "Due today",
+        "below_pace": "Below pace",
+        "cooling_off": "Cooling off"
+    }
+
+    focus_candidates = []
+    for habit in habit_summaries:
+        risk_code = habit["risk_code"]
+        if risk_code not in risk_priority:
+            continue
+
+        detail = ""
+        if risk_code == "due_today":
+            detail = (
+                f"{habit['completed_days']}/{habit['scheduled_days']} completed "
+                f"this week in {habit['category']}."
+            )
+        elif risk_code == "below_pace":
+            detail = (
+                f"{habit['weekly_rate']}% this week "
+                f"({habit['completed_days']}/{habit['scheduled_days']}) in "
+                f"{habit['category']}."
+            )
+        else:
+            detail = (
+                f"Best streak {habit['best_streak']} days, current streak "
+                f"{habit['current_streak']} in {habit['category']}."
+            )
+
+        focus_candidates.append({
+            "id": habit["id"],
+            "name": habit["name"],
+            "reason": reason_labels[risk_code],
+            "detail": detail,
+            "risk_code": risk_code,
+            "priority": risk_priority[risk_code],
+            "weekly_rate": habit["weekly_rate"],
+            "current_streak": habit["current_streak"]
+        })
+
+    return sorted(
+        focus_candidates,
+        key=lambda habit: (
+            habit["priority"],
+            habit["weekly_rate"],
+            habit["current_streak"],
+            habit["name"].lower()
+        )
+    )[:3]
+
+
+def classify_dashboard_habit_risk(
+    *,
+    scheduled_today,
+    completed_today,
+    weekly_rate,
+    current_streak,
+    best_streak
+):
+    """Flag habits that are due today, below pace, or losing momentum."""
+    if scheduled_today and not completed_today:
+        return "due_today"
+
+    if weekly_rate < DASHBOARD_AT_RISK_RATE_THRESHOLD:
+        return "below_pace"
+
+    if (
+        best_streak >= DASHBOARD_STREAK_COOLDOWN_MIN_BEST_STREAK
+        and current_streak == 0
+        and not completed_today
+    ):
+        return "cooling_off"
+
+    return None
 
 
 def recalculate_habit_streak(cursor, habit_id, user_id, reference_date=None):
@@ -200,6 +658,202 @@ def get_active_habits_for_user(user_id, target_date):
         habit for habit in get_habits_for_user_with_today_status(user_id, target_date)
         if is_habit_scheduled_for_date(habit[10], target_date)
     ]
+
+
+def build_progress_snapshot(user_id, reference_date=None):
+    """Build one dashboard analytics payload for all future progress widgets."""
+    if reference_date is None:
+        reference_date = date.today()
+
+    today_string = reference_date.isoformat()
+    week_dates = get_week_dates_sunday_first(reference_date)
+    previous_week_dates = get_week_dates_sunday_first(reference_date, week_offset=1)
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        SELECT id, habit_name, category, created_date, schedule
+        FROM habits
+        WHERE user_id = ?
+        ORDER BY habit_name COLLATE NOCASE
+        """,
+        (user_id,)
+    )
+    habit_rows = cursor.fetchall()
+
+    cursor.execute(
+        """
+        SELECT habit_id, completion_date
+        FROM habit_completions
+        WHERE user_id = ?
+        """,
+        (user_id,)
+    )
+    completion_rows = cursor.fetchall()
+    conn.close()
+
+    completion_records = set(completion_rows)
+    completion_days = {completion_date for _, completion_date in completion_rows}
+    completion_map = {}
+    for habit_id, completion_date in completion_rows:
+        completion_map.setdefault(habit_id, set()).add(completion_date)
+
+    progress_habits = [
+        (habit_id, created_date, schedule)
+        for habit_id, _, _, created_date, schedule in habit_rows
+    ]
+
+    weekly_progress, weekly_average, active_days = summarize_scheduled_progress(
+        progress_habits,
+        completion_records,
+        week_dates,
+        available_through_date=reference_date
+    )
+    _, previous_week_average, previous_active_days = summarize_scheduled_progress(
+        progress_habits,
+        completion_records,
+        previous_week_dates,
+        available_through_date=previous_week_dates[-1]
+    )
+
+    habit_summaries = []
+    category_totals = {}
+
+    for habit_id, habit_name, category, created_date, schedule in habit_rows:
+        completion_dates = completion_map.get(habit_id, set())
+        current_streak = calculate_habit_streak(
+            schedule,
+            created_date,
+            completion_dates,
+            reference_date
+        )
+        best_streak = calculate_longest_habit_streak(
+            schedule,
+            created_date,
+            completion_dates,
+            reference_date
+        )
+
+        scheduled_days = 0
+        completed_days = 0
+        for week_day in week_dates:
+            if week_day > reference_date:
+                continue
+
+            day_string = week_day.isoformat()
+            if created_date > day_string:
+                continue
+
+            if not is_habit_scheduled_for_date(schedule, week_day):
+                continue
+
+            scheduled_days += 1
+            if (habit_id, day_string) in completion_records:
+                completed_days += 1
+
+        weekly_rate = 0 if scheduled_days == 0 else int(
+            (completed_days / scheduled_days) * 100
+        )
+        scheduled_today = (
+            created_date <= today_string
+            and is_habit_scheduled_for_date(schedule, reference_date)
+        )
+        completed_today = (habit_id, today_string) in completion_records
+        risk_code = None
+        if scheduled_days > 0 or scheduled_today:
+            risk_code = classify_dashboard_habit_risk(
+                scheduled_today=scheduled_today,
+                completed_today=completed_today,
+                weekly_rate=weekly_rate,
+                current_streak=current_streak,
+                best_streak=best_streak
+            )
+
+        habit_category = category or "Uncategorized"
+        habit_summary = {
+            "id": habit_id,
+            "name": habit_name,
+            "category": habit_category,
+            "scheduled_days": scheduled_days,
+            "completed_days": completed_days,
+            "weekly_rate": weekly_rate,
+            "current_streak": current_streak,
+            "best_streak": best_streak,
+            "scheduled_today": scheduled_today,
+            "completed_today": completed_today,
+            "risk_code": risk_code,
+            "rank_eligible": should_rank_dashboard_habit(scheduled_days)
+        }
+        habit_summaries.append(habit_summary)
+
+        category_totals.setdefault(
+            habit_category,
+            {"completed_days": 0, "scheduled_days": 0}
+        )
+        category_totals[habit_category]["completed_days"] += completed_days
+        category_totals[habit_category]["scheduled_days"] += scheduled_days
+
+    category_summaries = []
+    for category_name, totals in sorted(category_totals.items()):
+        scheduled_days = totals["scheduled_days"]
+        completed_days = totals["completed_days"]
+        weekly_rate = 0 if scheduled_days == 0 else int(
+            (completed_days / scheduled_days) * 100
+        )
+        category_summaries.append({
+            "name": category_name,
+            "scheduled_days": scheduled_days,
+            "completed_days": completed_days,
+            "weekly_rate": weekly_rate,
+            "rank_eligible": should_rank_dashboard_category(scheduled_days)
+        })
+
+    best_day = {"label": "No data", "completed": 0, "goal": 0}
+    completed_week_days = [day for day in weekly_progress if not day["is_future"]]
+    if completed_week_days:
+        best_day = max(
+            completed_week_days,
+            key=lambda item: (item["percentage"], item["completed"])
+        )
+
+    completion_day_streak = calculate_completion_day_streak(
+        completion_days,
+        reference_date
+    )
+    personal_best_streak = calculate_longest_completion_day_streak(
+        completion_days
+    )
+    weekly_change_summary = summarize_week_over_week_change(
+        weekly_average,
+        previous_week_average,
+        active_days,
+        previous_active_days
+    )
+
+    return {
+        "reference_date": today_string,
+        "weekly_progress": weekly_progress,
+        "weekly_average": weekly_average,
+        "previous_week_average": previous_week_average,
+        "weekly_change_summary": weekly_change_summary,
+        "current_streak": completion_day_streak,
+        "has_scheduled_data": active_days > 0,
+        "best_day": best_day,
+        "at_risk": summarize_dashboard_risk(habit_summaries),
+        "focus_items": build_dashboard_focus_items(habit_summaries),
+        "top_habit": select_top_dashboard_habit(habit_summaries),
+        "streak_summary": build_streak_progress_summary(
+            completion_day_streak,
+            personal_best_streak,
+            habit_summaries,
+            weekly_average,
+            weekly_change_summary
+        ),
+        "habit_summaries": habit_summaries,
+        "category_summaries": category_summaries
+    }
 
 
 def init_db():
@@ -341,6 +995,7 @@ def dashboard():
 
     today_date = date.today()
     today = today_date.isoformat()
+    progress_snapshot = build_progress_snapshot(session["user_id"], today_date)
 
     quotes = [
         "Small progress is still progress.",
@@ -354,7 +1009,6 @@ def dashboard():
 
     total = len(habits)
     completed = len([h for h in habits if h[7] == "Completed"])
-    percentage = int((completed / total) * 100) if total > 0 else 0
     reminders = [h for h in habits if h[7] == "Not Completed"]
     preview_habits = habits[:3]
 
@@ -405,7 +1059,6 @@ def dashboard():
         habits=habits,
         total=total,
         completed=completed,
-        percentage=percentage,
         reminders=reminders,
         preview_habits=preview_habits,
         quote=random.choice(quotes),
@@ -413,7 +1066,8 @@ def dashboard():
         health_profile=health_profile,
         bmi=bmi,
         today_steps=today_steps,
-        today_videos=today_videos
+        today_videos=today_videos,
+        progress_snapshot=progress_snapshot
     )
 
 
@@ -1013,8 +1667,7 @@ def stats():
         return redirect(url_for("login"))
 
     today = date.today()
-    week_dates = [today - timedelta(days=offset) for offset in range(6, -1, -1)]
-    week_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    week_dates = get_trailing_dates(today, DASHBOARD_ANALYTICS_WINDOW_DAYS)
 
     conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
@@ -1047,40 +1700,11 @@ def stats():
     )
     completion_records = set(cursor.fetchall())
 
-    weekly_progress = []
-    active_days = 0
-
-    for week_day in week_dates:
-        day_string = week_day.isoformat()
-
-        scheduled_habit_ids = [
-            habit_id
-            for habit_id, created_date, schedule in user_habits
-            if created_date <= day_string
-            and is_habit_scheduled_for_date(schedule, week_day)
-        ]
-        goal = len(scheduled_habit_ids)
-        completed = sum(
-            1
-            for habit_id in scheduled_habit_ids
-            if (habit_id, day_string) in completion_records
-        )
-
-        if goal > 0:
-            active_days += 1
-
-        weekly_progress.append({
-            "label": week_labels[week_day.weekday()],
-            "completed": completed,
-            "goal": goal,
-            "percentage": 0 if goal == 0 else int((completed / goal) * 100)
-        })
-
-    average_progress = 0
-    if active_days > 0:
-        average_progress = int(
-            sum(day["percentage"] for day in weekly_progress) / active_days
-        )
+    weekly_progress, average_progress, _ = summarize_scheduled_progress(
+        user_habits,
+        completion_records,
+        week_dates
+    )
 
     cursor.execute(
         """
@@ -1094,13 +1718,7 @@ def stats():
     )
     completion_days = [row[0] for row in cursor.fetchall()]
 
-    current_streak = 0
-    streak_cursor = today
-    completion_set = set(completion_days)
-
-    while streak_cursor.isoformat() in completion_set:
-        current_streak += 1
-        streak_cursor -= timedelta(days=1)
+    current_streak = calculate_completion_day_streak(completion_days, today)
 
     best_day = {"label": "No data", "completed": 0, "goal": 0}
     if weekly_progress:
