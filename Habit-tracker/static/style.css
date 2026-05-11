@@ -1623,6 +1623,16 @@ h1, h2, h3, h4, h5 {
     gap: 14px;
 }
 
+.leaderboard-feedback-banner {
+    margin-top: 20px;
+    background: #f8fafc;
+    border: 1px solid #dbe4f0;
+    color: #475569;
+    border-radius: 18px;
+    padding: 14px 18px;
+    font-weight: 600;
+}
+
 .leaderboard-item {
     background: #f8fafc;
     border-radius: 20px;
@@ -1643,6 +1653,11 @@ h1, h2, h3, h4, h5 {
     border: 2px solid #facc15;
 }
 
+.leaderboard-item-private {
+    background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+    border: 1px dashed #cbd5e1;
+}
+
 .leaderboard-rank {
     font-size: 28px;
     font-weight: 900;
@@ -1660,6 +1675,19 @@ h1, h2, h3, h4, h5 {
     font-weight: 900;
 }
 
+.leaderboard-self-tag {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #dbeafe;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 800;
+    vertical-align: middle;
+}
+
 .leaderboard-user p {
     margin: 0;
     color: #6b7280;
@@ -1670,6 +1698,13 @@ h1, h2, h3, h4, h5 {
     font-weight: 900;
     color: #16a34a;
     text-align: right;
+}
+
+.leaderboard-score-hidden {
+    font-size: 15px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
 }
 
 @media (max-width: 768px) {
@@ -2062,6 +2097,61 @@ h1, h2, h3, h4, h5 {
     text-align: center;
 }
 
+.privacy-option-group {
+    display: grid;
+    gap: 14px;
+}
+
+.privacy-explainer {
+    background: #f8fafc;
+    border: 1px solid #dbe4f0;
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 18px;
+}
+
+.privacy-status-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 800;
+    margin-bottom: 12px;
+}
+
+.privacy-status-public {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.privacy-status-private {
+    background: #e0e7ff;
+    color: #4338ca;
+}
+
+.privacy-option-card {
+    background: #f8fafc;
+    border: 1px solid #dbe4f0;
+    border-radius: 18px;
+    padding: 18px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    cursor: pointer;
+}
+
+.privacy-option-card input[type="radio"] {
+    margin-top: 5px;
+    transform: scale(1.15);
+}
+
+.privacy-option-card strong {
+    display: block;
+    color: #111827;
+    margin-bottom: 6px;
+}
+
 .profile-progress-box h4 {
     font-size: 36px;
     font-weight: 900;
@@ -2087,6 +2177,11 @@ h1, h2, h3, h4, h5 {
     .profile-grid,
     .profile-progress-box {
         grid-template-columns: 1fr;
+    }
+
+    .privacy-option-card {
+        flex-direction: column;
+        align-items: flex-start;
     }
 
     .profile-info-row {
