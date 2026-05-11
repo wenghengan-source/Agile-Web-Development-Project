@@ -14,10 +14,12 @@ START_DATE = TODAY - timedelta(days=6)
 PRIMARY_USER = {
     "name": "Streak Demo",
     "email": "streak.demo@example.com",
+    "share_progress_with_friends": 1,
 }
 FRIEND_USER = {
     "name": "Support Friend",
     "email": "streak.friend@example.com",
+    "share_progress_with_friends": 0,
 }
 DEMO_EMAILS = [PRIMARY_USER["email"], FRIEND_USER["email"]]
 
@@ -90,7 +92,10 @@ def create_user(cursor, user):
             user["name"],
             user["email"],
             DEMO_PASSWORD,
-            habit_app.DEFAULT_SHARE_PROGRESS_WITH_FRIENDS,
+            user.get(
+                "share_progress_with_friends",
+                habit_app.DEFAULT_SHARE_PROGRESS_WITH_FRIENDS
+            ),
         ),
     )
     return cursor.lastrowid
@@ -323,6 +328,10 @@ def main():
     )
     print(
         f"Friend login: {FRIEND_USER['email']} / {DEMO_PASSWORD}"
+    )
+    print(
+        "Privacy states: "
+        "Streak Demo = visible, Support Friend = hidden"
     )
     print(
         f"Primary user habits: {len(primary_habits)}, friend habits: {len(friend_habits)}"
