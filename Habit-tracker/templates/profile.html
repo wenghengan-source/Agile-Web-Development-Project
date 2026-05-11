@@ -95,8 +95,22 @@
     <div class="profile-card mt-4">
         <h3>Privacy Settings</h3>
         <p class="text-muted">
-            Choose whether your daily habit progress is visible to friends on the leaderboard.
+            Control whether friends can see your daily habit progress on the leaderboard.
         </p>
+
+        <div class="privacy-explainer">
+            <div class="privacy-status-chip {% if share_progress_with_friends == 1 %}privacy-status-public{% else %}privacy-status-private{% endif %}">
+                {% if share_progress_with_friends == 1 %}
+                    Progress visible to friends
+                {% else %}
+                    Progress hidden from friends
+                {% endif %}
+            </div>
+
+            <p class="mb-0">
+                This setting only affects the Friends leaderboard. Your friends list stays the same, and you can still see your own progress normally.
+            </p>
+        </div>
 
         <form method="POST" action="/update_privacy">
             <div class="privacy-option-group">
@@ -127,7 +141,7 @@
                     <div>
                         <strong>Hide my progress from friends</strong>
                         <p class="mb-0 text-muted">
-                            Friends can still see you in their friends list, but your progress stays private.
+                            Friends can still see you in their friends list, but your daily progress stays private.
                         </p>
                     </div>
                 </label>

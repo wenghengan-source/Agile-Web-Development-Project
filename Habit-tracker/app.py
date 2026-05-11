@@ -1688,13 +1688,18 @@ def friends():
             user["name"].lower()
         )
     )
+    hidden_friend_count = len([
+        user for user in leaderboard
+        if not user["is_current_user"] and not user["can_show_progress"]
+    ])
 
     conn.close()
 
     return render_template(
         "friends.html",
         friend_list=friend_list,
-        leaderboard=leaderboard
+        leaderboard=leaderboard,
+        hidden_friend_count=hidden_friend_count
     )
 
 

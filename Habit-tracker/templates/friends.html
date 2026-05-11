@@ -122,10 +122,16 @@
             </div>
         </div>
 
+        {% if hidden_friend_count > 0 %}
+            <div class="leaderboard-feedback-banner">
+                {{ hidden_friend_count }} friend{% if hidden_friend_count != 1 %}s{% endif %} hidden their daily progress. They still appear here, but their totals stay private.
+            </div>
+        {% endif %}
+
         {% if leaderboard %}
             <div class="leaderboard-list mt-4">
                 {% for user in leaderboard %}
-                    <div class="leaderboard-item {% if loop.index == 1 and user.can_show_progress %}top-rank{% endif %}">
+                    <div class="leaderboard-item {% if loop.index == 1 and user.can_show_progress %}top-rank{% endif %} {% if not user.can_show_progress %}leaderboard-item-private{% endif %}">
                         <div class="leaderboard-rank">
                             {% if user.can_show_progress and loop.index == 1 %}
                                 #1
@@ -154,7 +160,7 @@
                                 {% if user.can_show_progress %}
                                     <p>{{ user.count }} completed habits today</p>
                                 {% else %}
-                                    <p>Progress hidden</p>
+                                    <p>Daily progress is hidden for privacy.</p>
                                 {% endif %}
                             </div>
                         </div>
