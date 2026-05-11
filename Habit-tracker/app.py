@@ -1648,13 +1648,24 @@ def friends():
     leaderboard = []
 
     for uid in user_ids:
-        cursor.execute("SELECT name FROM users WHERE id = ?", (uid,))
+        cursor.execute(
+            """
+            SELECT name, share_progress_with_friends
+            FROM users
+            WHERE id = ?
+            """,
+            (uid,)
+        )
         user_row = cursor.fetchone()
 
         if user_row is None:
             continue
 
         user_name = user_row[0]
+        can_show_progress = (
+            uid == session["user_id"]
+            or normalize_progress_visibility(user_row[1]) == 1
+        )
 
         cursor.execute("""
             SELECT COUNT(*)
@@ -1663,9 +1674,20 @@ def friends():
         """, (uid, today))
 
         count = cursor.fetchone()[0]
-        leaderboard.append((user_name, count))
+        leaderboard.append({
+            "name": user_name,
+            "count": count,
+            "can_show_progress": can_show_progress,
+            "is_current_user": uid == session["user_id"]
+        })
 
-    leaderboard.sort(key=lambda x: x[1], reverse=True)
+    leaderboard.sort(
+        key=lambda user: (
+            0 if user["can_show_progress"] else 1,
+            -user["count"] if user["can_show_progress"] else 0,
+            user["name"].lower()
+        )
+    )
 
     conn.close()
 
