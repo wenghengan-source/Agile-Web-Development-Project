@@ -63,6 +63,77 @@ def update_user_progress_visibility(cursor, user_id, is_visible):
     )
 
 
+def get_friends_for_user(cursor, user_id):
+    cursor.execute(
+        """
+        SELECT u.id, u.name, u.email
+        FROM friends f
+        JOIN users u ON f.friend_id = u.id
+        WHERE f.user_id = ?
+        """,
+        (user_id,)
+    )
+    return cursor.fetchall()
+
+
+def build_friend_leaderboard(cursor, current_user_id, target_date):
+    friend_list = get_friends_for_user(cursor, current_user_id)
+    user_ids = [current_user_id] + [friend[0] for friend in friend_list]
+    leaderboard = []
+
+    for uid in user_ids:
+        cursor.execute(
+            """
+            SELECT name, share_progress_with_friends
+            FROM users
+            WHERE id = ?
+            """,
+            (uid,)
+        )
+        user_row = cursor.fetchone()
+
+        if user_row is None:
+            continue
+
+        user_name = user_row[0]
+        can_show_progress = (
+            uid == current_user_id
+            or get_user_progress_visibility(cursor, uid) == 1
+        )
+
+        cursor.execute(
+            """
+            SELECT COUNT(*)
+            FROM habit_completions
+            WHERE user_id = ? AND completion_date = ?
+            """,
+            (uid, target_date)
+        )
+
+        count = cursor.fetchone()[0]
+        leaderboard.append({
+            "name": user_name,
+            "count": count,
+            "can_show_progress": can_show_progress,
+            "is_current_user": uid == current_user_id
+        })
+
+    leaderboard.sort(
+        key=lambda user: (
+            0 if user["can_show_progress"] else 1,
+            -user["count"] if user["can_show_progress"] else 0,
+            user["name"].lower()
+        )
+    )
+
+    hidden_friend_count = len([
+        user for user in leaderboard
+        if not user["is_current_user"] and not user["can_show_progress"]
+    ])
+
+    return friend_list, leaderboard, hidden_friend_count
+
+
 def parse_schedule(schedule_value):
     if not schedule_value:
         return []
@@ -1635,63 +1706,11 @@ def friends():
         conn.close()
         return redirect(url_for("friends"))
 
-    cursor.execute("""
-        SELECT u.id, u.name, u.email
-        FROM friends f
-        JOIN users u ON f.friend_id = u.id
-        WHERE f.user_id = ?
-    """, (session["user_id"],))
-    friend_list = cursor.fetchall()
-
-    user_ids = [session["user_id"]] + [friend[0] for friend in friend_list]
-
-    leaderboard = []
-
-    for uid in user_ids:
-        cursor.execute(
-            """
-            SELECT name, share_progress_with_friends
-            FROM users
-            WHERE id = ?
-            """,
-            (uid,)
-        )
-        user_row = cursor.fetchone()
-
-        if user_row is None:
-            continue
-
-        user_name = user_row[0]
-        can_show_progress = (
-            uid == session["user_id"]
-            or normalize_progress_visibility(user_row[1]) == 1
-        )
-
-        cursor.execute("""
-            SELECT COUNT(*)
-            FROM habit_completions
-            WHERE user_id = ? AND completion_date = ?
-        """, (uid, today))
-
-        count = cursor.fetchone()[0]
-        leaderboard.append({
-            "name": user_name,
-            "count": count,
-            "can_show_progress": can_show_progress,
-            "is_current_user": uid == session["user_id"]
-        })
-
-    leaderboard.sort(
-        key=lambda user: (
-            0 if user["can_show_progress"] else 1,
-            -user["count"] if user["can_show_progress"] else 0,
-            user["name"].lower()
-        )
+    friend_list, leaderboard, hidden_friend_count = build_friend_leaderboard(
+        cursor,
+        session["user_id"],
+        today
     )
-    hidden_friend_count = len([
-        user for user in leaderboard
-        if not user["is_current_user"] and not user["can_show_progress"]
-    ])
 
     conn.close()
 
