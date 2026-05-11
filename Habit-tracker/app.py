@@ -1850,6 +1850,30 @@ def profile():
         share_progress_with_friends=share_progress_with_friends
     )
 
+
+@app.route("/update_privacy", methods=["POST"])
+def update_privacy():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    share_progress_with_friends = request.form.get(
+        "share_progress_with_friends",
+        str(DEFAULT_SHARE_PROGRESS_WITH_FRIENDS)
+    )
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+    update_user_progress_visibility(
+        cursor,
+        session["user_id"],
+        share_progress_with_friends
+    )
+    conn.commit()
+    conn.close()
+
+    flash("Privacy setting updated successfully.")
+    return redirect(url_for("profile"))
+
 @app.route("/habit/<int:habit_id>")
 def habit_detail(habit_id):
     if "user_id" not in session:

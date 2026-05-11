@@ -29,6 +29,14 @@
 
 <div class="container mt-4">
 
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="alert alert-info">
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+    {% endwith %}
+
     <div class="profile-hero">
         <div class="profile-avatar" id="heroInitial">
             {{ user[0][0]|upper if user and user[0] else "U" }}
@@ -82,6 +90,53 @@
             <span>Focus Note</span>
             <strong id="focusNote">Stay consistent and build momentum one day at a time.</strong>
         </div>
+    </div>
+
+    <div class="profile-card mt-4">
+        <h3>Privacy Settings</h3>
+        <p class="text-muted">
+            Choose whether your daily habit progress is visible to friends on the leaderboard.
+        </p>
+
+        <form method="POST" action="/update_privacy">
+            <div class="privacy-option-group">
+                <label class="privacy-option-card">
+                    <input
+                        type="radio"
+                        name="share_progress_with_friends"
+                        value="1"
+                        {% if share_progress_with_friends == 1 %}checked{% endif %}
+                    >
+
+                    <div>
+                        <strong>Show my progress to friends</strong>
+                        <p class="mb-0 text-muted">
+                            Friends can see your daily completed habit count on the leaderboard.
+                        </p>
+                    </div>
+                </label>
+
+                <label class="privacy-option-card">
+                    <input
+                        type="radio"
+                        name="share_progress_with_friends"
+                        value="0"
+                        {% if share_progress_with_friends == 0 %}checked{% endif %}
+                    >
+
+                    <div>
+                        <strong>Hide my progress from friends</strong>
+                        <p class="mb-0 text-muted">
+                            Friends can still see you in their friends list, but your progress stays private.
+                        </p>
+                    </div>
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3">
+                Save Privacy Setting
+            </button>
+        </form>
     </div>
 
     <div class="profile-card mt-4">
