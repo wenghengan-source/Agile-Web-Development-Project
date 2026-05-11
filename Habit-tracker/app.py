@@ -17,6 +17,7 @@ DASHBOARD_TOP_HABIT_MIN_SCHEDULED_DAYS = 2
 DASHBOARD_TOP_CATEGORY_MIN_SCHEDULED_DAYS = 2
 DASHBOARD_AT_RISK_RATE_THRESHOLD = 60
 DASHBOARD_STREAK_COOLDOWN_MIN_BEST_STREAK = 3
+DEFAULT_SHARE_PROGRESS_WITH_FRIENDS = 1
 
 
 def ensure_column_exists(cursor, table_name, column_name, column_definition):
@@ -28,6 +29,38 @@ def ensure_column_exists(cursor, table_name, column_name, column_definition):
             f"ALTER TABLE {table_name} "
             f"ADD COLUMN {column_name} {column_definition}"
         )
+
+
+def normalize_progress_visibility(value):
+    return 0 if str(value).strip() in {"0", "false", "False"} else 1
+
+
+def get_user_progress_visibility(cursor, user_id):
+    cursor.execute(
+        """
+        SELECT share_progress_with_friends
+        FROM users
+        WHERE id = ?
+        """,
+        (user_id,)
+    )
+    row = cursor.fetchone()
+
+    if row is None:
+        return DEFAULT_SHARE_PROGRESS_WITH_FRIENDS
+
+    return normalize_progress_visibility(row[0])
+
+
+def update_user_progress_visibility(cursor, user_id, is_visible):
+    cursor.execute(
+        """
+        UPDATE users
+        SET share_progress_with_friends = ?
+        WHERE id = ?
+        """,
+        (normalize_progress_visibility(is_visible), user_id)
+    )
 
 
 def parse_schedule(schedule_value):
@@ -865,9 +898,17 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            share_progress_with_friends INTEGER NOT NULL DEFAULT 1
         )
     """)
+
+    ensure_column_exists(
+        cursor,
+        "users",
+        "share_progress_with_friends",
+        f"INTEGER NOT NULL DEFAULT {DEFAULT_SHARE_PROGRESS_WITH_FRIENDS}"
+    )
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS habits (
@@ -945,8 +986,18 @@ def register():
 
         try:
             cursor.execute(
-                "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-                (name, email, password)
+                """
+                INSERT INTO users (
+                    name, email, password, share_progress_with_friends
+                )
+                VALUES (?, ?, ?, ?)
+                """,
+                (
+                    name,
+                    email,
+                    password,
+                    DEFAULT_SHARE_PROGRESS_WITH_FRIENDS
+                )
             )
             conn.commit()
             flash("Registration successful. Please login.")
@@ -1783,6 +1834,10 @@ def profile():
         (session["user_id"],)
     )
     goals = [row[0] for row in cursor.fetchall()]
+    share_progress_with_friends = get_user_progress_visibility(
+        cursor,
+        session["user_id"]
+    )
 
     conn.close()
 
@@ -1791,7 +1846,8 @@ def profile():
         user=user,
         total_habits=total_habits,
         completed_habits=completed_habits,
-        goals=goals
+        goals=goals,
+        share_progress_with_friends=share_progress_with_friends
     )
 
 @app.route("/habit/<int:habit_id>")
