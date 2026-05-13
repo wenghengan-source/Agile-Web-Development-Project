@@ -36,7 +36,10 @@
             <p>Add friends, compare daily progress, and stay motivated together.</p>
         </div>
 
-        <a href="/dashboard" class="btn btn-light">Back to Dashboard</a>
+        <div class="d-flex gap-2">
+            <a href="/dashboard" class="btn btn-light">Back to Dashboard</a>
+            <a href="/reward" class="btn btn-primary">My Rewards</a>
+        </div>
     </div>
 
     {% with messages = get_flashed_messages() %}
@@ -95,19 +98,22 @@
                                                                         {{ friend[1][0] }}
                                                                 </div>
 
-                                                                <h5>{{ friend[1] }}</h5>
-                                                                <p>{{ friend[2] }}</p>
-                                                                <div class="mt-2">
-                                                                    <button
-                                                                        class="btn btn-sm btn-outline-primary"
-                                                                        data-bs-toggle="modal"
-                                                                        data-bs-target="#sendMessageModal"
-                                                                        data-recipient-email="{{ friend[2] }}"
-                                                                        data-recipient-name="{{ friend[1] }}"
-                                                                    >
-                                                                        Send Message
-                                                                    </button>
-                                                                </div>
+                                                                                                <h5 class="d-flex align-items-center gap-2">
+                                                                                                        {{ friend[1] }}
+                                                                                                        <a href="/reward/{{ friend[0] }}" class="btn btn-sm btn-outline-secondary">View Rewards</a>
+                                                                                                </h5>
+                                                                                                <p>{{ friend[2] }}</p>
+                                                                                                <div class="mt-2 d-flex gap-2">
+                                                                                                    <button
+                                                                                                        class="btn btn-sm btn-outline-primary"
+                                                                                                        data-bs-toggle="modal"
+                                                                                                        data-bs-target="#sendMessageModal"
+                                                                                                        data-recipient-email="{{ friend[2] }}"
+                                                                                                        data-recipient-name="{{ friend[1] }}"
+                                                                                                    >
+                                                                                                        Send Message
+                                                                                                    </button>
+                                                                                                </div>
                                                         </div>
                                                 {% endfor %}
                     </div>

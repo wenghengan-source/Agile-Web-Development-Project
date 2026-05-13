@@ -1308,6 +1308,33 @@ def reward():
     return render_template("reward.html", points=points)
 
 
+@app.route("/reward/<int:user_id>")
+def reward_user(user_id):
+    # allow logged-in users to view friends' reward points
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    # get user info
+    cursor.execute("SELECT name FROM users WHERE id = ?", (user_id,))
+    user_row = cursor.fetchone()
+    if not user_row:
+        conn.close()
+        return "User not found", 404
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM habit_completions WHERE user_id = ?",
+        (user_id,)
+    )
+    points = cursor.fetchone()[0]
+
+    conn.close()
+
+    return render_template("reward.html", points=points, viewed_user={'id': user_id, 'name': user_row[0]})
+
+
 @app.route("/claim_reward", methods=["POST"])
 def claim_reward():
     if "user_id" not in session:
