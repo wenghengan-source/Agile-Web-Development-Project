@@ -119,6 +119,13 @@ def calculate_habit_streak(
     return streak
 
 
+def get_week_dates_sunday_first(reference_date, week_offset=0):
+    days_since_sunday = (reference_date.weekday() + 1) % 7
+    week_start = reference_date - timedelta(days=days_since_sunday)
+    week_start -= timedelta(days=week_offset * 7)
+    return [week_start + timedelta(days=offset) for offset in range(7)]
+
+
 def summarize_scheduled_progress(
     habits,
     completion_records,
