@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import random
 from datetime import date
@@ -1134,9 +1135,10 @@ def register():
         cursor = conn.cursor()
 
         try:
+            hashed_password = generate_password_hash(password)
             cursor.execute(
                 "INSERT INTO users (name, email, password, share_progress_with_friends) VALUES (?, ?, ?, ?)",
-                (name, email, password, DEFAULT_SHARE_PROGRESS_WITH_FRIENDS)
+                (name, email, hashed_password, DEFAULT_SHARE_PROGRESS_WITH_FRIENDS)
             )
             conn.commit()
             flash("Registration successful. Please login.")
@@ -1160,14 +1162,14 @@ def login():
         cursor = conn.cursor()
 
         cursor.execute(
-            "SELECT * FROM users WHERE email = ? AND password = ?",
-            (email, password)
+            "SELECT * FROM users WHERE email = ?",
+            (email,)
         )
 
         user = cursor.fetchone()
         conn.close()
 
-        if user:
+        if user and check_password_hash(user[3], password):
             session["user_id"] = user[0]
             session["user_name"] = user[1]
             session["user_email"] = user[2]
@@ -2067,9 +2069,10 @@ def edit_profile():
         password = request.form.get("password")
 
         if password:
+            hashed_password = generate_password_hash(password)
             cursor.execute(
                 "UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?",
-                (name, email, password, session["user_id"])
+                (name, email, hashed_password, session["user_id"])
             )
         else:
             cursor.execute(
