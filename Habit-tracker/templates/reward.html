@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <h2>Rewards</h2>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-info">
+          {% for msg in messages %}{{ msg }}<br>{% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <p>Your points: <strong>{{ points if points is not none else 0 }}</strong></p>
+
+    <div class="list-group mb-3">
+      {% set tiers = [
+        { 'key':'bronze','title':'Bronze Reward','desc':'Reach 50 points — small badge','pts':50 },
+        { 'key':'silver','title':'Silver Reward','desc':'Reach 100 points — medium reward','pts':100 },
+        { 'key':'gold','title':'Gold Reward','desc':'Reach 200 points — big reward','pts':200 }
+      ] %}
+
+      {% for t in tiers %}
+        <div class="list-group-item d-flex justify-content-between align-items-center">
+          <div>
+            <h6>{{ t.title }}</h6>
+            <small>{{ t.desc }}</small>
+          </div>
+
+          {% if points is not none and points >= t.pts %}
+            <form method="post" action="/claim_reward" onsubmit="return confirm('Claim {{ t.title }}?');">
+              <input type="hidden" name="tier" value="{{ t.key }}">
+              <button class="btn btn-sm btn-success">Claim</button>
+            </form>
+          {% else %}
+            <span class="badge bg-secondary">{{ t.pts }} pts</span>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <p class="text-muted">Note: Claiming currently shows a confirmation message. The backend could record claimed rewards to prevent duplicate claims.</p>
+  </div>
+</div>
+
+{% endblock %}

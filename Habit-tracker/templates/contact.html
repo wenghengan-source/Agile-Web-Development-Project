@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-8">
+    <h2>Contact Us</h2>
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-info">
+          {% for msg in messages %}{{ msg }}<br>{% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <h4>Team Introduction</h4>
+        <p>We are a student development team from the Agile Web Development course at The University of Western Australia.</p>
+        <p>Our project focuses on building a Smart Habit Tracker web application that helps users develop positive habits through intelligent tracking, progress visualization, and personalized reminders.</p>
+        <h5>Team Members</h5>
+        <ul>
+          <li>Hengan Weng</li>
+          <li>Yukendar Naidu</li>
+          <li>Pengfei Luo</li>
+        </ul>
+        <p>Through this project, we applied Agile development practices, including teamwork, iterative development, sprint planning, and continuous improvement. Our goal was to create a practical and user-friendly application while strengthening our collaborative software development skills.</p>
+      </div>
+    </div>
+
+    <p class="text-muted">If you have questions or feedback, please fill the form and we'll get back to you.</p>
+
+    <form method="post" action="/contact" class="needs-validation" novalidate>
+      <div class="mb-3">
+        <label for="name" class="form-label">Name</label>
+        <input type="text" class="form-control" id="name" name="name" required value="{{ session.user_name if session.user_name is defined else '' }}">
+        <div class="invalid-feedback">Please enter your name.</div>
+      </div>
+
+        <div class="mb-3">
+          <label for="email" class="form-label">Your Email</label>
+          <input type="email" class="form-control" id="email" name="email" required value="{{ user[1] if user else '' }}">
+          <div class="invalid-feedback">Please enter a valid email address.</div>
+        </div>
+
+        {% if to_name or to_email %}
+          <div class="mb-3">
+            <label class="form-label">To</label>
+            <div class="input-group">
+              <input type="text" class="form-control" value="{{ to_name if to_name else to_email }}" readonly>
+              <input type="hidden" name="to_email" value="{{ to_email }}">
+            </div>
+          </div>
+        {% endif %}
+
+      <div class="mb-3">
+        <label for="message" class="form-label">Message</label>
+        <textarea class="form-control" id="message" name="message" rows="5" required></textarea>
+        <div class="invalid-feedback">Please enter a message.</div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">Send Message</button>
+    </form>
+  </div>
+</div>
+
+<script>
+// Bootstrap client-side validation
+(function () {
+  'use strict'
+  var forms = document.querySelectorAll('.needs-validation')
+  Array.prototype.slice.call(forms).forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+      if (!form.checkValidity()) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+      form.classList.add('was-validated')
+    }, false)
+  })
+})()
+</script>
+
+{% endblock %}
