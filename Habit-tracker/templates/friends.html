@@ -11,58 +11,108 @@
 
 <body class="dashboard-body">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="/">Habit Tracker</a>
-        <div>
-            <a class="btn btn-light btn-sm" href="/">Home</a>
-            <a class="btn btn-light btn-sm" href="/dashboard">Dashboard</a>
-            <a class="btn btn-light btn-sm" href="/active_habits">Active Habits</a>
-            <a class="btn btn-light btn-sm" href="/calendar">Calendar</a>
-            <a class="btn btn-light btn-sm" href="/friends">Friends</a>
-            <a class="btn btn-light btn-sm" href="/stats">Stats</a>
-            <a class="btn btn-light btn-sm" href="/profile">Profile</a>
-            <a class="btn btn-danger btn-sm" href="/logout">Logout</a>
+<div class="dashboard-layout">
+
+    <aside class="dashboard-sidebar">
+        <h3 class="sidebar-logo">🏋️ Habit Tracker</h3>
+
+        <a href="/dashboard" class="sidebar-link">🏠 Dashboard</a>
+        <a href="/active_habits" class="sidebar-link">✅ Active Habits</a>
+        <a href="/calendar" class="sidebar-link">📅 Calendar</a>
+        <a href="/friends" class="sidebar-link active">👥 Friends</a>
+        <a href="/stats" class="sidebar-link">📊 Stats</a>
+        <a href="/profile" class="sidebar-link">👤 Profile</a>
+        <a href="/logout" class="sidebar-link logout">🚪 Logout</a>
+
+        <div class="sidebar-quote">
+            <h4>“</h4>
+            <p>Progress feels easier when you build it with friends.</p>
         </div>
-    </div>
-</nav>
+    </aside>
 
-<div class="container mt-4">
+    <main class="dashboard-main">
 
-    <div class="friends-hero">
-        <div>
-            <span class="friends-badge">Social Motivation</span>
-            <h1>Friends & Challenge</h1>
-            <p>Add friends, compare daily progress, and stay motivated together.</p>
-        </div>
-
-        <a href="/dashboard" class="btn btn-light">Back to Dashboard</a>
-    </div>
-
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            <div class="alert alert-info mt-4">
-                {{ messages[0] }}
+        <div class="dashboard-top">
+            <div>
+                <h1>Friends & Challenge 👥</h1>
+                <p>Add friends, compare daily progress, and stay motivated together.</p>
             </div>
-        {% endif %}
-    {% endwith %}
 
-    <div class="row mt-4">
+            <div class="date-pill">
+                Social Motivation
+            </div>
+        </div>
 
-        <div class="col-lg-4 mb-4">
-            <div class="friend-card friend-add-card">
-                <div class="friend-card-icon">＋</div>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="alert alert-info friends-dashboard-alert">
+                    {{ messages[0] }}
+                </div>
+            {% endif %}
+        {% endwith %}
 
-                <h3>Add Friend</h3>
-                <p class="text-muted">
-                    Connect with a friend using their email address.
-                </p>
+        <div class="summary-grid">
+            <div class="summary-card purple">
+                <div class="summary-icon">👥</div>
+                <div>
+                    <p>Your Friends</p>
+                    <h2>{{ friend_list|length }}</h2>
+                    <span>People connected with you</span>
+                </div>
+            </div>
 
-                <form method="POST">
+            <div class="summary-card split-card">
+                <div class="summary-icon">🏆</div>
+                <div class="split-card-content">
+                    <p class="split-card-title">Leaderboard</p>
+
+                    <div class="split-card-metrics">
+                        <div class="split-card-metric">
+                            <span class="split-card-label">Players</span>
+                            <strong>{{ leaderboard|length }}</strong>
+                        </div>
+                    </div>
+
+                    <span class="split-card-detail">
+                        Ranking is based on completed habits today.
+                    </span>
+                </div>
+            </div>
+
+            <div class="summary-card blue summary-card-stacked">
+                <div class="summary-icon">🔥</div>
+                <div>
+                    <p>Daily Challenge</p>
+                    <h2>
+                        {% if leaderboard %}
+                            {{ leaderboard[0][1] }}
+                        {% else %}
+                            0
+                        {% endif %}
+                    </h2>
+                    <span>
+                        Highest completed habits today.
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="friends-dashboard-grid">
+            <section class="dash-card friends-add-panel">
+                <div class="friends-panel-header">
+                    <div>
+                        <span class="friends-panel-badge">Connect</span>
+                        <h3>Add Friend</h3>
+                        <p class="mb-0">Connect with a friend using their email address.</p>
+                    </div>
+                </div>
+
+                <form method="POST" class="friends-add-form">
+                    <label class="form-label">Friend email</label>
                     <input
                         type="email"
                         name="friend_email"
-                        class="form-control mb-3"
+                        class="form-control"
                         placeholder="friend@example.com"
                         required
                     >
@@ -71,94 +121,94 @@
                         Add Friend
                     </button>
                 </form>
-            </div>
-        </div>
+            </section>
 
-        <div class="col-lg-8 mb-4">
-            <div class="friend-card">
-                <div class="d-flex justify-content-between align-items-center mb-3">
+            <section class="dash-card friends-list-panel">
+                <div class="friends-panel-header">
                     <div>
+                        <span class="friends-panel-badge">Community</span>
                         <h3>Your Friends</h3>
-                        <p class="text-muted mb-0">People you are competing with.</p>
+                        <p class="mb-0">People you are competing with.</p>
                     </div>
 
-                    <span class="friend-count">
+                    <span class="friends-count-pill">
                         {{ friend_list|length }} Friends
                     </span>
                 </div>
 
                 {% if friend_list %}
-                    <div class="friend-grid">
+                    <div class="friends-card-grid">
                         {% for friend in friend_list %}
-                            <div class="friend-profile-card">
+                            <article class="friends-profile-card">
                                 <div class="friend-avatar">
                                     {{ friend[1][0] }}
                                 </div>
 
                                 <h5>{{ friend[1] }}</h5>
                                 <p>{{ friend[2] }}</p>
-                            </div>
+                            </article>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="empty-friends-box">
+                    <div class="friends-empty-state">
                         <h4>No friends yet</h4>
                         <p>Add your first friend and start competing together.</p>
                     </div>
                 {% endif %}
-            </div>
+            </section>
         </div>
 
-    </div>
-
-    <div class="friend-card leaderboard-card">
-        <div class="leaderboard-header">
-            <div>
-                <span class="friends-badge">Daily Competition</span>
-                <h3>Today’s Leaderboard 🏆</h3>
-                <p class="text-muted mb-0">
-                    Ranking is based on completed habits today.
-                </p>
+        <section class="dash-card friends-leaderboard-panel">
+            <div class="friends-panel-header">
+                <div>
+                    <span class="friends-panel-badge">Daily Competition</span>
+                    <h3>Today’s Leaderboard 🏆</h3>
+                    <p class="mb-0">Ranking is based on completed habits today.</p>
+                </div>
             </div>
-        </div>
 
-        {% if leaderboard %}
-            <div class="leaderboard-list mt-4">
-                {% for user in leaderboard %}
-                    <div class="leaderboard-item {% if loop.index == 1 %}top-rank{% endif %}">
-                        <div class="leaderboard-rank">
-                            {% if loop.index == 1 %}
-                                🥇
-                            {% elif loop.index == 2 %}
-                                🥈
-                            {% elif loop.index == 3 %}
-                                🥉
-                            {% else %}
-                                #{{ loop.index }}
-                            {% endif %}
-                        </div>
-
-                        <div class="leaderboard-user">
-                            <div class="friend-avatar small">
-                                {{ user[0][0] }}
+            {% if leaderboard %}
+                <div class="friends-leaderboard-list">
+                    {% for user in leaderboard %}
+                        <article class="friends-leaderboard-item {% if loop.index == 1 %}top-rank{% endif %}">
+                            <div class="friends-rank">
+                                {% if loop.index == 1 %}
+                                    🥇
+                                {% elif loop.index == 2 %}
+                                    🥈
+                                {% elif loop.index == 3 %}
+                                    🥉
+                                {% else %}
+                                    #{{ loop.index }}
+                                {% endif %}
                             </div>
 
-                            <div>
-                                <h5>{{ user[0] }}</h5>
-                                <p>{{ user[1] }} completed habits today</p>
-                            </div>
-                        </div>
+                            <div class="friends-leaderboard-user">
+                                <div class="friend-avatar small">
+                                    {{ user[0][0] }}
+                                </div>
 
-                        <div class="leaderboard-score">
-                            {{ user[1] }}
-                        </div>
-                    </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p>No leaderboard data available.</p>
-        {% endif %}
-    </div>
+                                <div>
+                                    <h5>{{ user[0] }}</h5>
+                                    <p>{{ user[1] }} completed habits today</p>
+                                </div>
+                            </div>
+
+                            <div class="friends-score">
+                                {{ user[1] }}
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="friends-empty-state">
+                    <h4>No leaderboard data yet</h4>
+                    <p>Complete habits today to start building the leaderboard.</p>
+                </div>
+            {% endif %}
+        </section>
+
+    </main>
 
 </div>
 

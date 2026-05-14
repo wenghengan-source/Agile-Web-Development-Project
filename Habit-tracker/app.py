@@ -1027,12 +1027,6 @@ def dashboard():
         height = health_profile[1] / 100
         bmi = round(weight / (height * height), 1)
 
-    cursor.execute(
-        "SELECT steps FROM daily_steps WHERE user_id = ? AND step_date = ?",
-        (session["user_id"], today)
-    )
-    step_data = cursor.fetchone()
-    today_steps = step_data[0] if step_data else 0
 
     today_videos = [
         {
@@ -1065,7 +1059,6 @@ def dashboard():
         format_schedule_label=format_schedule_label,
         health_profile=health_profile,
         bmi=bmi,
-        today_steps=today_steps,
         today_videos=today_videos,
         progress_snapshot=progress_snapshot
     )
@@ -1184,40 +1177,6 @@ def update_health():
 
     return redirect(url_for("dashboard"))
 
-
-@app.route("/update_steps", methods=["POST"])
-def update_steps():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    steps = request.form["steps"]
-    today = date.today().isoformat()
-
-    conn = sqlite3.connect("habit_tracker.db")
-    cursor = conn.cursor()
-
-    cursor.execute(
-        "SELECT id FROM daily_steps WHERE user_id = ? AND step_date = ?",
-        (session["user_id"], today)
-    )
-    existing = cursor.fetchone()
-
-    if existing:
-        cursor.execute("""
-            UPDATE daily_steps
-            SET steps = ?
-            WHERE user_id = ? AND step_date = ?
-        """, (steps, session["user_id"], today))
-    else:
-        cursor.execute("""
-            INSERT INTO daily_steps (user_id, step_date, steps)
-            VALUES (?, ?, ?)
-        """, (session["user_id"], today, steps))
-
-    conn.commit()
-    conn.close()
-
-    return redirect(url_for("dashboard"))
 
 
 @app.route("/new_habit", methods=["GET", "POST"])

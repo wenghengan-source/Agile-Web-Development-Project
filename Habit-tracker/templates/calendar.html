@@ -11,30 +11,48 @@
 
 <body class="dashboard-body">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="/">Habit Tracker</a>
-        <div>
-            <a class="btn btn-light btn-sm" href="/">Home</a>
-            <a class="btn btn-light btn-sm" href="/dashboard">Dashboard</a>
-            <a class="btn btn-light btn-sm" href="/active_habits">Active Habits</a>
-            <a class="btn btn-light btn-sm" href="/calendar">Calendar</a>
-            <a class="btn btn-light btn-sm" href="/friends">Friends</a>
-            <a class="btn btn-light btn-sm" href="/stats">Stats</a>
-            <a class="btn btn-light btn-sm" href="/profile">Profile</a>
-            <a class="btn btn-danger btn-sm" href="/logout">Logout</a>
+<div class="dashboard-layout">
+
+    <aside class="dashboard-sidebar">
+        <h3 class="sidebar-logo">🏋️ Habit Tracker</h3>
+
+        <a href="/dashboard" class="sidebar-link">🏠 Dashboard</a>
+        <a href="/active_habits" class="sidebar-link">✅ Active Habits</a>
+        <a href="/calendar" class="sidebar-link active">📅 Calendar</a>
+        <a href="/friends" class="sidebar-link">👥 Friends</a>
+        <a href="/stats" class="sidebar-link">📊 Stats</a>
+        <a href="/profile" class="sidebar-link">👤 Profile</a>
+        <a href="/logout" class="sidebar-link logout">🚪 Logout</a>
+
+        <div class="sidebar-quote">
+            <h4>“</h4>
+            <p>Your calendar shows the small wins that build consistency.</p>
         </div>
-    </div>
-</nav>
+    </aside>
 
-<div class="container mt-4">
+    <main class="dashboard-main calendar-beauty-page">
 
-    <div class="calendar-header-card">
-        <div>
-            <h1>Habit Calendar</h1>
-            <p>View each habit's completion trend and calendar history.</p>
+        <div class="dashboard-top">
+            <div>
+                <h1>Habit Calendar 📅</h1>
+                <p>View your habit schedule, daily progress, and completion history.</p>
+            </div>
 
-            <div class="calendar-controls">
+            <div class="date-pill">
+                {{ selected_date_label }}
+            </div>
+        </div>
+
+        <section class="calendar-beauty-hero">
+            <div class="calendar-beauty-hero-copy">
+                <span class="calendar-beauty-badge">Calendar View</span>
+                <h3>{{ month_name }}</h3>
+                <p>
+                    Use the calendar to quickly check which habits were scheduled and whether they were completed.
+                </p>
+            </div>
+
+            <div class="calendar-beauty-controls">
                 <div class="calendar-mode-toggle" role="tablist" aria-label="Calendar view mode">
                     <a
                         class="calendar-mode-pill {% if view_mode == 'monthly' %}active{% endif %}"
@@ -42,6 +60,7 @@
                     >
                         Monthly
                     </a>
+
                     <a
                         class="calendar-mode-pill {% if view_mode == 'daily' %}active{% endif %}"
                         href="{{ url_for('calendar', view='daily', date=selected_date_value) }}"
@@ -50,9 +69,9 @@
                     </a>
                 </div>
 
-                <form class="calendar-date-form" method="get" action="{{ url_for('calendar') }}">
+                <form class="calendar-date-form calendar-beauty-date-form" method="get" action="{{ url_for('calendar') }}">
                     <input type="hidden" name="view" value="{{ view_mode }}">
-                    <label for="calendar-date" class="calendar-date-label">Selected date</label>
+
                     <input
                         id="calendar-date"
                         class="calendar-date-input"
@@ -60,52 +79,89 @@
                         name="date"
                         value="{{ selected_date_value }}"
                     >
-                    <button type="submit" class="btn btn-light btn-sm">Go</button>
+
+                    <button type="submit" class="btn btn-primary">Go</button>
                 </form>
 
                 <a
                     class="calendar-today-link {% if is_today_selected %}disabled{% endif %}"
                     href="{{ url_for('calendar', view=view_mode, date=today_value) }}"
                 >
-                    Jump to today
+                    Today
                 </a>
             </div>
+        </section>
+
+        <div class="calendar-beauty-grid">
+            <section class="dash-card calendar-chart-panel compact-chart-panel">
+                <div class="calendar-panel-title compact-panel-title">
+                    <div>
+                        <span class="calendar-panel-badge">Last 7 days</span>
+                        <h3>Habit Trend</h3>
+                        <p class="mb-0">Recent completion pattern.</p>
+                    </div>
+                </div>
+
+                <div class="calendar-chart-shell compact-chart-shell">
+                    <canvas id="habitTrendChart" height="95"></canvas>
+                </div>
+            </section>
+
+            <section class="dash-card calendar-mini-summary">
+                <div class="calendar-panel-title compact-panel-title">
+                    <div>
+                        <span class="calendar-panel-badge">Selected date</span>
+                        <h3>{{ selected_date_label }}</h3>
+                        <p class="mb-0">
+                            {% if view_mode == "daily" %}
+                                Daily habit overview.
+                            {% else %}
+                                Monthly habit overview.
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="calendar-mini-list">
+                    <div class="calendar-mini-item">
+                        <span>Mode</span>
+                        <strong>{{ view_mode|capitalize }}</strong>
+                    </div>
+                    <div class="calendar-mini-item">
+                        <span>Today</span>
+                        <strong>{% if is_today_selected %}Selected{% else %}Not selected{% endif %}</strong>
+                    </div>
+                    <div class="calendar-mini-item">
+                        <span>Action</span>
+                        <strong>Track progress</strong>
+                    </div>
+                </div>
+            </section>
         </div>
 
-        <a href="/dashboard" class="btn btn-primary">Back to Dashboard</a>
-    </div>
+        {% if view_mode == "daily" %}
+            <section class="dash-card calendar-overview-panel calendar-beauty-panel">
+                <div class="calendar-panel-title">
+                    <div>
+                        <span class="calendar-panel-badge">Daily overview</span>
+                        <h3>{{ selected_date_label }}</h3>
+                        <p class="mb-0">Habits scheduled for this selected day.</p>
+                    </div>
 
-    <div class="calendar-wrapper mb-4">
-        <div class="calendar-title">
-            <h2>Habit Trend Line</h2>
-            <span>Last 7 Days</span>
-        </div>
-
-        <canvas id="habitTrendChart" height="100"></canvas>
-    </div>
-
-    {% if view_mode == "daily" %}
-        <div class="calendar-wrapper">
-            <div class="calendar-title">
-                <div class="calendar-heading-group">
-                    <h2>{{ selected_date_label }}</h2>
                     {% if is_today_selected %}
                         <span class="calendar-today-chip">Today</span>
                     {% endif %}
                 </div>
-                <span>Daily Overview</span>
-            </div>
 
-            {% if daily_habits %}
-                <div class="row g-3">
-                    {% for habit in daily_habits %}
-                        <div class="col-12">
-                            <div class="calendar-habit-card calendar-habit-card-wide d-flex justify-content-between align-items-center">
+                {% if daily_habits %}
+                    <div class="calendar-daily-list">
+                        {% for habit in daily_habits %}
+                            <article class="calendar-dashboard-habit">
                                 <div>
-                                    <div class="calendar-habit-name">{{ habit.name }}</div>
-                                    <small class="text-muted">
-                                        {{ habit.category }} - {{ habit.priority }} priority
-                                    </small>
+                                    <h4>{{ habit.name }}</h4>
+                                    <p class="mb-0">
+                                        {{ habit.category }} · {{ habit.priority }} priority
+                                    </p>
                                 </div>
 
                                 {% if habit.completed %}
@@ -113,71 +169,95 @@
                                 {% else %}
                                     <span class="calendar-status pending">Pending</span>
                                 {% endif %}
-                            </div>
-                        </div>
-                    {% endfor %}
+                            </article>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="calendar-empty-state">
+                        <h4>No habits scheduled</h4>
+                        <p>No habits are scheduled for {{ selected_date_label }}.</p>
+                    </div>
+                {% endif %}
+            </section>
+        {% else %}
+            <section class="dash-card calendar-overview-panel calendar-beauty-panel">
+                <div class="calendar-panel-title">
+                    <div>
+                        <span class="calendar-panel-badge">Monthly overview</span>
+                        <h3>{{ month_name }}</h3>
+                        <p class="mb-0">A compact monthly view that keeps the page clean and easy to scan.</p>
+                    </div>
                 </div>
-            {% else %}
-                <div class="alert alert-light border">
-                    No habits are scheduled for {{ selected_date_label }}.
-                </div>
-            {% endif %}
-        </div>
-    {% else %}
-        <div class="calendar-wrapper">
-            <div class="calendar-title">
-                <h2>{{ month_name }}</h2>
-                <span>Monthly Overview</span>
-            </div>
 
-            <table class="table calendar-table-pro">
-                <thead>
-                    <tr>
-                        <th>Mon</th>
-                        <th>Tue</th>
-                        <th>Wed</th>
-                        <th>Thu</th>
-                        <th>Fri</th>
-                        <th>Sat</th>
-                        <th>Sun</th>
-                    </tr>
-                </thead>
+                <div class="calendar-table-scroll compact-calendar-scroll">
+                    <table class="table calendar-table-pro calendar-dashboard-table compact-calendar-table">
+                        <thead>
+                            <tr>
+                                <th>Mon</th>
+                                <th>Tue</th>
+                                <th>Wed</th>
+                                <th>Thu</th>
+                                <th>Fri</th>
+                                <th>Sat</th>
+                                <th>Sun</th>
+                            </tr>
+                        </thead>
 
-                <tbody>
-                    {% for week in month_days %}
-                        <tr>
-                            {% for day in week %}
-                                <td class="{% if day == 0 %}empty-day{% endif %}{% if day != 0 and '%04d-%02d-%02d'|format(year, month, day) == today_value %} today-cell{% endif %}">
-                                    {% if day != 0 %}
-                                        <div class="calendar-day-header">
-                                            <div class="calendar-day-number">{{ day }}</div>
-                                            {% if "%04d-%02d-%02d"|format(year, month, day) == today_value %}
-                                                <span class="calendar-today-badge">Today</span>
-                                            {% endif %}
-                                        </div>
+                        <tbody>
+                            {% for week in month_days %}
+                                <tr>
+                                    {% for day in week %}
+                                        <td class="{% if day == 0 %}empty-day{% endif %}{% if day != 0 and '%04d-%02d-%02d'|format(year, month, day) == today_value %} today-cell{% endif %}">
+                                            {% if day != 0 %}
+                                                {% set full_date = "%04d-%02d-%02d"|format(year, month, day) %}
 
-                                        {% set full_date = "%04d-%02d-%02d"|format(year, month, day) %}
+                                                <a
+                                                    class="calendar-day-select-link"
+                                                    href="{{ url_for('calendar', view='daily', date=full_date) }}"
+                                                    title="View habits for {{ full_date }}"
+                                                >
+                                                    <div class="calendar-day-header compact-day-header">
+                                                        <div class="calendar-day-number">{{ day }}</div>
 
-                                        {% for habit in calendar_habits_by_date.get(full_date, []) %}
-                                            <div class="calendar-habit-card">
-                                                <div class="calendar-habit-name">{{ habit[1] }}</div>
+                                                        {% if full_date == today_value %}
+                                                            <span class="calendar-today-dot">Today</span>
+                                                        {% else %}
+                                                            <span class="calendar-select-dot">View</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </a>
 
-                                                {% if (habit[0], full_date) in completed_set %}
-                                                    <span class="calendar-status done">Completed</span>
+                                                {% set day_habits = calendar_habits_by_date.get(full_date, []) %}
+
+                                                {% if day_habits %}
+                                                    <div class="compact-habit-stack">
+                                                        {% for habit in day_habits[:2] %}
+                                                            <div class="compact-calendar-habit {% if (habit[0], full_date) in completed_set %}done{% else %}pending{% endif %}">
+                                                                <span>{{ habit[1] }}</span>
+                                                            </div>
+                                                        {% endfor %}
+
+                                                        {% if day_habits|length > 2 %}
+                                                            <div class="compact-more-chip">
+                                                                +{{ day_habits|length - 2 }} more
+                                                            </div>
+                                                        {% endif %}
+                                                    </div>
                                                 {% else %}
-                                                    <span class="calendar-status pending">Pending</span>
+                                                    <div class="compact-rest-text">Rest</div>
                                                 {% endif %}
-                                            </div>
-                                        {% endfor %}
-                                    {% endif %}
-                                </td>
+                                            {% endif %}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
                             {% endfor %}
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        {% endif %}
+
+    </main>
 
 </div>
 
@@ -205,9 +285,14 @@
         },
         options: {
             responsive: true,
+            maintainAspectRatio: true,
             plugins: {
                 legend: {
-                    display: true
+                    display: true,
+                    labels: {
+                        boxWidth: 12,
+                        usePointStyle: true
+                    }
                 }
             },
             scales: {

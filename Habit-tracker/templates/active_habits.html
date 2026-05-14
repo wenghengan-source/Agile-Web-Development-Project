@@ -11,127 +11,201 @@
 
 <body class="dashboard-body">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="/">Habit Tracker</a>
-        <div>
-            <a class="btn btn-light btn-sm" href="/">Home</a>
-            <a class="btn btn-light btn-sm" href="/dashboard">Dashboard</a>
-            <a class="btn btn-light btn-sm" href="/active_habits">Active Habits</a>
-            <a class="btn btn-light btn-sm" href="/calendar">Calendar</a>
-            <a class="btn btn-light btn-sm" href="/friends">Friends</a>
-            <a class="btn btn-light btn-sm" href="/stats">Stats</a>
-            <a class="btn btn-light btn-sm" href="/profile">Profile</a>
-            <a class="btn btn-danger btn-sm" href="/logout">Logout</a>
-        </div>
-    </div>
-</nav>
+<div class="dashboard-layout">
 
-<div class="container mt-4 mb-5">
-    <div class="card p-4">
-        <div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <aside class="dashboard-sidebar">
+        <h3 class="sidebar-logo">🏋️ Habit Tracker</h3>
+
+        <a href="/dashboard" class="sidebar-link">🏠 Dashboard</a>
+        <a href="/active_habits" class="sidebar-link active">✅ Active Habits</a>
+        <a href="/calendar" class="sidebar-link">📅 Calendar</a>
+        <a href="/friends" class="sidebar-link">👥 Friends</a>
+        <a href="/stats" class="sidebar-link">📊 Stats</a>
+        <a href="/profile" class="sidebar-link">👤 Profile</a>
+        <a href="/logout" class="sidebar-link logout">🚪 Logout</a>
+
+        <div class="sidebar-quote">
+            <h4>“</h4>
+            <p>Small actions become strong habits when repeated daily.</p>
+        </div>
+    </aside>
+
+    <main class="dashboard-main">
+
+        <div class="dashboard-top">
             <div>
-                <h1 class="mb-2">Active Habits Today</h1>
-                <p class="text-muted mb-1">See both today’s active habits and the ones that are resting today.</p>
-                <small class="text-muted">{{ today_label }}</small>
+                <h1>Active Habits Today ✅</h1>
+                <p>Manage today’s scheduled habits, completed habits, and resting habits in one place.</p>
             </div>
 
-            <div class="d-flex gap-2">
-                <a href="/dashboard" class="btn btn-outline-primary">Back to Dashboard</a>
-                <a href="/new_habit" class="btn btn-primary">+ Add Goal</a>
+            <div class="date-pill">
+                {{ today_label }}
             </div>
         </div>
 
-        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-            <div class="d-flex flex-wrap gap-2">
-                <a href="/active_habits?status=all&q={{ search_query|urlencode }}&sort={{ sort_by|urlencode }}" class="btn {% if status_filter == 'all' %}btn-primary{% else %}btn-outline-primary{% endif %}">
-                    All ({{ total_active }})
-                </a>
-                <a href="/active_habits?status=completed&q={{ search_query|urlencode }}&sort={{ sort_by|urlencode }}" class="btn {% if status_filter == 'completed' %}btn-success{% else %}btn-outline-success{% endif %}">
-                    Completed ({{ completed_active }})
-                </a>
-                <a href="/active_habits?status=incomplete&q={{ search_query|urlencode }}&sort={{ sort_by|urlencode }}" class="btn {% if status_filter == 'incomplete' %}btn-warning{% else %}btn-outline-warning{% endif %}">
-                    Incomplete ({{ incomplete_active }})
-                </a>
-            </div>
-
-            <p class="text-muted mb-0">
-                Showing {{ active_habits|length }} active habit{% if active_habits|length != 1 %}s{% endif %} and {{ total_inactive }} not active today
-            </p>
-        </div>
-
-        <form method="GET" action="/active_habits" class="row g-3 align-items-end mb-4">
-            <input type="hidden" name="status" value="{{ status_filter }}">
-
-            <div class="col-lg-7">
-                <label for="active-habit-search" class="form-label">Search habits</label>
-                <input
-                    id="active-habit-search"
-                    type="text"
-                    name="q"
-                    class="form-control"
-                    value="{{ search_query }}"
-                    placeholder="Search by habit name"
-                >
-            </div>
-
-            <div class="col-lg-3">
-                <label for="active-habit-sort" class="form-label">Sort by</label>
-                <select id="active-habit-sort" name="sort" class="form-control">
-                    <option value="priority" {% if sort_by == "priority" %}selected{% endif %}>Priority</option>
-                    <option value="name" {% if sort_by == "name" %}selected{% endif %}>Name</option>
-                    <option value="streak" {% if sort_by == "streak" %}selected{% endif %}>Streak</option>
-                </select>
-            </div>
-
-            <div class="col-lg-2 d-flex gap-2">
-                <button type="submit" class="btn btn-primary w-100">Apply</button>
-                <a href="/active_habits?status={{ status_filter }}" class="btn btn-outline-secondary">Clear</a>
-            </div>
-        </form>
-
-        <div class="mb-5">
-            <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+        <div class="summary-grid">
+            <div class="summary-card purple">
+                <div class="summary-icon">📋</div>
                 <div>
-                    <h3 class="mb-1">Active Today</h3>
-                    <p class="text-muted mb-0">These habits are due today based on their schedules.</p>
+                    <p>Active Today</p>
+                    <h2>{{ total_active }}</h2>
+                    <span>Scheduled for today</span>
                 </div>
+            </div>
+
+            <div class="summary-card split-card">
+                <div class="summary-icon">✓</div>
+                <div class="split-card-content">
+                    <p class="split-card-title">Completed</p>
+
+                    <div class="split-card-metrics">
+                        <div class="split-card-metric">
+                            <span class="split-card-label">Checked off</span>
+                            <strong>{{ completed_active }}</strong>
+                        </div>
+                    </div>
+
+                    <span class="split-card-detail">
+                        {% if total_active > 0 %}
+                            {{ completed_active }}/{{ total_active }} active habits completed today.
+                        {% else %}
+                            No active habits are scheduled for today.
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <div class="summary-card blue summary-card-stacked">
+                <div class="summary-icon">🌙</div>
+                <div>
+                    <p>Not Active Today</p>
+                    <h2>{{ total_inactive }}</h2>
+                    <span>
+                        These habits are resting today based on their weekday schedule.
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <section class="dash-card active-toolbar-card">
+            <div class="active-toolbar-top">
+                <div>
+                    <h3>Find your habits</h3>
+                    <p class="mb-0">
+                        Filter by status, search by habit name, or sort your list.
+                    </p>
+                </div>
+
+                <div class="active-toolbar-actions">
+                    <a href="/dashboard" class="btn btn-outline-primary">Back to Dashboard</a>
+                    <a href="/new_habit" class="btn btn-primary">+ Add Goal</a>
+                </div>
+            </div>
+
+            <div class="active-status-tabs">
+                <a href="/active_habits?status=all&q={{ search_query|urlencode }}&sort={{ sort_by|urlencode }}"
+                   class="active-status-tab {% if status_filter == 'all' %}active{% endif %}">
+                    <span>All</span>
+                    <strong>{{ total_active }}</strong>
+                </a>
+
+                <a href="/active_habits?status=completed&q={{ search_query|urlencode }}&sort={{ sort_by|urlencode }}"
+                   class="active-status-tab completed {% if status_filter == 'completed' %}active{% endif %}">
+                    <span>Completed</span>
+                    <strong>{{ completed_active }}</strong>
+                </a>
+
+                <a href="/active_habits?status=incomplete&q={{ search_query|urlencode }}&sort={{ sort_by|urlencode }}"
+                   class="active-status-tab incomplete {% if status_filter == 'incomplete' %}active{% endif %}">
+                    <span>Incomplete</span>
+                    <strong>{{ incomplete_active }}</strong>
+                </a>
+            </div>
+
+            <form method="GET" action="/active_habits" class="active-search-box">
+                <input type="hidden" name="status" value="{{ status_filter }}">
+
+                <div class="active-form-group search">
+                    <label for="active-habit-search">Search habits</label>
+                    <input
+                        id="active-habit-search"
+                        type="text"
+                        name="q"
+                        class="form-control"
+                        value="{{ search_query }}"
+                        placeholder="Search by habit name"
+                    >
+                </div>
+
+                <div class="active-form-group">
+                    <label for="active-habit-sort">Sort by</label>
+                    <select id="active-habit-sort" name="sort" class="form-control">
+                        <option value="priority" {% if sort_by == "priority" %}selected{% endif %}>Priority</option>
+                        <option value="name" {% if sort_by == "name" %}selected{% endif %}>Name</option>
+                        <option value="streak" {% if sort_by == "streak" %}selected{% endif %}>Streak</option>
+                    </select>
+                </div>
+
+                <div class="active-form-buttons">
+                    <button type="submit" class="btn btn-primary">Apply</button>
+                    <a href="/active_habits?status={{ status_filter }}" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            </form>
+        </section>
+
+        <section class="dash-card active-habits-panel">
+            <div class="active-panel-header">
+                <div>
+                    <span class="active-panel-badge">Due today</span>
+                    <h3>Active Today</h3>
+                    <p class="mb-0">These habits are scheduled for today and count toward today’s goals.</p>
+                </div>
+
+                <span class="active-count-pill">
+                    {{ active_habits|length }} habit{% if active_habits|length != 1 %}s{% endif %}
+                </span>
             </div>
 
             {% set habits = active_habits %}
             {% if habits %}
                 {% include "_habit_list.html" %}
             {% else %}
-                <div class="text-center py-5">
+                <div class="active-empty-state">
                     {% if status_filter == "completed" %}
                         <h4>No completed active habits yet</h4>
-                        <p class="text-muted">Complete one of today’s habits to see it here.</p>
+                        <p>Complete one of today’s habits to see it here.</p>
                     {% elif status_filter == "incomplete" %}
                         <h4>No incomplete active habits right now</h4>
-                        <p class="text-muted">Nice work. Everything active for today has been completed.</p>
+                        <p>Nice work. Everything active for today has been completed.</p>
                     {% else %}
                         <h4>No active habits for today</h4>
-                        <p class="text-muted">Add a new habit or wait for one of your scheduled habits to become active.</p>
+                        <p>Add a new habit or wait for one of your scheduled habits to become active.</p>
                         <a href="/new_habit" class="btn btn-primary">Create a Habit</a>
                     {% endif %}
                 </div>
             {% endif %}
-        </div>
+        </section>
 
-        <div>
-            <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+        <section class="dash-card active-habits-panel">
+            <div class="active-panel-header">
                 <div>
-                    <h3 class="mb-1">Not Active Today</h3>
-                    <p class="text-muted mb-0">These habits are in your tracker, but they are not scheduled for today.</p>
+                    <span class="active-panel-badge rest">Resting</span>
+                    <h3>Not Active Today</h3>
+                    <p class="mb-0">These habits are saved in your tracker, but they are not scheduled for today.</p>
                 </div>
-                <span class="badge bg-light text-dark border">{{ total_inactive }} hidden from today’s goals</span>
+
+                <span class="active-count-pill muted">
+                    {{ total_inactive }} resting
+                </span>
             </div>
 
             {% set habits = inactive_habits %}
             {% set empty_message = "No non-active habits matched your current search." %}
             {% include "_habit_list.html" %}
-        </div>
-    </div>
+        </section>
+
+    </main>
+
 </div>
 
 </body>

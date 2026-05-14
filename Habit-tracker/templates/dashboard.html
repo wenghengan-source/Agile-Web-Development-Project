@@ -369,31 +369,6 @@
                 </form>
             </section>
 
-            <section class="dash-card">
-                <h3>👟 Daily Steps</h3>
-
-                <div class="steps-ring">
-                    <div>
-                        <h2>{{ today_steps }}</h2>
-                        <span>steps</span>
-                    </div>
-                </div>
-
-                <form method="POST" action="/update_steps">
-                    <input
-                        type="number"
-                        name="steps"
-                        class="form-control mb-3"
-                        placeholder="Enter today's steps"
-                        required
-                    >
-
-                    <button class="btn btn-success w-100">
-                        Save Steps
-                    </button>
-                </form>
-            </section>
-
         </div>
 
         <section class="dash-card mt-4">
