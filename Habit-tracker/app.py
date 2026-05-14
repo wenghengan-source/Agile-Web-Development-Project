@@ -1000,6 +1000,73 @@ def init_db():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS reward_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            event_type TEXT NOT NULL,
+            points INTEGER NOT NULL,
+            event_date TEXT NOT NULL
+        )
+    """)
+
+    conn.commit()
+    conn.close()
+
+
+def calculate_total_points(user_id):
+    """Sum habit completions + leaderboard bonus + challenge rewards."""
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM habit_completions WHERE user_id = ?",
+        (user_id,)
+    )
+    base_points = cursor.fetchone()[0]
+
+    cursor.execute(
+        "SELECT COALESCE(SUM(points), 0) FROM reward_events WHERE user_id = ?",
+        (user_id,)
+    )
+    bonus_points = cursor.fetchone()[0]
+
+    conn.close()
+    return base_points + bonus_points, base_points, bonus_points
+
+
+def award_leaderboard_bonus(today_str):
+    """Award bonus points to top 3 on today's leaderboard."""
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT hc.user_id, COUNT(*) as cnt
+        FROM habit_completions hc
+        WHERE hc.completion_date = ?
+        GROUP BY hc.user_id
+        ORDER BY cnt DESC
+        LIMIT 3
+    """, (today_str,))
+
+    top_users = cursor.fetchall()
+    bonuses = [(0, 10), (1, 5), (2, 3)]
+
+    for rank_idx, bonus in bonuses:
+        if rank_idx < len(top_users):
+            uid = top_users[rank_idx][0]
+            cursor.execute("""
+                SELECT id FROM reward_events
+                WHERE user_id = ? AND event_type = 'leaderboard_bonus'
+                AND event_date = ?
+            """, (uid, today_str))
+
+            if not cursor.fetchone():
+                cursor.execute("""
+                    INSERT INTO reward_events (user_id, event_type, points, event_date)
+                    VALUES (?, 'leaderboard_bonus', ?, ?)
+                """, (uid, bonus, today_str))
+
     conn.commit()
     conn.close()
 
@@ -2044,45 +2111,46 @@ def reward():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    conn = sqlite3.connect("habit_tracker.db")
-    cursor = conn.cursor()
+    today_str = date.today().isoformat()
+    award_leaderboard_bonus(today_str)
 
-    cursor.execute(
-        "SELECT COUNT(*) FROM habit_completions WHERE user_id = ?",
-        (session["user_id"],)
+    total_points, base_points, bonus_points = calculate_total_points(
+        session["user_id"]
     )
-    points = cursor.fetchone()[0]
 
-    conn.close()
-
-    return render_template("reward.html", points=points)
+    return render_template(
+        "reward.html",
+        points=total_points,
+        base_points=base_points,
+        bonus_points=bonus_points
+    )
 
 
 @app.route("/reward/<int:user_id>")
 def reward_user(user_id):
-    # allow logged-in users to view friends' reward points
     if "user_id" not in session:
         return redirect(url_for("login"))
 
     conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
-    # get user info
     cursor.execute("SELECT name FROM users WHERE id = ?", (user_id,))
     user_row = cursor.fetchone()
     if not user_row:
         conn.close()
         return "User not found", 404
 
-    cursor.execute(
-        "SELECT COUNT(*) FROM habit_completions WHERE user_id = ?",
-        (user_id,)
-    )
-    points = cursor.fetchone()[0]
-
     conn.close()
 
-    return render_template("reward.html", points=points, viewed_user={'id': user_id, 'name': user_row[0]})
+    total_points, base_points, bonus_points = calculate_total_points(user_id)
+
+    return render_template(
+        "reward.html",
+        points=total_points,
+        base_points=base_points,
+        bonus_points=bonus_points,
+        viewed_user={'id': user_id, 'name': user_row[0]}
+    )
 
 
 @app.route("/claim_reward", methods=["POST"])
@@ -2092,24 +2160,26 @@ def claim_reward():
 
     tier = request.form.get("tier")
 
-    conn = sqlite3.connect("habit_tracker.db")
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT COUNT(*) FROM habit_completions WHERE user_id = ?",
-        (session["user_id"],)
-    )
-    points = cursor.fetchone()[0]
-    conn.close()
+    total_points, _, _ = calculate_total_points(session["user_id"])
 
-    thresholds = {"bronze": 50, "silver": 100, "gold": 200}
+    thresholds = {
+        "bronze": 50, "silver": 100, "gold": 200,
+        "platinum": 350, "diamond": 500, "legend": 750
+    }
+    trophy_names = {
+        "bronze": "🥉 Bronze", "silver": "🥈 Silver",
+        "gold": "🥇 Gold", "platinum": "💎 Platinum",
+        "diamond": "👑 Diamond", "legend": "🏆 Legend"
+    }
     required = thresholds.get(tier, None)
 
     if required is None:
         flash("Invalid reward tier.")
-    elif points >= required:
-        flash(f"Reward '{tier}' claimed. Congratulations!")
+    elif total_points >= required:
+        flash(f"Reward '{trophy_names.get(tier, tier)}' claimed. Congratulations!")
     else:
-        flash(f"Not enough points for {tier} reward. Need {required} points.")
+        flash(f"Not enough points for {trophy_names.get(tier, tier)}. "
+              f"Need {required} points (you have {total_points}).")
 
     return redirect(url_for("reward"))
 

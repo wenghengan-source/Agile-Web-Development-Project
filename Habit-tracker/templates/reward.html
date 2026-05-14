@@ -3,7 +3,7 @@
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-md-8">
-    <h2>Rewards</h2>
+    <h2>🏆 Rewards</h2>
 
     {% with messages = get_flashed_messages() %}
       {% if messages %}
@@ -13,35 +13,64 @@
       {% endif %}
     {% endwith %}
 
-    <p>Your points: <strong>{{ points if points is not none else 0 }}</strong></p>
+    <div class="card mb-4">
+      <div class="card-body text-center">
+        <h1 class="display-4 fw-bold">{{ points }}</h1>
+        <p class="text-muted mb-2">Total Points</p>
+        <div class="d-flex justify-content-center gap-4">
+          <span>🎯 Habit Completions: <strong>{{ base_points }}</strong></span>
+          <span>⚡ Leaderboard Bonus: <strong>{{ bonus_points }}</strong></span>
+        </div>
+        <p class="text-muted small mt-2">
+          Top 3 on the daily leaderboard earn bonus points: #1 = +10, #2 = +5, #3 = +3
+        </p>
+      </div>
+    </div>
 
+    <h4>Trophy Room</h4>
     <div class="list-group mb-3">
       {% set tiers = [
-        { 'key':'bronze','title':'Bronze Reward','desc':'Reach 50 points — small badge','pts':50 },
-        { 'key':'silver','title':'Silver Reward','desc':'Reach 100 points — medium reward','pts':100 },
-        { 'key':'gold','title':'Gold Reward','desc':'Reach 200 points — big reward','pts':200 }
+        { 'key':'bronze',   'icon':'🥉', 'title':'Bronze',   'desc':'Reach 50 points',   'pts':50 },
+        { 'key':'silver',   'icon':'🥈', 'title':'Silver',   'desc':'Reach 100 points',  'pts':100 },
+        { 'key':'gold',     'icon':'🥇', 'title':'Gold',     'desc':'Reach 200 points',  'pts':200 },
+        { 'key':'platinum', 'icon':'💎', 'title':'Platinum', 'desc':'Reach 350 points',  'pts':350 },
+        { 'key':'diamond',  'icon':'👑', 'title':'Diamond',  'desc':'Reach 500 points',  'pts':500 },
+        { 'key':'legend',   'icon':'🏆', 'title':'Legend',   'desc':'Reach 750 points',  'pts':750 }
       ] %}
 
       {% for t in tiers %}
-        <div class="list-group-item d-flex justify-content-between align-items-center">
+        <div class="list-group-item d-flex justify-content-between align-items-center
+                    {% if points >= t.pts %}list-group-item-success{% endif %}">
           <div>
-            <h6>{{ t.title }}</h6>
-            <small>{{ t.desc }}</small>
+            <h5 class="mb-1">{{ t.icon }} {{ t.title }}</h5>
+            <small class="text-muted">{{ t.desc }}</small>
           </div>
 
-          {% if points is not none and points >= t.pts %}
-            <form method="post" action="/claim_reward" onsubmit="return confirm('Claim {{ t.title }}?');">
-              <input type="hidden" name="tier" value="{{ t.key }}">
-              <button class="btn btn-sm btn-success">Claim</button>
-            </form>
-          {% else %}
-            <span class="badge bg-secondary">{{ t.pts }} pts</span>
-          {% endif %}
+          <div class="d-flex align-items-center gap-2">
+            {% if points >= t.pts %}
+              <span class="badge bg-success fs-6">Unlocked ✓</span>
+              <form method="post" action="/claim_reward" onsubmit="return confirm('Claim {{ t.title }} trophy?');">
+                <input type="hidden" name="tier" value="{{ t.key }}">
+                <button class="btn btn-sm btn-success">Claim</button>
+              </form>
+            {% else %}
+              <div class="text-end">
+                <div class="progress" style="width: 120px; height: 8px;">
+                  <div class="progress-bar" style="width: {{ (points / t.pts * 100)|int if points > 0 else 0 }}%;"></div>
+                </div>
+                <small class="text-muted">{{ points }}/{{ t.pts }} pts</small>
+              </div>
+              <span class="badge bg-secondary">{{ t.pts }} pts</span>
+            {% endif %}
+          </div>
         </div>
       {% endfor %}
     </div>
 
-    <p class="text-muted">Note: Claiming currently shows a confirmation message. The backend could record claimed rewards to prevent duplicate claims.</p>
+    <p class="text-muted">
+      💡 Earn points by completing daily habits. Finish in the top 3 on the daily
+      leaderboard to earn bonus points and unlock trophies faster!
+    </p>
   </div>
 </div>
 
