@@ -1046,6 +1046,42 @@ def calculate_total_points(user_id):
     return base_points + bonus_points, base_points, bonus_points
 
 
+def get_highest_trophy(user_id):
+    """Return the highest unlocked trophy across all habits for a user."""
+    thresholds = [
+        ("iron", "🪨", 50),
+        ("bronze", "🥉", 100),
+        ("silver", "🥈", 200),
+        ("gold", "🥇", 350),
+        ("platinum", "💎", 500),
+        ("diamond", "👑", 650),
+        ("legend", "🏆", 800),
+        ("master", "🌟", 1000),
+    ]
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT h.id, COUNT(hc.id) as completions
+        FROM habits h
+        LEFT JOIN habit_completions hc ON h.id = hc.habit_id AND hc.user_id = ?
+        WHERE h.user_id = ?
+        GROUP BY h.id
+    """, (user_id, user_id))
+
+    best_tier = None
+    for habit_id, completions in cursor.fetchall():
+        for key, icon, required in reversed(thresholds):
+            if completions >= required:
+                if best_tier is None or required > best_tier["required"]:
+                    best_tier = {"key": key, "icon": icon, "name": key.title()}
+                break
+
+    conn.close()
+    return best_tier
+
+
 def award_leaderboard_bonus(today_str):
     """Award bonus points to top 3 on today's leaderboard."""
     conn = sqlite3.connect("habit_tracker.db")
@@ -1754,9 +1790,14 @@ def friends():
         JOIN users u ON f.friend_id = u.id
         WHERE f.user_id = ?
     """, (session["user_id"],))
-    friend_list = cursor.fetchall()
+    friend_rows = cursor.fetchall()
 
-    user_ids = [session["user_id"]] + [friend[0] for friend in friend_list]
+    friend_list = []
+    for fid, fname, femail in friend_rows:
+        trophy = get_highest_trophy(fid)
+        friend_list.append((fid, fname, femail, trophy))
+
+    user_ids = [session["user_id"]] + [friend[0] for friend in friend_rows]
 
     leaderboard = []
     hidden_friend_count = 0
@@ -1785,11 +1826,14 @@ def friends():
 
         can_show = bool(share_progress) or uid == session["user_id"]
 
+        trophy = get_highest_trophy(uid)
+
         entry = {
             "name": user_name,
             "count": count,
             "can_show_progress": can_show,
-            "is_current_user": uid == session["user_id"]
+            "is_current_user": uid == session["user_id"],
+            "trophy": trophy
         }
 
         if uid == session["user_id"]:

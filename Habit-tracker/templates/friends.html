@@ -151,7 +151,12 @@
                                     {{ friend[1][0] }}
                                 </div>
 
-                                <h5>{{ friend[1] }}</h5>
+                                <h5>
+                                    {{ friend[1] }}
+                                    {% if friend[3] %}
+                                        <span title="{{ friend[3].name }}">{{ friend[3].icon }}</span>
+                                    {% endif %}
+                                </h5>
                                 <p>{{ friend[2] }}</p>
                             </article>
                         {% endfor %}
@@ -374,6 +379,9 @@
                                 <div>
                                     <h5>
                                         {{ user.name }}
+                                        {% if user.trophy %}
+                                            <span title="{{ user.trophy.name }}">{{ user.trophy.icon }}</span>
+                                        {% endif %}
                                         {% if user.is_current_user %}
                                             <span class="leaderboard-self-tag">You</span>
                                         {% endif %}
