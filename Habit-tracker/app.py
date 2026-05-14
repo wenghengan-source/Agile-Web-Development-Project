@@ -1019,14 +1019,21 @@ def friends():
 
         count = cursor.fetchone()[0]
 
+        entry = {
+            "name": user_name,
+            "count": count,
+            "can_show_progress": bool(share_progress) or uid == session["user_id"],
+            "is_current_user": uid == session["user_id"]
+        }
+
         if uid == session["user_id"]:
-            current_user_entry = (user_name, count)
+            current_user_entry = entry
         elif share_progress:
-            leaderboard.append((user_name, count))
+            leaderboard.append(entry)
         else:
             hidden_friend_count += 1
 
-    leaderboard.sort(key=lambda x: x[1], reverse=True)
+    leaderboard.sort(key=lambda x: x["count"], reverse=True)
 
     if current_user_entry:
         leaderboard.insert(0, current_user_entry)
