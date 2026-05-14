@@ -30,12 +30,14 @@
     <h4>Trophy Room</h4>
     <div class="list-group mb-3">
       {% set tiers = [
-        { 'key':'bronze',   'icon':'🥉', 'title':'Bronze',   'desc':'Reach 50 points',   'pts':50 },
-        { 'key':'silver',   'icon':'🥈', 'title':'Silver',   'desc':'Reach 100 points',  'pts':100 },
-        { 'key':'gold',     'icon':'🥇', 'title':'Gold',     'desc':'Reach 200 points',  'pts':200 },
-        { 'key':'platinum', 'icon':'💎', 'title':'Platinum', 'desc':'Reach 350 points',  'pts':350 },
-        { 'key':'diamond',  'icon':'👑', 'title':'Diamond',  'desc':'Reach 500 points',  'pts':500 },
-        { 'key':'legend',   'icon':'🏆', 'title':'Legend',   'desc':'Reach 750 points',  'pts':750 }
+        { 'key':'iron',     'icon':'🪨', 'title':'Iron',     'desc':'Reach 50 points',   'pts':50 },
+        { 'key':'bronze',   'icon':'🥉', 'title':'Bronze',   'desc':'Reach 100 points',  'pts':100 },
+        { 'key':'silver',   'icon':'🥈', 'title':'Silver',   'desc':'Reach 200 points',  'pts':200 },
+        { 'key':'gold',     'icon':'🥇', 'title':'Gold',     'desc':'Reach 350 points',  'pts':350 },
+        { 'key':'platinum', 'icon':'💎', 'title':'Platinum', 'desc':'Reach 500 points',  'pts':500 },
+        { 'key':'diamond',  'icon':'👑', 'title':'Diamond',  'desc':'Reach 650 points',  'pts':650 },
+        { 'key':'legend',   'icon':'🏆', 'title':'Legend',   'desc':'Reach 800 points',  'pts':800 },
+        { 'key':'master',   'icon':'🌟', 'title':'Master',   'desc':'Reach 1000 points', 'pts':1000 }
       ] %}
 
       {% for t in tiers %}

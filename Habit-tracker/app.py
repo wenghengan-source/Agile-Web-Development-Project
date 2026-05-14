@@ -2163,13 +2163,15 @@ def claim_reward():
     total_points, _, _ = calculate_total_points(session["user_id"])
 
     thresholds = {
-        "bronze": 50, "silver": 100, "gold": 200,
-        "platinum": 350, "diamond": 500, "legend": 750
+        "iron": 50, "bronze": 100, "silver": 200,
+        "gold": 350, "platinum": 500, "diamond": 650,
+        "legend": 800, "master": 1000
     }
     trophy_names = {
-        "bronze": "🥉 Bronze", "silver": "🥈 Silver",
-        "gold": "🥇 Gold", "platinum": "💎 Platinum",
-        "diamond": "👑 Diamond", "legend": "🏆 Legend"
+        "iron": "🪨 Iron", "bronze": "🥉 Bronze",
+        "silver": "🥈 Silver", "gold": "🥇 Gold",
+        "platinum": "💎 Platinum", "diamond": "👑 Diamond",
+        "legend": "🏆 Legend", "master": "🌟 Master"
     }
     required = thresholds.get(tier, None)
 
