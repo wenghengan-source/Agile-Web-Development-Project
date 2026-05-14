@@ -344,16 +344,22 @@
                 </div>
             </div>
 
+            {% if hidden_friend_count > 0 %}
+                <div class="leaderboard-feedback-banner">
+                    {{ hidden_friend_count }} friend{% if hidden_friend_count != 1 %}s{% endif %} hidden their daily progress.
+                </div>
+            {% endif %}
+
             {% if leaderboard %}
                 <div class="friends-leaderboard-list">
                     {% for user in leaderboard %}
-                        <article class="friends-leaderboard-item {% if loop.index == 1 %}top-rank{% endif %}">
+                        <article class="friends-leaderboard-item {% if loop.index == 1 and user.can_show_progress %}top-rank{% endif %} {% if not user.can_show_progress %}private{% endif %}">
                             <div class="friends-rank">
-                                {% if loop.index == 1 %}
+                                {% if loop.index == 1 and user.can_show_progress %}
                                     🥇
-                                {% elif loop.index == 2 %}
+                                {% elif loop.index == 2 and user.can_show_progress %}
                                     🥈
-                                {% elif loop.index == 3 %}
+                                {% elif loop.index == 3 and user.can_show_progress %}
                                     🥉
                                 {% else %}
                                     #{{ loop.index }}
@@ -362,18 +368,33 @@
 
                             <div class="friends-leaderboard-user">
                                 <div class="friend-avatar small">
-                                    {{ user[0][0] }}
+                                    {{ user.name[0] }}
                                 </div>
 
                                 <div>
-                                    <h5>{{ user[0] }}</h5>
-                                    <p>{{ user[1] }} completed habits today</p>
+                                    <h5>
+                                        {{ user.name }}
+                                        {% if user.is_current_user %}
+                                            <span class="leaderboard-self-tag">You</span>
+                                        {% endif %}
+                                    </h5>
+                                    {% if user.can_show_progress %}
+                                        <p>{{ user.count }} completed habits today</p>
+                                    {% else %}
+                                        <p>Daily progress is hidden for privacy.</p>
+                                    {% endif %}
                                 </div>
                             </div>
 
-                            <div class="friends-score">
-                                {{ user[1] }}
-                            </div>
+                            {% if user.can_show_progress %}
+                                <div class="friends-score">
+                                    {{ user.count }}
+                                </div>
+                            {% else %}
+                                <div class="friends-score private">
+                                    --
+                                </div>
+                            {% endif %}
                         </article>
                     {% endfor %}
                 </div>
