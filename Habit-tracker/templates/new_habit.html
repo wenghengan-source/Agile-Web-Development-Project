@@ -11,135 +11,218 @@
 
 <body class="dashboard-body">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="/">Habit Tracker</a>
-        <div>
-            <a class="btn btn-light btn-sm" href="/">Home</a>
-            <a class="btn btn-light btn-sm" href="/dashboard">Dashboard</a>
-            <a class="btn btn-light btn-sm" href="/active_habits">Active Habits</a>
-            <a class="btn btn-light btn-sm" href="/calendar">Calendar</a>
-            <a class="btn btn-light btn-sm" href="/friends">Friends</a>
-            <a class="btn btn-light btn-sm" href="/stats">Stats</a>
-            <a class="btn btn-light btn-sm" href="/profile">Profile</a>
-            <a class="btn btn-danger btn-sm" href="/logout">Logout</a>
+<div class="dashboard-layout">
+
+    <aside class="dashboard-sidebar">
+        <h3 class="sidebar-logo">🏋️ Habit Tracker</h3>
+
+        <a href="/dashboard" class="sidebar-link">🏠 Dashboard</a>
+        <a href="/active_habits" class="sidebar-link">✅ Active Habits</a>
+        <a href="/calendar" class="sidebar-link">📅 Calendar</a>
+        <a href="/friends" class="sidebar-link">👥 Friends</a>
+        <a href="/stats" class="sidebar-link">📊 Stats</a>
+        <a href="/profile" class="sidebar-link">👤 Profile</a>
+        
+<a href="#" class="sidebar-link notification-link" id="notificationButton">
+    🔔 Notifications
+    <span class="notification-badge">3</span>
+</a>
+
+<a href="/logout" class="sidebar-link logout">🚪 Logout</a>
+
+        <div class="sidebar-quote">
+            <h4>“</h4>
+            <p>Start small, stay consistent, and build the habit.</p>
         </div>
-    </div>
-</nav>
+    </aside>
 
-<div class="container mt-4">
-    <div class="card p-4 mx-auto" style="max-width: 750px;">
-        <h2>Set a New Goal</h2>
-        <p class="text-muted">Create a habit with a clear target and unit.</p>
+    <main class="dashboard-main edit-goal-page">
 
-        <form method="POST">
-            <div class="mb-3">
-                <label>Habit / Goal Name</label>
-                <input type="text" name="habit_name" class="form-control" placeholder="e.g. Drink Water, Walk, Study" required>
+        <section class="edit-goal-hero">
+            <div>
+                <span class="edit-goal-badge">New Goal</span>
+                <h1>Set a New Goal ✨</h1>
+                <p>Create a habit with a clear target, schedule, priority, and notes.</p>
             </div>
 
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label>Category</label>
-                    <select name="category" class="form-control">
-                        <option value="Health">Health</option>
-                        <option value="Fitness">Fitness</option>
-                        <option value="Study">Study</option>
-                        <option value="Work">Work</option>
-                        <option value="Personal">Personal</option>
-                        <option value="General">General</option>
-                    </select>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <label>Priority</label>
-                    <select name="priority" class="form-control">
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
-                    </select>
-                </div>
+            <div class="edit-goal-hero-actions">
+                <a href="/active_habits" class="btn btn-light">Back to Active Habits</a>
+                <a href="/dashboard" class="btn btn-outline-light">Dashboard</a>
             </div>
+        </section>
 
-            <div class="card p-3 mb-3 bg-light">
-                <h5>Goal Target</h5>
+        <section class="edit-goal-shell">
+            <form method="POST">
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label>Target Number</label>
-                        <input type="number" step="0.1" name="target_value" class="form-control" placeholder="e.g. 2, 8000, 30" required>
+                <div class="edit-form-section main-info">
+                    <div class="edit-section-heading">
+                        <span>01</span>
+                        <div>
+                            <h3>Basic information</h3>
+                            <p>Name, category, and priority for this new habit.</p>
+                        </div>
                     </div>
 
-                    <div class="col-md-6 mb-3">
-                        <label>Unit</label>
-                        <select name="target_unit" class="form-control">
-                            <option value="times">Times</option>
-                            <option value="minutes">Minutes</option>
-                            <option value="hours">Hours</option>
-                            <option value="steps">Steps</option>
-                            <option value="km">Kilometres</option>
-                            <option value="litres">Litres</option>
-                            <option value="pages">Pages</option>
-                            <option value="tasks">Tasks</option>
-                        </select>
+                    <div class="mb-4">
+                        <label class="form-label">Habit / Goal Name</label>
+                        <input
+                            type="text"
+                            name="habit_name"
+                            class="form-control edit-input"
+                            placeholder="e.g. Drink Water, Walk, Study"
+                            required
+                        >
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Category</label>
+                            <select name="category" class="form-control edit-input">
+                                <option value="Health">Health</option>
+                                <option value="Fitness">Fitness</option>
+                                <option value="Study">Study</option>
+                                <option value="Work">Work</option>
+                                <option value="Personal">Personal</option>
+                                <option value="General">General</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Priority</label>
+                            <select name="priority" class="form-control edit-input">
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="card p-3 mb-3 bg-light">
-                <h5>Habit Schedule</h5>
-                <p class="text-muted mb-3">
-                    Choose the days this habit should appear. Leave all unchecked for an everyday habit.
-                </p>
+                <div class="edit-form-grid">
+                    <div class="edit-form-section">
+                        <div class="edit-section-heading">
+                            <span>02</span>
+                            <div>
+                                <h3>Goal target</h3>
+                                <p>Set a clear measurable target for this habit.</p>
+                            </div>
+                        </div>
 
-                <div class="weekday-selector">
-                    <label class="weekday-option">
-                        <input type="checkbox" name="schedule" value="Mon">
-                        <span>Mon</span>
-                    </label>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Target Number</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    name="target_value"
+                                    class="form-control edit-input"
+                                    placeholder="e.g. 2, 8000, 30"
+                                    required
+                                >
+                            </div>
 
-                    <label class="weekday-option">
-                        <input type="checkbox" name="schedule" value="Tue">
-                        <span>Tue</span>
-                    </label>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Target Unit</label>
+                                <select name="target_unit" class="form-control edit-input">
+                                    <option value="times">Times</option>
+                                    <option value="minutes">Minutes</option>
+                                    <option value="hours">Hours</option>
+                                    <option value="steps">Steps</option>
+                                    <option value="km">Kilometres</option>
+                                    <option value="litres">Litres</option>
+                                    <option value="pages">Pages</option>
+                                    <option value="tasks">Tasks</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
 
-                    <label class="weekday-option">
-                        <input type="checkbox" name="schedule" value="Wed">
-                        <span>Wed</span>
-                    </label>
+                    <div class="edit-form-section">
+                        <div class="edit-section-heading">
+                            <span>03</span>
+                            <div>
+                                <h3>Habit schedule</h3>
+                                <p>Choose days, or leave unchecked for everyday.</p>
+                            </div>
+                        </div>
 
-                    <label class="weekday-option">
-                        <input type="checkbox" name="schedule" value="Thu">
-                        <span>Thu</span>
-                    </label>
+                        <div class="weekday-selector edit-weekday-selector">
+                            <label class="weekday-option">
+                                <input type="checkbox" name="schedule" value="Mon">
+                                <span>Mon</span>
+                            </label>
 
-                    <label class="weekday-option">
-                        <input type="checkbox" name="schedule" value="Fri">
-                        <span>Fri</span>
-                    </label>
+                            <label class="weekday-option">
+                                <input type="checkbox" name="schedule" value="Tue">
+                                <span>Tue</span>
+                            </label>
 
-                    <label class="weekday-option">
-                        <input type="checkbox" name="schedule" value="Sat">
-                        <span>Sat</span>
-                    </label>
+                            <label class="weekday-option">
+                                <input type="checkbox" name="schedule" value="Wed">
+                                <span>Wed</span>
+                            </label>
 
-                    <label class="weekday-option">
-                        <input type="checkbox" name="schedule" value="Sun">
-                        <span>Sun</span>
-                    </label>
+                            <label class="weekday-option">
+                                <input type="checkbox" name="schedule" value="Thu">
+                                <span>Thu</span>
+                            </label>
+
+                            <label class="weekday-option">
+                                <input type="checkbox" name="schedule" value="Fri">
+                                <span>Fri</span>
+                            </label>
+
+                            <label class="weekday-option">
+                                <input type="checkbox" name="schedule" value="Sat">
+                                <span>Sat</span>
+                            </label>
+
+                            <label class="weekday-option">
+                                <input type="checkbox" name="schedule" value="Sun">
+                                <span>Sun</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
-            </div>
 
-            <div class="mb-3">
-                <label>Notes</label>
-                <textarea name="notes" class="form-control" rows="3" placeholder="Optional notes about this goal..."></textarea>
-            </div>
+                <div class="edit-form-section">
+                    <div class="edit-section-heading">
+                        <span>04</span>
+                        <div>
+                            <h3>Notes</h3>
+                            <p>Add optional reminders, motivation, or extra details.</p>
+                        </div>
+                    </div>
 
-            <button class="btn btn-primary">Save Goal</button>
-            <a href="/dashboard" class="btn btn-secondary">Cancel</a>
-        </form>
-    </div>
+                    <textarea
+                        name="notes"
+                        class="form-control edit-input"
+                        rows="4"
+                        placeholder="Optional notes about this goal..."
+                    ></textarea>
+                </div>
+
+                <div class="edit-goal-footer">
+                    <div class="edit-created-pill">
+                        <span>New habit</span>
+                        <strong>Ready to save</strong>
+                    </div>
+
+                    <div class="edit-action-buttons">
+                        <a href="/dashboard" class="btn btn-outline-secondary">Cancel</a>
+                        <button class="btn btn-primary">Save Goal</button>
+                    </div>
+                </div>
+
+            </form>
+        </section>
+
+    </main>
+
 </div>
+
+
+{% include "_notifications.html" %}
 
 </body>
 </html>

@@ -1,0 +1,35 @@
+<div class="notification-panel" id="notificationPanel">
+    <div class="notification-header">
+        <h4>Notifications</h4>
+        <button type="button" id="closeNotification">×</button>
+    </div>
+
+    <div class="notification-item">
+        ⚔️ Pengfei challenged you to Exercise.
+    </div>
+
+    <div class="notification-item">
+        🔥 Keep your streak alive today.
+    </div>
+
+    <div class="notification-item">
+        ✅ You still have incomplete habits today.
+    </div>
+</div>
+
+<script>
+const notificationButton = document.getElementById("notificationButton");
+const notificationPanel = document.getElementById("notificationPanel");
+const closeNotification = document.getElementById("closeNotification");
+
+if (notificationButton && notificationPanel && closeNotification) {
+    notificationButton.addEventListener("click", function (event) {
+        event.preventDefault();
+        notificationPanel.classList.toggle("show");
+    });
+
+    closeNotification.addEventListener("click", function () {
+        notificationPanel.classList.remove("show");
+    });
+}
+</script>

@@ -2,32 +2,71 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <title>Profile - Habit Tracker</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body class="dashboard-body">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="/">Habit Tracker</a>
-        <div>
-            <a class="btn btn-light btn-sm" href="/">Home</a>
-            <a class="btn btn-light btn-sm" href="/dashboard">Dashboard</a>
-            <a class="btn btn-light btn-sm" href="/active_habits">Active Habits</a>
-            <a class="btn btn-light btn-sm" href="/calendar">Calendar</a>
-            <a class="btn btn-light btn-sm" href="/friends">Friends</a>
-            <a class="btn btn-light btn-sm" href="/stats">Stats</a>
-            <a class="btn btn-light btn-sm" href="/profile">Profile</a>
-            <a class="btn btn-danger btn-sm" href="/logout">Logout</a>
-        </div>
-    </div>
-</nav>
+<div class="dashboard-layout">
 
-<div class="container mt-4">
+    <!-- SIDEBAR -->
+
+    <aside class="dashboard-sidebar">
+
+        <h3 class="sidebar-logo">
+            🏋️ Habit Tracker
+        </h3>
+
+        <a href="/dashboard" class="sidebar-link">
+            🏠 Dashboard
+        </a>
+
+        <a href="/active_habits" class="sidebar-link">
+            ✅ Active Habits
+        </a>
+
+        <a href="/calendar" class="sidebar-link">
+            📅 Calendar
+        </a>
+
+        <a href="/friends" class="sidebar-link">
+            👥 Friends
+        </a>
+
+        <a href="/stats" class="sidebar-link">
+            📊 Stats
+        </a>
+
+<a href="/profile" class="sidebar-link active">
+    👤 Profile
+</a>
+
+<a href="#" class="sidebar-link notification-link" id="notificationButton">
+    🔔 Notifications
+    <span class="notification-badge">3</span>
+</a>
+
+<a href="/logout" class="sidebar-link logout">
+    🚪 Logout
+</a>
+
+<div class="sidebar-quote">
+
+            <h4>“</h4>
+
+            <p>
+                Your profile keeps your goals and progress in one place.
+            </p>
 
     {% with messages = get_flashed_messages() %}
         {% if messages %}
@@ -42,23 +81,15 @@
             {{ user[0][0]|upper if user and user[0] else "U" }}
         </div>
 
-        <div>
-            <span class="profile-badge">User Profile</span>
-            <h1 id="heroName">{{ user[0] }}</h1>
-            <p id="heroEmail">{{ user[1] }}</p>
-        </div>
+    </aside>
 
-        <a href="/dashboard" class="btn btn-light">Back to Dashboard</a>
-    </div>
+    <!-- MAIN -->
 
-    <div class="profile-grid mt-4">
+    <main class="dashboard-main">
 
-        <div class="profile-stat-card">
-            <div class="profile-stat-icon">📋</div>
-            <span>Total Habits</span>
-            <h2>{{ total_habits }}</h2>
-        </div>
+        <!-- TOP -->
 
+        <div class="dashboard-top">
         <div class="profile-stat-card">
             <div class="profile-stat-icon">✅</div>
             <span>Total Completed Records</span>
@@ -184,111 +215,495 @@
             </div>
 
             <div>
-                <h4>{{ completed_habits }}</h4>
-                <p>Completion Records</p>
+
+                <h1>Profile 👤</h1>
+
+                <p>
+                    View your account, current goals,
+                    and progress summary.
+                </p>
+
             </div>
-        </div>
-    </div>
 
-    <div class="profile-card mt-4 mb-5">
-        <h3>Edit Profile Preview</h3>
-        <p class="text-muted">
-            This updates the profile preview in the browser only, so you can experiment without changing stored account data.
-        </p>
+            <div class="date-pill">
+                User Profile
+            </div>
 
-        <div class="editor-field">
-            <label class="form-label fw-semibold" for="nameInput">Display Name</label>
-            <input type="text" id="nameInput" class="form-control" value="{{ user[0] }}" disabled>
         </div>
 
-        <div class="editor-field">
-            <label class="form-label fw-semibold" for="summaryInput">Focus Note</label>
-            <textarea id="summaryInput" class="form-control" rows="3" disabled>Stay consistent and build momentum one day at a time.</textarea>
+        <!-- HERO -->
+
+        <section class="dash-card profile-dashboard-hero">
+
+            <div class="profile-dashboard-avatar"
+                 id="heroInitial">
+
+                {{ user[0][0]|upper if user and user[0] else "U" }}
+
+            </div>
+
+            <div class="profile-dashboard-info">
+
+                <span class="profile-dashboard-badge">
+                    Account Overview
+                </span>
+
+                <h2 id="heroName">
+                    {{ user[0] }}
+                </h2>
+
+                <p id="heroEmail">
+                    {{ user[1] }}
+                </p>
+
+            </div>
+
+            <!-- BUTTONS -->
+
+            <div class="d-flex flex-wrap gap-2">
+
+                <a href="/dashboard"
+                   class="btn btn-outline-primary">
+
+                    Back to Dashboard
+
+                </a>
+
+                <button type="button"
+                        class="btn btn-info"
+                        id="supportButton">
+
+                    Contact Support
+
+                </button>
+
+            </div>
+
+        </section>
+
+        <!-- SUMMARY -->
+
+        <div class="summary-grid">
+
+            <div class="summary-card purple">
+
+                <div class="summary-icon">
+                    📋
+                </div>
+
+                <div>
+
+                    <p>Total Habits</p>
+
+                    <h2>
+                        {{ total_habits }}
+                    </h2>
+
+                    <span>
+                        Habits created
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="summary-card split-card">
+
+                <div class="summary-icon">
+                    ✅
+                </div>
+
+                <div class="split-card-content">
+
+                    <p class="split-card-title">
+                        Completed Records
+                    </p>
+
+                    <div class="split-card-metrics">
+
+                        <div class="split-card-metric">
+
+                            <span class="split-card-label">
+                                Total
+                            </span>
+
+                            <strong>
+                                {{ completed_habits }}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                    <span class="split-card-detail">
+
+                        All habit completion records
+                        in your account.
+
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="summary-card blue summary-card-stacked">
+
+                <div class="summary-icon">
+                    🎯
+                </div>
+
+                <div>
+
+                    <p>Current Goals</p>
+
+                    <h2>
+                        {{ goals|length }}
+                    </h2>
+
+                    <span>
+                        Your most recent habit goals.
+                    </span>
+
+                </div>
+
+            </div>
+
         </div>
 
-        <div class="editor-field">
-            <label class="form-label fw-semibold" for="goalsInput">Goals</label>
-            <textarea id="goalsInput" class="form-control" rows="5" disabled>{% if goals %}{% for goal in goals %}{{ goal }}{% if not loop.last %}
-{% endif %}{% endfor %}{% else %}Add your first habit goal here.{% endif %}</textarea>
+        <!-- ACCOUNT + GOALS -->
+
+        <div class="profile-dashboard-grid">
+
+            <!-- ACCOUNT -->
+
+            <section class="dash-card profile-dashboard-panel">
+
+                <div class="profile-panel-header">
+
+                    <div>
+
+                        <span class="profile-panel-badge">
+                            Account
+                        </span>
+
+                        <h3>
+                            Account Information
+                        </h3>
+
+                        <p class="mb-0">
+                            You can edit your display name
+                            and focus note here.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="editor-field">
+
+                    <label class="form-label fw-semibold"
+                           for="nameInput">
+
+                        Name
+
+                    </label>
+
+                    <input
+                        type="text"
+                        id="nameInput"
+                        class="form-control"
+                        value="{{ user[0] }}"
+                        disabled
+                    >
+
+                </div>
+
+                <div class="editor-field">
+
+                    <label class="form-label fw-semibold">
+
+                        Email
+
+                    </label>
+
+                    <input
+                        type="text"
+                        class="form-control"
+                        value="{{ user[1] }}"
+                        disabled
+                    >
+
+                </div>
+
+                <div class="editor-field">
+
+                    <label class="form-label fw-semibold"
+                           for="summaryInput">
+
+                        Focus Note
+
+                    </label>
+
+                    <textarea
+                        id="summaryInput"
+                        class="form-control"
+                        rows="3"
+                        disabled
+                    >Stay consistent and build momentum one day at a time.</textarea>
+
+                </div>
+
+                <!-- BUTTONS -->
+
+                <div class="d-flex flex-wrap gap-2">
+
+                    <button type="button"
+                            class="btn btn-primary"
+                            id="editButton">
+
+                        Edit Account
+
+                    </button>
+
+                    <button type="button"
+                            class="btn btn-outline-secondary"
+                            id="saveButton">
+
+                        Save Changes
+
+                    </button>
+
+                </div>
+
+                <p class="text-success fw-semibold mt-3 mb-0"
+                   id="statusText"></p>
+
+            </section>
+
+            <!-- GOALS -->
+
+            <section class="dash-card profile-dashboard-panel">
+
+                <div class="profile-panel-header">
+
+                    <div>
+
+                        <span class="profile-panel-badge">
+                            Goals
+                        </span>
+
+                        <h3>
+                            Current Goals
+                        </h3>
+
+                        <p class="mb-0">
+                            Your most recent habits
+                            and focus areas.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="profile-goal-list"
+                     id="goalGrid">
+
+                    {% if goals %}
+
+                        {% for goal in goals %}
+
+                            <div class="profile-goal-pill">
+                                {{ goal }}
+                            </div>
+
+                        {% endfor %}
+
+                    {% else %}
+
+                        <div class="profile-goal-pill">
+
+                            Add a few habits to see your
+                            current goals here.
+
+                        </div>
+
+                    {% endif %}
+
+                </div>
+
+            </section>
+
         </div>
 
-        <div class="d-flex flex-wrap gap-2">
-            <button type="button" class="btn btn-primary" id="editButton">Edit</button>
-            <button type="button" class="btn btn-outline-secondary" id="saveButton">Save</button>
+        <!-- PROGRESS -->
+
+        <div class="profile-dashboard-grid">
+
+            <section class="dash-card profile-dashboard-panel">
+
+                <div class="profile-panel-header">
+
+                    <div>
+
+                        <span class="profile-panel-badge">
+                            Summary
+                        </span>
+
+                        <h3>
+                            Progress Summary
+                        </h3>
+
+                        <p class="mb-0">
+                            Quick overview of your habit
+                            tracking activity.
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="profile-progress-box">
+
+                    <div>
+
+                        <h4>
+                            {{ total_habits }}
+                        </h4>
+
+                        <p>
+                            Habits Created
+                        </p>
+
+                    </div>
+
+                    <div>
+
+                        <h4>
+                            {{ completed_habits }}
+                        </h4>
+
+                        <p>
+                            Completion Records
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </section>
+
         </div>
 
-        <p class="text-success fw-semibold mt-3 mb-0" id="statusText"></p>
-    </div>
+    </main>
 
 </div>
 
+<!-- SCRIPT -->
+
 <script>
-const nameInput = document.getElementById("nameInput");
-const summaryInput = document.getElementById("summaryInput");
-const goalsInput = document.getElementById("goalsInput");
-const editButton = document.getElementById("editButton");
-const saveButton = document.getElementById("saveButton");
-const statusText = document.getElementById("statusText");
-const heroName = document.getElementById("heroName");
-const heroInitial = document.getElementById("heroInitial");
-const infoName = document.getElementById("infoName");
-const focusNote = document.getElementById("focusNote");
-const goalGrid = document.getElementById("goalGrid");
+
+const nameInput =
+    document.getElementById("nameInput");
+
+const summaryInput =
+    document.getElementById("summaryInput");
+
+const editButton =
+    document.getElementById("editButton");
+
+const saveButton =
+    document.getElementById("saveButton");
+
+const supportButton =
+    document.getElementById("supportButton");
+
+const statusText =
+    document.getElementById("statusText");
+
+const heroName =
+    document.getElementById("heroName");
+
+const heroInitial =
+    document.getElementById("heroInitial");
+
+const infoName =
+    document.getElementById("infoName");
+
+const focusNote =
+    document.getElementById("focusNote");
 
 function setEditable(isEditable) {
+
     nameInput.disabled = !isEditable;
     summaryInput.disabled = !isEditable;
-    goalsInput.disabled = !isEditable;
+
 }
 
 function buildInitial(name) {
+
     return (name.trim()[0] || "U").toUpperCase();
-}
 
-function renderGoals(goalText) {
-    const goals = goalText
-        .split("\n")
-        .map(goal => goal.trim())
-        .filter(Boolean);
-
-    goalGrid.innerHTML = "";
-
-    if (goals.length === 0) {
-        const emptyGoal = document.createElement("div");
-        emptyGoal.className = "goal-pill";
-        emptyGoal.textContent = "Add your first habit goal here.";
-        goalGrid.appendChild(emptyGoal);
-        return;
-    }
-
-    goals.forEach(goal => {
-        const goalElement = document.createElement("div");
-        goalElement.className = "goal-pill";
-        goalElement.textContent = goal;
-        goalGrid.appendChild(goalElement);
-    });
 }
 
 editButton.addEventListener("click", function () {
+
     setEditable(true);
-    statusText.textContent = "Edit mode enabled.";
+
+    statusText.textContent =
+        "Edit mode enabled.";
+
     nameInput.focus();
+
 });
 
 saveButton.addEventListener("click", function () {
-    const updatedName = nameInput.value.trim() || "User";
-    const updatedSummary = summaryInput.value.trim() || "No focus note added yet.";
+
+    const updatedName =
+        nameInput.value.trim() || "User";
+
+    const updatedSummary =
+        summaryInput.value.trim() ||
+        "No focus note added yet.";
 
     heroName.textContent = updatedName;
-    heroInitial.textContent = buildInitial(updatedName);
+
+    heroInitial.textContent =
+        buildInitial(updatedName);
+
     infoName.textContent = updatedName;
-    focusNote.textContent = updatedSummary;
-    renderGoals(goalsInput.value);
+
+    focusNote.textContent =
+        updatedSummary;
 
     setEditable(false);
-    statusText.textContent = "Profile preview updated.";
+
+    statusText.textContent =
+        "Account information updated.";
+
 });
+
+supportButton.addEventListener("click", function () {
+
+    alert(
+
+        "Need Help?\n\n" +
+
+        "Contact our support team:\n\n" +
+
+        "Yukendar Naidu (24781111)\n" +
+
+        "Pengfei Luo (24036668)\n" +
+
+        "Hengan Weng (24201874)"
+
+    );
+
+});
+
 </script>
+
+
+{% include "_notifications.html" %}
 
 </body>
 </html>

@@ -11,112 +11,151 @@
 
 <body class="dashboard-body">
 
-<div class="container mt-4">
+<div class="dashboard-layout">
 
-    <div class="habit-detail-hero">
-        <div>
-            <span class="habit-detail-badge">Habit Detail</span>
-            <h1>{{ habit[1] }}</h1>
-            <p>Track your goal, completion history, and personal progress trend.</p>
+    <aside class="dashboard-sidebar">
+        <h3 class="sidebar-logo">🏋️ Habit Tracker</h3>
+
+        <a href="/dashboard" class="sidebar-link">🏠 Dashboard</a>
+        <a href="/active_habits" class="sidebar-link">✅ Active Habits</a>
+        <a href="/calendar" class="sidebar-link">📅 Calendar</a>
+        <a href="/friends" class="sidebar-link">👥 Friends</a>
+        <a href="/stats" class="sidebar-link">📊 Stats</a>
+        <a href="/profile" class="sidebar-link">👤 Profile</a>
+        
+<a href="#" class="sidebar-link notification-link" id="notificationButton">
+    🔔 Notifications
+    <span class="notification-badge">3</span>
+</a>
+
+<a href="/logout" class="sidebar-link logout">🚪 Logout</a>
+
+        <div class="sidebar-quote">
+            <h4>“</h4>
+            <p>Progress becomes clearer when you review the details.</p>
         </div>
+    </aside>
 
-        <div>
-            <a href="/dashboard" class="btn btn-light">Back to Dashboard</a>
-        </div>
-    </div>
+    <main class="dashboard-main habit-detail-dashboard-page">
 
-    <div class="habit-detail-grid mt-4">
-
-        <div class="habit-detail-stat">
-            <span>Category</span>
-            <h3>{{ habit[2] }}</h3>
-        </div>
-
-        <div class="habit-detail-stat">
-            <span>Priority</span>
-            <h3>{{ habit[3] }}</h3>
-        </div>
-
-        <div class="habit-detail-stat">
-            <span>Goal</span>
-            <h3>{{ habit[4] }} {{ habit[5] }}</h3>
-        </div>
-
-        <div class="habit-detail-stat">
-            <span>Created</span>
-            <h3>{{ habit[7] }}</h3>
-        </div>
-
-    </div>
-
-    {% if habit[6] %}
-        <div class="habit-detail-card mt-4">
-            <h3>Notes</h3>
-            <p>{{ habit[6] }}</p>
-        </div>
-    {% endif %}
-
-    <div class="habit-detail-card mt-4">
-        <div class="habit-detail-section-title">
+        <section class="edit-goal-hero habit-detail-dashboard-hero">
             <div>
-                <h3>7-Day Completion Trend</h3>
-                <p>1 means completed, 0 means not completed.</p>
+                <span class="edit-goal-badge">Habit Detail</span>
+                <h1>{{ habit[1] }} 📌</h1>
+                <p>Track your goal, completion history, schedule, and personal progress trend.</p>
             </div>
 
-            <span>Last 7 Days</span>
+            <div class="edit-goal-hero-actions">
+                <a href="/active_habits" class="btn btn-light">Back to Active Habits</a>
+                <a href="/dashboard" class="btn btn-outline-light">Dashboard</a>
+            </div>
+        </section>
+
+        <div class="habit-detail-summary-grid">
+            <article class="habit-detail-info-card">
+                <span>Category</span>
+                <strong>{{ habit[2] }}</strong>
+            </article>
+
+            <article class="habit-detail-info-card priority">
+                <span>Priority</span>
+                <strong>{{ habit[3] }}</strong>
+            </article>
+
+            <article class="habit-detail-info-card goal">
+                <span>Goal</span>
+                <strong>{{ habit[4] }} {{ habit[5] }}</strong>
+            </article>
+
+            <article class="habit-detail-info-card created">
+                <span>Created</span>
+                <strong>{{ habit[7] }}</strong>
+            </article>
         </div>
 
-        <canvas id="habitDetailChart" height="90"></canvas>
-    </div>
+        {% if habit[6] %}
+            <section class="edit-form-section habit-detail-note-panel">
+                <div class="edit-section-heading">
+                    <span>01</span>
+                    <div>
+                        <h3>Notes</h3>
+                        <p>Extra details and reminders for this habit.</p>
+                    </div>
+                </div>
 
-    <div class="habit-detail-card mt-4 mb-5">
-        <div class="habit-detail-section-title">
-            <div>
-                <h3>{{ month_name }}</h3>
-                <p>Calendar view for this specific habit.</p>
+                <div class="habit-detail-note-box">
+                    {{ habit[6] }}
+                </div>
+            </section>
+        {% endif %}
+
+        <section class="edit-form-section habit-detail-chart-panel">
+            <div class="edit-section-heading">
+                <span>{% if habit[6] %}02{% else %}01{% endif %}</span>
+                <div>
+                    <h3>7-Day Completion Trend</h3>
+                    <p>1 means completed, 0 means not completed.</p>
+                </div>
             </div>
 
-            <span>Monthly History</span>
-        </div>
+            <div class="habit-detail-chart-shell">
+                <canvas id="habitDetailChart" height="90"></canvas>
+            </div>
+        </section>
 
-        <table class="table habit-detail-calendar">
-            <thead>
-                <tr>
-                    <th>Mon</th>
-                    <th>Tue</th>
-                    <th>Wed</th>
-                    <th>Thu</th>
-                    <th>Fri</th>
-                    <th>Sat</th>
-                    <th>Sun</th>
-                </tr>
-            </thead>
+        <section class="edit-form-section habit-detail-calendar-panel">
+            <div class="edit-section-heading">
+                <span>{% if habit[6] %}03{% else %}02{% endif %}</span>
+                <div>
+                    <h3>{{ month_name }}</h3>
+                    <p>Monthly calendar view for this specific habit.</p>
+                </div>
+            </div>
 
-            <tbody>
-                {% for week in month_days %}
-                    <tr>
-                        {% for day in week %}
-                            <td class="{% if day == 0 %}empty-day{% endif %}">
-                                {% if day != 0 %}
-                                    <strong>{{ day }}</strong>
+            <div class="habit-detail-table-scroll">
+                <table class="table habit-detail-calendar habit-detail-dashboard-calendar">
+                    <thead>
+                        <tr>
+                            <th>Mon</th>
+                            <th>Tue</th>
+                            <th>Wed</th>
+                            <th>Thu</th>
+                            <th>Fri</th>
+                            <th>Sat</th>
+                            <th>Sun</th>
+                        </tr>
+                    </thead>
 
-                                    {% set full_date = "%04d-%02d-%02d"|format(year, month, day) %}
+                    <tbody>
+                        {% for week in month_days %}
+                            <tr>
+                                {% for day in week %}
+                                    <td class="{% if day == 0 %}empty-day{% endif %}">
+                                        {% if day != 0 %}
+                                            <div class="habit-detail-day-number">{{ day }}</div>
 
-                                    {% if full_date >= habit[7] and is_habit_scheduled_for_date(habit[8], date(year, month, day)) %}
-                                        {% if full_date in completion_set %}
-                                            <div class="habit-day-status done">Completed</div>
-                                        {% else %}
-                                            <div class="habit-day-status pending">Pending</div>
+                                            {% set full_date = "%04d-%02d-%02d"|format(year, month, day) %}
+
+                                            {% if full_date >= habit[7] and is_habit_scheduled_for_date(habit[8], date(year, month, day)) %}
+                                                {% if full_date in completion_set %}
+                                                    <div class="habit-day-status done">Completed</div>
+                                                {% else %}
+                                                    <div class="habit-day-status pending">Pending</div>
+                                                {% endif %}
+                                            {% else %}
+                                                <div class="habit-day-status rest">Rest</div>
+                                            {% endif %}
                                         {% endif %}
-                                    {% endif %}
-                                {% endif %}
-                            </td>
+                                    </td>
+                                {% endfor %}
+                            </tr>
                         {% endfor %}
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+    </main>
 
 </div>
 
@@ -162,6 +201,9 @@
         }
     });
 </script>
+
+
+{% include "_notifications.html" %}
 
 </body>
 </html>
