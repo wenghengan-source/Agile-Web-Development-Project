@@ -11,91 +11,169 @@
 
 <body class="dashboard-body">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="/">Habit Tracker</a>
-        <div>
-            <a class="btn btn-light btn-sm" href="/">Home</a>
-            <a class="btn btn-light btn-sm" href="/dashboard">Dashboard</a>
-            <a class="btn btn-light btn-sm" href="/active_habits">Active Habits</a>
-            <a class="btn btn-light btn-sm" href="/calendar">Calendar</a>
-            <a class="btn btn-light btn-sm" href="/friends">Friends</a>
-            <a class="btn btn-light btn-sm" href="/stats">Stats</a>
-            <a class="btn btn-light btn-sm" href="/profile">Profile</a>
-            <a class="btn btn-danger btn-sm" href="/logout">Logout</a>
+<div class="dashboard-layout">
+
+    <aside class="dashboard-sidebar">
+        <h3 class="sidebar-logo">🏋️ Habit Tracker</h3>
+
+        <a href="/dashboard" class="sidebar-link">🏠 Dashboard</a>
+        <a href="/active_habits" class="sidebar-link">✅ Active Habits</a>
+        <a href="/calendar" class="sidebar-link">📅 Calendar</a>
+        <a href="/friends" class="sidebar-link">👥 Friends</a>
+        <a href="/stats" class="sidebar-link active">📊 Stats</a>
+        <a href="/profile" class="sidebar-link">👤 Profile</a>
+        
+<a href="#" class="sidebar-link notification-link" id="notificationButton">
+    🔔 Notifications
+    <span class="notification-badge">3</span>
+</a>
+
+<a href="/logout" class="sidebar-link logout">🚪 Logout</a>
+
+        <div class="sidebar-quote">
+            <h4>“</h4>
+            <p>Your progress data shows how consistent you are becoming.</p>
         </div>
-    </div>
-</nav>
+    </aside>
 
-<div class="container mt-4">
-    <div class="card page-intro page-section">
-        <span class="hero-badge">Habit Insights</span>
-        <h2 class="mb-2">Stats</h2>
-        <p class="muted-copy mb-0">
-            Review your completions, streaks, and weekly progress to see how your routines are trending.
-        </p>
-    </div>
+    <main class="dashboard-main">
 
-    <div class="stats-metric-grid page-section">
-        <div class="card metric-card">
-            <p class="text-uppercase text-muted small mb-2">Total Completed</p>
-            <p class="metric-value">{{ total_completed }}</p>
-            <p class="muted-copy mb-0">All habit completions recorded in your account.</p>
+        <div class="dashboard-top">
+            <div>
+                <h1>Stats & Insights 📊</h1>
+                <p>Review your completions, streaks, and weekly progress to understand your routine.</p>
+            </div>
+
+            <div class="date-pill">
+                Habit Insights
+            </div>
         </div>
 
-        <div class="card metric-card">
-            <p class="text-uppercase text-muted small mb-2">Current Streak</p>
-            <p class="metric-value">{{ current_streak }}</p>
-            <p class="muted-copy mb-0">Consecutive days with at least one completed habit.</p>
+        <div class="summary-grid">
+            <div class="summary-card purple">
+                <div class="summary-icon">✅</div>
+                <div>
+                    <p>Total Completed</p>
+                    <h2>{{ total_completed }}</h2>
+                    <span>All completions recorded</span>
+                </div>
+            </div>
+
+            <div class="summary-card split-card">
+                <div class="summary-icon">🔥</div>
+                <div class="split-card-content">
+                    <p class="split-card-title">Current Streak</p>
+
+                    <div class="split-card-metrics">
+                        <div class="split-card-metric">
+                            <span class="split-card-label">Days</span>
+                            <strong>{{ current_streak }}</strong>
+                        </div>
+                    </div>
+
+                    <span class="split-card-detail">
+                        Consecutive days with at least one completed habit.
+                    </span>
+                </div>
+            </div>
+
+            <div class="summary-card blue summary-card-stacked">
+                <div class="summary-icon">📈</div>
+                <div>
+                    <p>Weekly Progress</p>
+                    <h2>{{ average_progress }}%</h2>
+                    <span>
+                        Average completion rate across your active days this week.
+                    </span>
+                </div>
+            </div>
         </div>
 
-        <div class="card metric-card">
-            <p class="text-uppercase text-muted small mb-2">Weekly Progress</p>
-            <p class="metric-value">{{ average_progress }}%</p>
-            <p class="muted-copy mb-0">Average completion rate across your active days this week.</p>
-        </div>
-    </div>
+        <div class="stats-dashboard-grid">
+            <section class="dash-card stats-progress-panel">
+                <div class="stats-panel-header">
+                    <div>
+                        <span class="stats-panel-badge">This week</span>
+                        <h3>Weekly Progress</h3>
+                        <p class="mb-0">
+                            This week is calculated using your real completions and the number of habits active on each day.
+                        </p>
+                    </div>
+                </div>
 
-    <div class="row g-4 page-section">
-        <div class="col-lg-8">
-            <div class="card feature-panel h-100">
-                <h4 class="mb-2">Weekly Progress</h4>
-                <p class="muted-copy mb-0">
-                    This week is calculated using your real completions and the number of habits active on each day.
-                </p>
-
-                <div class="progress-week">
+                <div class="stats-week-bars">
                     {% for day in weekly_progress %}
-                        <div class="progress-day">
-                            <div class="progress-bar-wrap">
+                        <div class="stats-day">
+                            <div class="stats-bar-track">
                                 <div
-                                    class="progress-bar-fill"
-                                    style="height: {{ day.percentage }}%;"
+                                    class="stats-bar-fill {% if day.goal == 0 %}empty{% elif day.percentage == 0 %}zero{% endif %}"
+                                    style="height: {% if day.goal == 0 %}0{% elif day.percentage == 0 %}12px{% else %}{{ day.percentage }}%{% endif %};"
                                     title="{{ day.completed }}/{{ day.goal if day.goal else 0 }}"
                                 ></div>
                             </div>
-                            <p class="progress-day-value">{{ day.completed }}/{{ day.goal }}</p>
-                            <p class="progress-day-label mb-0">{{ day.label }}</p>
+
+                            <p class="stats-day-percent">
+                                {% if day.goal > 0 %}
+                                    {{ day.percentage }}%
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </p>
+
+                            <p class="stats-day-value">{{ day.completed }}/{{ day.goal }}</p>
+                            <p class="stats-day-label mb-0">{{ day.label }}</p>
                         </div>
                     {% endfor %}
                 </div>
-            </div>
+            </section>
+
+            <section class="dash-card stats-highlight-panel">
+                <div class="stats-panel-header">
+                    <div>
+                        <span class="stats-panel-badge">Highlights</span>
+                        <h3>Progress Summary</h3>
+                        <p class="mb-0">Quick overview of your current habit performance.</p>
+                    </div>
+                </div>
+
+                <div class="stats-highlight-list">
+                    <article class="stats-highlight-card">
+                        <span>Active habits</span>
+                        <strong>{{ total_habits }}</strong>
+                        <small>Total habits currently saved in your account.</small>
+                    </article>
+
+                    <article class="stats-highlight-card">
+                        <span>Best day</span>
+                        <strong>
+                            {{ best_day.label }}
+                        </strong>
+                        <small>
+                            {% if best_day.goal > 0 %}
+                                {{ best_day.completed }}/{{ best_day.goal }} completed.
+                            {% else %}
+                                No scheduled data yet.
+                            {% endif %}
+                        </small>
+                    </article>
+
+                    <article class="stats-highlight-card">
+                        <span>Streak momentum</span>
+                        <strong>
+                            {{ current_streak }} day{% if current_streak != 1 %}s{% endif %}
+                        </strong>
+                        <small>Keep completing at least one habit each day.</small>
+                    </article>
+                </div>
+            </section>
         </div>
 
-        <div class="col-lg-4">
-            <div class="card feature-panel h-100">
-                <h4 class="mb-3">Highlights</h4>
-                <div class="d-grid gap-3">
-                    <div class="goal-pill">Active habits: {{ total_habits }}</div>
-                    <div class="goal-pill">
-                        Best day: {{ best_day.label }}{% if best_day.goal > 0 %} ({{ best_day.completed }}/{{ best_day.goal }}){% endif %}
-                    </div>
-                    <div class="goal-pill">Streak momentum: {{ current_streak }} day{% if current_streak != 1 %}s{% endif %}</div>
-                </div>
-            </div>
-        </div>
-    </div>
+    </main>
+
 </div>
+
+
+{% include "_notifications.html" %}
 
 </body>
 </html>
