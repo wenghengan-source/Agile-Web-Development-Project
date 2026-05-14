@@ -22,7 +22,13 @@
         <a href="/friends" class="sidebar-link">👥 Friends</a>
         <a href="/stats" class="sidebar-link">📊 Stats</a>
         <a href="/profile" class="sidebar-link">👤 Profile</a>
-        <a href="/logout" class="sidebar-link logout">🚪 Logout</a>
+        
+<a href="#" class="sidebar-link notification-link" id="notificationButton">
+    🔔 Notifications
+    <span class="notification-badge">3</span>
+</a>
+
+<a href="/logout" class="sidebar-link logout">🚪 Logout</a>
 
         <div class="sidebar-quote">
             <h4>“</h4>
@@ -213,6 +219,9 @@
     </main>
 
 </div>
+
+
+{% include "_notifications.html" %}
 
 </body>
 </html>

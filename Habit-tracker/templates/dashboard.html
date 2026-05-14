@@ -22,6 +22,12 @@
         <a href="/friends" class="sidebar-link">👥 Friends</a>
         <a href="/stats" class="sidebar-link">📊 Stats</a>
         <a href="/profile" class="sidebar-link">👤 Profile</a>
+
+        <a href="#" class="sidebar-link notification-link" id="notificationButton">
+            🔔 Notifications
+            <span class="notification-badge">3</span>
+        </a>
+
         <a href="/logout" class="sidebar-link logout">🚪 Logout</a>
 
         <div class="sidebar-quote">
@@ -63,7 +69,6 @@
                             <span class="split-card-label">Completed</span>
                             <strong>{{ completed }}</strong>
                         </div>
-
                     </div>
 
                     <span class="split-card-detail">
@@ -94,148 +99,156 @@
 
         <div class="analytics-grid">
             <div class="analytics-primary-column">
-            <section class="weekly-trend-card">
-                <div class="weekly-trend-header">
-                    <div>
-                        <h3>Weekly trend</h3>
-                        <p class="mb-0">
-                            A Sunday-to-Saturday view of what was scheduled and what
-                            got done this week.
-                        </p>
+
+                <section class="weekly-trend-card">
+                    <div class="weekly-trend-header">
+                        <div>
+                            <h3>Weekly trend</h3>
+                            <p class="mb-0">
+                                A Sunday-to-Saturday view of what was scheduled and what got done this week.
+                            </p>
+                        </div>
+
+                        {% if progress_snapshot.has_scheduled_data and progress_snapshot.best_day.goal > 0 %}
+                            <div class="weekly-trend-badge">
+                                <span>Best day</span>
+                                <strong>{{ progress_snapshot.best_day.label }}</strong>
+                                <small>
+                                    {{ progress_snapshot.best_day.completed }}/{{ progress_snapshot.best_day.goal }}
+                                    completed
+                                </small>
+                            </div>
+                        {% endif %}
                     </div>
 
-                    {% if progress_snapshot.has_scheduled_data and progress_snapshot.best_day.goal > 0 %}
-                        <div class="weekly-trend-badge">
-                            <span>Best day</span>
-                            <strong>{{ progress_snapshot.best_day.label }}</strong>
-                            <small>
-                                {{ progress_snapshot.best_day.completed }}/{{ progress_snapshot.best_day.goal }}
-                                completed
-                            </small>
+                    {% if progress_snapshot.has_scheduled_data %}
+                        <div class="weekly-bars">
+                            {% for day in progress_snapshot.weekly_progress %}
+                                <div class="weekly-bar-group {% if day.is_future %}future{% endif %}">
+                                    <div class="weekly-bar-track">
+                                        <div
+                                            class="weekly-bar-fill {% if day.goal == 0 %}empty{% elif day.percentage == 0 %}zero{% endif %}"
+                                            style="height: {% if day.goal == 0 %}0{% elif day.percentage == 0 %}12px{% else %}{{ day.percentage }}%{% endif %};"
+                                        ></div>
+                                    </div>
+
+                                    <p class="weekly-bar-percent">
+                                        {% if day.is_future %}--{% else %}{{ day.percentage }}%{% endif %}
+                                    </p>
+
+                                    <p class="weekly-bar-value">
+                                        {% if day.is_future %}Upcoming{% else %}{{ day.completed }}/{{ day.goal }}{% endif %}
+                                    </p>
+
+                                    <p class="weekly-bar-label mb-0">{{ day.label }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="weekly-trend-empty">
+                            <strong>No weekly trend yet</strong>
+                            <span>
+                                This chart will start filling in once this week has scheduled habit check-ins.
+                            </span>
                         </div>
                     {% endif %}
-                </div>
+                </section>
 
-                {% if progress_snapshot.has_scheduled_data %}
-                    <div class="weekly-bars">
-                        {% for day in progress_snapshot.weekly_progress %}
-                            <div class="weekly-bar-group {% if day.is_future %}future{% endif %}">
-                                <div class="weekly-bar-track">
-                                    <div
-                                        class="weekly-bar-fill {% if day.goal == 0 %}empty{% elif day.percentage == 0 %}zero{% endif %}"
-                                        style="height: {% if day.goal == 0 %}0{% elif day.percentage == 0 %}12px{% else %}{{ day.percentage }}%{% endif %};"
-                                        title="{% if day.is_future %}Upcoming day{% else %}{{ day.percentage }}% ({{ day.completed }}/{{ day.goal }}){% endif %}"
-                                    ></div>
-                                </div>
-                                <p class="weekly-bar-percent">
-                                    {% if day.is_future %}--{% else %}{{ day.percentage }}%{% endif %}
-                                </p>
-                                <p class="weekly-bar-value">
-                                    {% if day.is_future %}Upcoming{% else %}{{ day.completed }}/{{ day.goal }}{% endif %}
-                                </p>
-                                <p class="weekly-bar-label mb-0">{{ day.label }}</p>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="weekly-trend-empty">
-                        <strong>No weekly trend yet</strong>
-                        <span>
-                            This chart will start filling in once this week has scheduled
-                            habit check-ins to measure against.
+                <section class="dash-card streak-card">
+                    <div class="streak-card-header">
+                        <div>
+                            <h3>Streak momentum</h3>
+                            <p class="mb-0">{{ progress_snapshot.streak_summary.headline }}</p>
+                        </div>
+
+                        <span class="streak-chip">
+                            {{ progress_snapshot.streak_summary.current }}
+                            day{% if progress_snapshot.streak_summary.current != 1 %}s{% endif %} streak
                         </span>
                     </div>
-                {% endif %}
-            </section>
 
-            <section class="dash-card streak-card">
-                <div class="streak-card-header">
-                    <div>
-                        <h3>Streak momentum</h3>
-                        <p class="mb-0">{{ progress_snapshot.streak_summary.headline }}</p>
-                    </div>
-                    <span class="streak-chip">
-                        {{ progress_snapshot.streak_summary.current }}
-                        day{% if progress_snapshot.streak_summary.current != 1 %}s{% endif %} streak
-                    </span>
-                </div>
+                    <div class="streak-progress-block">
+                        <span class="streak-progress-label">Current streak</span>
 
-                <div class="streak-progress-block">
-                    <span class="streak-progress-label">Current streak</span>
-                    <div class="streak-progress-topline">
-                        <strong>
-                            {{ progress_snapshot.streak_summary.current }}
-                            day{% if progress_snapshot.streak_summary.current != 1 %}s{% endif %}
-                        </strong>
-                        <span>{{ progress_snapshot.streak_summary.next_milestone_label }}</span>
-                    </div>
+                        <div class="streak-progress-topline">
+                            <strong>
+                                {{ progress_snapshot.streak_summary.current }}
+                                day{% if progress_snapshot.streak_summary.current != 1 %}s{% endif %}
+                            </strong>
 
-                    <div class="streak-progress-track" aria-hidden="true">
-                        <div
-                            class="streak-progress-fill"
-                            style="width: {{ progress_snapshot.streak_summary.progress_percentage }}%;"
-                        ></div>
+                            <span>{{ progress_snapshot.streak_summary.next_milestone_label }}</span>
+                        </div>
+
+                        <div class="streak-progress-track">
+                            <div
+                                class="streak-progress-fill"
+                                style="width: {{ progress_snapshot.streak_summary.progress_percentage }}%;"
+                            ></div>
+                        </div>
+
+                        <div class="streak-progress-scale">
+                            <span></span>
+                            <span>{{ progress_snapshot.streak_summary.next_goal }} day goal</span>
+                        </div>
                     </div>
 
-                    <div class="streak-progress-scale">
-                        <span></span>
-                        <span>{{ progress_snapshot.streak_summary.next_goal }} day goal</span>
+                    <div class="streak-card-notes">
+                        <article class="streak-note-card">
+                            <span>Next milestone</span>
+                            <strong>{{ progress_snapshot.streak_summary.next_goal }} days</strong>
+                            <small>{{ progress_snapshot.streak_summary.detail }}</small>
+                        </article>
+
+                        <article class="streak-note-card">
+                            <span>{{ progress_snapshot.streak_summary.personal_best_label }}</span>
+                            <strong>
+                                {% if progress_snapshot.streak_summary.days_to_personal_best == 0 %}
+                                    {{ progress_snapshot.streak_summary.personal_best }} days
+                                {% else %}
+                                    {{ progress_snapshot.streak_summary.days_to_personal_best }}
+                                    day{% if progress_snapshot.streak_summary.days_to_personal_best != 1 %}s{% endif %}
+                                {% endif %}
+                            </strong>
+                            <small>{{ progress_snapshot.streak_summary.personal_best_detail }}</small>
+                        </article>
+
+                        <article class="streak-note-card">
+                            <span>Habit carrying the streak</span>
+                            <strong>{{ progress_snapshot.streak_summary.carrying_habit_name }}</strong>
+                            <small>{{ progress_snapshot.streak_summary.carrying_habit_detail }}</small>
+                        </article>
+
+                        <article class="streak-note-card">
+                            <span>Weekly completion trend</span>
+                            <strong>{{ progress_snapshot.streak_summary.weekly_completion_value }}%</strong>
+                            <small>{{ progress_snapshot.streak_summary.weekly_completion_trend }}</small>
+                        </article>
                     </div>
-                </div>
 
-                <div class="streak-card-notes">
-                    <article class="streak-note-card">
-                        <span>Next milestone</span>
-                        <strong>{{ progress_snapshot.streak_summary.next_goal }} days</strong>
-                        <small>{{ progress_snapshot.streak_summary.detail }}</small>
-                    </article>
-
-                    <article class="streak-note-card">
-                        <span>{{ progress_snapshot.streak_summary.personal_best_label }}</span>
-                        <strong>
-                            {% if progress_snapshot.streak_summary.days_to_personal_best == 0 %}
-                                {{ progress_snapshot.streak_summary.personal_best }} days
-                            {% else %}
-                                {{ progress_snapshot.streak_summary.days_to_personal_best }} day{% if progress_snapshot.streak_summary.days_to_personal_best != 1 %}s{% endif %}
-                            {% endif %}
-                        </strong>
-                        <small>{{ progress_snapshot.streak_summary.personal_best_detail }}</small>
-                    </article>
-
-                    <article class="streak-note-card">
-                        <span>Habit carrying the streak</span>
-                        <strong>{{ progress_snapshot.streak_summary.carrying_habit_name }}</strong>
-                        <small>{{ progress_snapshot.streak_summary.carrying_habit_detail }}</small>
-                    </article>
-
-                    <article class="streak-note-card">
-                        <span>Weekly completion trend</span>
-                        <strong>{{ progress_snapshot.streak_summary.weekly_completion_value }}%</strong>
-                        <small>{{ progress_snapshot.streak_summary.weekly_completion_trend }}</small>
-                    </article>
-                </div>
-
-                <p class="streak-card-detail mb-0">
-                    Keep the streak moving and this card will keep updating your next milestone, personal-best pace, and the habit driving the run.
-                </p>
-            </section>
-            </div>
-
-        <section class="focus-panel-card">
-            <div class="focus-panel-header">
-                <div>
-                    <h3>Focus this week</h3>
-                    <p class="mb-0">
-                        The habits most worth a quick check-in right now.
+                    <p class="streak-card-detail mb-0">
+                        Keep the streak moving and this card will keep updating your next milestone, personal-best pace, and the habit driving the run.
                     </p>
-                </div>
+                </section>
+
             </div>
+
+            <section class="focus-panel-card">
+                <div class="focus-panel-header">
+                    <div>
+                        <h3>Focus this week</h3>
+                        <p class="mb-0">
+                            The habits most worth a quick check-in right now.
+                        </p>
+                    </div>
+                </div>
 
                 <div class="focus-panel-highlight">
                     <span class="focus-panel-highlight-label">
                         {% if progress_snapshot.top_habit.has_data %}Leading this week{% else %}Top habit preview{% endif %}
                     </span>
+
                     <strong>{{ progress_snapshot.top_habit.name }}</strong>
+
                     <small>
                         {{ progress_snapshot.top_habit.summary }}
                         {% if not progress_snapshot.top_habit.has_data %}
@@ -259,22 +272,12 @@
                                 </a>
                             </article>
                         {% endfor %}
-
-                        {% if progress_snapshot.focus_items|length < 3 %}
-                            <div class="focus-panel-placeholder">
-                                <span class="focus-panel-placeholder-label">Steady pace</span>
-                                <h4>More room for wins</h4>
-                                <p class="mb-0">
-                                    This space stays open when fewer habits need attention, which usually means your week is tracking well.
-                                </p>
-                            </div>
-                        {% endif %}
                     </div>
                 {% else %}
                     <div class="focus-panel-empty">
                         <h4>Nothing urgent right now</h4>
                         <p class="mb-0">
-                            Your habits are on track right now, so this space will stay quiet until something needs attention.
+                            Your habits are on track right now.
                         </p>
                     </div>
                 {% endif %}
@@ -299,11 +302,7 @@
                         <span>⚖️</span>
                         <small>Weight</small>
                         <strong>
-                            {% if health_profile %}
-                                {{ health_profile[0] }} kg
-                            {% else %}
-                                -
-                            {% endif %}
+                            {% if health_profile %}{{ health_profile[0] }} kg{% else %}-{% endif %}
                         </strong>
                     </div>
 
@@ -311,11 +310,7 @@
                         <span>📏</span>
                         <small>Height</small>
                         <strong>
-                            {% if health_profile %}
-                                {{ health_profile[1] }} cm
-                            {% else %}
-                                -
-                            {% endif %}
+                            {% if health_profile %}{{ health_profile[1] }} cm{% else %}-{% endif %}
                         </strong>
                     </div>
 
@@ -323,11 +318,7 @@
                         <span>🎂</span>
                         <small>Age</small>
                         <strong>
-                            {% if health_profile %}
-                                {{ health_profile[2] }}
-                            {% else %}
-                                -
-                            {% endif %}
+                            {% if health_profile %}{{ health_profile[2] }}{% else %}-{% endif %}
                         </strong>
                     </div>
 
@@ -335,11 +326,7 @@
                         <span>🎯</span>
                         <small>Goal</small>
                         <strong>
-                            {% if health_profile %}
-                                {{ health_profile[3] }}
-                            {% else %}
-                                -
-                            {% endif %}
+                            {% if health_profile %}{{ health_profile[3] }}{% else %}-{% endif %}
                         </strong>
                     </div>
                 </div>
@@ -368,7 +355,6 @@
                     </button>
                 </form>
             </section>
-
         </div>
 
         <section class="dash-card mt-4">
@@ -395,7 +381,9 @@
             <div class="active-preview-header d-flex justify-content-between align-items-center mb-3">
                 <div>
                     <h3>Active Habits Preview</h3>
-                    <p class="text-muted mb-0">A quick look at today's active habits. Open the full page to manage everything.</p>
+                    <p class="text-muted mb-0">
+                        A quick look at today's active habits. Open the full page to manage everything.
+                    </p>
                 </div>
 
                 <div class="active-preview-actions d-flex gap-2">
@@ -426,6 +414,42 @@
 
 </div>
 
+<div class="notification-panel" id="notificationPanel">
+    <div class="notification-header">
+        <h4>Notifications</h4>
+        <button type="button" id="closeNotification">×</button>
+    </div>
+
+    <div class="notification-item">
+        ⚔️ Pengfei challenged you to Exercise.
+    </div>
+
+    <div class="notification-item">
+        🔥 Keep your streak alive today.
+    </div>
+
+    <div class="notification-item">
+        ✅ You still have incomplete habits today.
+    </div>
+</div>
+
+<script>
+const notificationButton = document.getElementById("notificationButton");
+const notificationPanel = document.getElementById("notificationPanel");
+const closeNotification = document.getElementById("closeNotification");
+
+notificationButton.addEventListener("click", function (event) {
+    event.preventDefault();
+    notificationPanel.classList.toggle("show");
+});
+
+closeNotification.addEventListener("click", function () {
+    notificationPanel.classList.remove("show");
+});
+</script>
+
+
+{% include "_notifications.html" %}
+
 </body>
 </html>
-
