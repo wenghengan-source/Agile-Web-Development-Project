@@ -1004,9 +1004,20 @@ def init_db():
         CREATE TABLE IF NOT EXISTS reward_events (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
+            habit_id INTEGER,
             event_type TEXT NOT NULL,
             points INTEGER NOT NULL,
             event_date TEXT NOT NULL
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS habit_reward_claims (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            habit_id INTEGER NOT NULL,
+            tier TEXT NOT NULL,
+            claimed_date TEXT NOT NULL
         )
     """)
 
@@ -2106,6 +2117,69 @@ def stats_custom():
     return redirect(url_for("stats"), code=302)
 
 
+def get_per_habit_rewards(user_id):
+    """Return per-habit completion counts with trophy progress and claimed status."""
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT h.id, h.habit_name, h.category,
+               COUNT(hc.id) as completions
+        FROM habits h
+        LEFT JOIN habit_completions hc
+            ON h.id = hc.habit_id AND hc.user_id = ?
+        WHERE h.user_id = ?
+        GROUP BY h.id
+        ORDER BY completions DESC, h.habit_name
+    """, (user_id, user_id))
+
+    habits = []
+    thresholds = [
+        ("iron", "🪨 Iron", 50),
+        ("bronze", "🥉 Bronze", 100),
+        ("silver", "🥈 Silver", 200),
+        ("gold", "🥇 Gold", 350),
+        ("platinum", "💎 Platinum", 500),
+        ("diamond", "👑 Diamond", 650),
+        ("legend", "🏆 Legend", 800),
+        ("master", "🌟 Master", 1000),
+    ]
+
+    for row in cursor.fetchall():
+        habit_id, name, category, completions = row
+
+        cursor.execute("""
+            SELECT tier FROM habit_reward_claims
+            WHERE user_id = ? AND habit_id = ?
+        """, (user_id, habit_id))
+        claimed_tiers = {r[0] for r in cursor.fetchall()}
+
+        tier_progress = []
+        for key, label, required in thresholds:
+            tier_progress.append({
+                "key": key,
+                "label": label,
+                "required": required,
+                "unlocked": completions >= required,
+                "claimed": key in claimed_tiers,
+                "percentage": min(100, int((completions / required) * 100)) if required > 0 else 100
+            })
+
+        habits.append({
+            "id": habit_id,
+            "name": name,
+            "category": category or "General",
+            "completions": completions,
+            "tiers": tier_progress,
+            "highest_unlocked": next(
+                (t for t in reversed(tier_progress) if t["unlocked"]), None
+            )
+        })
+
+    conn.close()
+    return habits
+
+
 @app.route("/reward")
 def reward():
     if "user_id" not in session:
@@ -2118,11 +2192,14 @@ def reward():
         session["user_id"]
     )
 
+    habits = get_per_habit_rewards(session["user_id"])
+
     return render_template(
         "reward.html",
         points=total_points,
         base_points=base_points,
-        bonus_points=bonus_points
+        bonus_points=bonus_points,
+        habits=habits
     )
 
 
@@ -2143,12 +2220,14 @@ def reward_user(user_id):
     conn.close()
 
     total_points, base_points, bonus_points = calculate_total_points(user_id)
+    habits = get_per_habit_rewards(user_id)
 
     return render_template(
         "reward.html",
         points=total_points,
         base_points=base_points,
         bonus_points=bonus_points,
+        habits=habits,
         viewed_user={'id': user_id, 'name': user_row[0]}
     )
 
@@ -2159,8 +2238,7 @@ def claim_reward():
         return redirect(url_for("login"))
 
     tier = request.form.get("tier")
-
-    total_points, _, _ = calculate_total_points(session["user_id"])
+    habit_id = request.form.get("habit_id")
 
     thresholds = {
         "iron": 50, "bronze": 100, "silver": 200,
@@ -2177,12 +2255,41 @@ def claim_reward():
 
     if required is None:
         flash("Invalid reward tier.")
-    elif total_points >= required:
-        flash(f"Reward '{trophy_names.get(tier, tier)}' claimed. Congratulations!")
-    else:
-        flash(f"Not enough points for {trophy_names.get(tier, tier)}. "
-              f"Need {required} points (you have {total_points}).")
+        return redirect(url_for("reward"))
 
+    if not habit_id:
+        flash("Please select a habit to claim the reward for.")
+        return redirect(url_for("reward"))
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT COUNT(*) FROM habit_completions WHERE user_id = ? AND habit_id = ?",
+        (session["user_id"], habit_id)
+    )
+    habit_points = cursor.fetchone()[0]
+
+    cursor.execute(
+        "SELECT id FROM habit_reward_claims WHERE user_id = ? AND habit_id = ? AND tier = ?",
+        (session["user_id"], habit_id, tier)
+    )
+    already_claimed = cursor.fetchone()
+
+    if already_claimed:
+        flash(f"You already claimed {trophy_names[tier]} for this habit.")
+    elif habit_points >= required:
+        cursor.execute("""
+            INSERT INTO habit_reward_claims (user_id, habit_id, tier, claimed_date)
+            VALUES (?, ?, ?, ?)
+        """, (session["user_id"], habit_id, tier, date.today().isoformat()))
+        conn.commit()
+        flash(f"🎉 {trophy_names[tier]} claimed! Congratulations!")
+    else:
+        flash(f"Not enough points for {trophy_names[tier]}. "
+              f"Need {required} completions (this habit has {habit_points}).")
+
+    conn.close()
     return redirect(url_for("reward"))
 
 

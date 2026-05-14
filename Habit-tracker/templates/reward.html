@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-md-8">
+  <div class="col-md-10">
     <h2>🏆 Rewards</h2>
 
     {% with messages = get_flashed_messages() %}
@@ -18,60 +18,68 @@
         <h1 class="display-4 fw-bold">{{ points }}</h1>
         <p class="text-muted mb-2">Total Points</p>
         <div class="d-flex justify-content-center gap-4">
-          <span>🎯 Habit Completions: <strong>{{ base_points }}</strong></span>
-          <span>⚡ Leaderboard Bonus: <strong>{{ bonus_points }}</strong></span>
+          <span>🎯 Completions: <strong>{{ base_points }}</strong></span>
+          <span>⚡ Bonus: <strong>{{ bonus_points }}</strong></span>
         </div>
         <p class="text-muted small mt-2">
-          Top 3 on the daily leaderboard earn bonus points: #1 = +10, #2 = +5, #3 = +3
+          Each habit tracks its own completions. Top 3 daily leaderboard: #1 = +10, #2 = +5, #3 = +3
         </p>
       </div>
     </div>
 
-    <h4>Trophy Room</h4>
-    <div class="list-group mb-3">
-      {% set tiers = [
-        { 'key':'iron',     'icon':'🪨', 'title':'Iron',     'desc':'Reach 50 points',   'pts':50 },
-        { 'key':'bronze',   'icon':'🥉', 'title':'Bronze',   'desc':'Reach 100 points',  'pts':100 },
-        { 'key':'silver',   'icon':'🥈', 'title':'Silver',   'desc':'Reach 200 points',  'pts':200 },
-        { 'key':'gold',     'icon':'🥇', 'title':'Gold',     'desc':'Reach 350 points',  'pts':350 },
-        { 'key':'platinum', 'icon':'💎', 'title':'Platinum', 'desc':'Reach 500 points',  'pts':500 },
-        { 'key':'diamond',  'icon':'👑', 'title':'Diamond',  'desc':'Reach 650 points',  'pts':650 },
-        { 'key':'legend',   'icon':'🏆', 'title':'Legend',   'desc':'Reach 800 points',  'pts':800 },
-        { 'key':'master',   'icon':'🌟', 'title':'Master',   'desc':'Reach 1000 points', 'pts':1000 }
-      ] %}
-
-      {% for t in tiers %}
-        <div class="list-group-item d-flex justify-content-between align-items-center
-                    {% if points >= t.pts %}list-group-item-success{% endif %}">
-          <div>
-            <h5 class="mb-1">{{ t.icon }} {{ t.title }}</h5>
-            <small class="text-muted">{{ t.desc }}</small>
-          </div>
-
-          <div class="d-flex align-items-center gap-2">
-            {% if points >= t.pts %}
-              <span class="badge bg-success fs-6">Unlocked ✓</span>
-              <form method="post" action="/claim_reward" onsubmit="return confirm('Claim {{ t.title }} trophy?');">
-                <input type="hidden" name="tier" value="{{ t.key }}">
-                <button class="btn btn-sm btn-success">Claim</button>
-              </form>
-            {% else %}
-              <div class="text-end">
-                <div class="progress" style="width: 120px; height: 8px;">
-                  <div class="progress-bar" style="width: {{ (points / t.pts * 100)|int if points > 0 else 0 }}%;"></div>
-                </div>
-                <small class="text-muted">{{ points }}/{{ t.pts }} pts</small>
-              </div>
-              <span class="badge bg-secondary">{{ t.pts }} pts</span>
-            {% endif %}
-          </div>
+    {% if not habits %}
+      <div class="card mb-4">
+        <div class="card-body text-center text-muted">
+          <p class="mb-0">No habits yet. Create a habit to start earning trophies!</p>
         </div>
-      {% endfor %}
+      </div>
+    {% endif %}
+
+    {% for habit in habits %}
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+          <strong>{{ habit.name }}</strong>
+          <span class="badge bg-secondary ms-2">{{ habit.category }}</span>
+        </div>
+        <span class="badge bg-primary fs-6">{{ habit.completions }} completions</span>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          {% for t in habit.tiers %}
+          <div class="col-md-3 mb-2">
+            <div class="border rounded p-2 text-center
+                        {% if t.claimed %}bg-success text-white{% elif t.unlocked %}bg-warning-subtle{% endif %}"
+                 style="{% if t.unlocked and not t.claimed %}background-color: #fff3cd;{% endif %}">
+              <div class="fw-bold">{{ t.label }}</div>
+              <small>{{ t.required }} pts</small>
+              <div class="progress mt-1" style="height: 6px;">
+                <div class="progress-bar {% if t.claimed %}bg-light{% elif t.unlocked %}bg-success{% endif %}"
+                     style="width: {{ t.percentage }}%;"></div>
+              </div>
+              {% if t.claimed %}
+                <small class="text-white">✓ Claimed</small>
+              {% elif t.unlocked %}
+                <form method="post" action="/claim_reward" class="mt-1"
+                      onsubmit="return confirm('Claim {{ t.label }} for {{ habit.name }}?');">
+                  <input type="hidden" name="tier" value="{{ t.key }}">
+                  <input type="hidden" name="habit_id" value="{{ habit.id }}">
+                  <button class="btn btn-sm btn-success">Claim</button>
+                </form>
+              {% else %}
+                <small class="text-muted">{{ habit.completions }}/{{ t.required }}</small>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
     </div>
+    {% endfor %}
 
     <p class="text-muted">
-      💡 Earn points by completing daily habits. Finish in the top 3 on the daily
-      leaderboard to earn bonus points and unlock trophies faster!
+      💡 Each habit earns trophies independently based on its own completion count.
+      Keep completing your habits daily to unlock all 8 trophy tiers!
     </p>
   </div>
 </div>
