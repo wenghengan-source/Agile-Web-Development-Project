@@ -10,16 +10,10 @@ app.secret_key = "habit_tracker_secret_key"
 
 WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 DEFAULT_SHARE_PROGRESS_WITH_FRIENDS = 1
+
 def ensure_column_exists(cursor, table_name, column_name, column_definition):
     cursor.execute(f"PRAGMA table_info({table_name})")
     existing_columns = [column[1] for column in cursor.fetchall()]
-
-    if column_name not in existing_columns:
-        cursor.execute(
-            f"ALTER TABLE {table_name} "
-            f"ADD COLUMN {column_name} {column_definition}"
-        )
-
 
 def get_user_progress_visibility(user_id):
     conn = sqlite3.connect("habit_tracker.db")
@@ -44,6 +38,13 @@ def set_user_progress_visibility(user_id, value):
     )
     conn.commit()
     conn.close()
+
+
+    if column_name not in existing_columns:
+        cursor.execute(
+            f"ALTER TABLE {table_name} "
+            f"ADD COLUMN {column_name} {column_definition}"
+        )
 
 
 def parse_schedule(schedule_value):
@@ -119,11 +120,126 @@ def calculate_habit_streak(
     return streak
 
 
+def get_trailing_dates(reference_date, length, trailing_offset=0):
+    """Return ascending dates for a trailing window ending before offset days."""
+    return [
+        reference_date - timedelta(days=offset)
+        for offset in range(length + trailing_offset - 1, trailing_offset - 1, -1)
+    ]
+
+
 def get_week_dates_sunday_first(reference_date, week_offset=0):
+    """Return one calendar week in Sun-Sat order for the reference date."""
     days_since_sunday = (reference_date.weekday() + 1) % 7
     week_start = reference_date - timedelta(days=days_since_sunday)
     week_start -= timedelta(days=week_offset * 7)
     return [week_start + timedelta(days=offset) for offset in range(7)]
+
+
+def calculate_habit_streak(
+    schedule_value,
+    created_date,
+    completion_dates,
+    reference_date=None
+):
+    if reference_date is None:
+        reference_date = date.today()
+
+    if isinstance(created_date, str):
+        created_date = date.fromisoformat(created_date)
+
+    if reference_date < created_date:
+        return 0
+
+    completion_set = set(completion_dates)
+    streak = 0
+    streak_date = reference_date
+
+    while streak_date >= created_date:
+        if not is_habit_scheduled_for_date(schedule_value, streak_date):
+            streak_date -= timedelta(days=1)
+            continue
+
+        if streak_date.isoformat() not in completion_set:
+            break
+
+        streak += 1
+        streak_date -= timedelta(days=1)
+
+    return streak
+
+
+def calculate_completion_day_streak(completion_dates, reference_date=None):
+    """Count consecutive calendar days with at least one habit completion."""
+    if reference_date is None:
+        reference_date = date.today()
+
+    completion_set = set(completion_dates)
+    streak = 0
+    streak_date = reference_date
+
+    while streak_date.isoformat() in completion_set:
+        streak += 1
+        streak_date -= timedelta(days=1)
+
+    return streak
+
+
+def calculate_longest_completion_day_streak(completion_dates):
+    """Track the best consecutive completion-day streak across all habits."""
+    if not completion_dates:
+        return 0
+
+    completion_days = sorted({
+        date.fromisoformat(completion_date)
+        for completion_date in completion_dates
+    })
+
+    longest_streak = 1
+    current_streak = 1
+
+    for index in range(1, len(completion_days)):
+        if completion_days[index] - completion_days[index - 1] == timedelta(days=1):
+            current_streak += 1
+            longest_streak = max(longest_streak, current_streak)
+        else:
+            current_streak = 1
+
+    return longest_streak
+
+
+def calculate_longest_habit_streak(
+    schedule_value,
+    created_date,
+    completion_dates,
+    reference_date=None
+):
+    """Track the best scheduled completion streak achieved by one habit."""
+    if reference_date is None:
+        reference_date = date.today()
+
+    if isinstance(created_date, str):
+        created_date = date.fromisoformat(created_date)
+
+    if reference_date < created_date:
+        return 0
+
+    completion_set = set(completion_dates)
+    longest_streak = 0
+    current_streak = 0
+    streak_date = created_date
+
+    while streak_date <= reference_date:
+        if is_habit_scheduled_for_date(schedule_value, streak_date):
+            if streak_date.isoformat() in completion_set:
+                current_streak += 1
+                longest_streak = max(longest_streak, current_streak)
+            else:
+                current_streak = 0
+
+        streak_date += timedelta(days=1)
+
+    return longest_streak
 
 
 def summarize_scheduled_progress(
@@ -680,6 +796,116 @@ def build_progress_snapshot(user_id, reference_date=None):
             if created_date > day_string:
                 continue
 
+            if not is_habit_scheduled_for_date(schedule, week_day):
+                continue
+
+            scheduled_days += 1
+            if (habit_id, day_string) in completion_records:
+                completed_days += 1
+
+        weekly_rate = 0 if scheduled_days == 0 else int(
+            (completed_days / scheduled_days) * 100
+        )
+        scheduled_today = (
+            created_date <= today_string
+            and is_habit_scheduled_for_date(schedule, reference_date)
+        )
+        completed_today = (habit_id, today_string) in completion_records
+        risk_code = None
+        if scheduled_days > 0 or scheduled_today:
+            risk_code = classify_dashboard_habit_risk(
+                scheduled_today=scheduled_today,
+                completed_today=completed_today,
+                weekly_rate=weekly_rate,
+                current_streak=current_streak,
+                best_streak=best_streak
+            )
+
+        habit_category = category or "Uncategorized"
+        habit_summary = {
+            "id": habit_id,
+            "name": habit_name,
+            "category": habit_category,
+            "scheduled_days": scheduled_days,
+            "completed_days": completed_days,
+            "weekly_rate": weekly_rate,
+            "current_streak": current_streak,
+            "best_streak": best_streak,
+            "scheduled_today": scheduled_today,
+            "completed_today": completed_today,
+            "risk_code": risk_code,
+            "rank_eligible": should_rank_dashboard_habit(scheduled_days)
+        }
+        habit_summaries.append(habit_summary)
+
+        category_totals.setdefault(
+            habit_category,
+            {"completed_days": 0, "scheduled_days": 0}
+        )
+        category_totals[habit_category]["completed_days"] += completed_days
+        category_totals[habit_category]["scheduled_days"] += scheduled_days
+
+    category_summaries = []
+    for category_name, totals in sorted(category_totals.items()):
+        scheduled_days = totals["scheduled_days"]
+        completed_days = totals["completed_days"]
+        weekly_rate = 0 if scheduled_days == 0 else int(
+            (completed_days / scheduled_days) * 100
+        )
+        category_summaries.append({
+            "name": category_name,
+            "scheduled_days": scheduled_days,
+            "completed_days": completed_days,
+            "weekly_rate": weekly_rate,
+            "rank_eligible": should_rank_dashboard_category(scheduled_days)
+        })
+
+    best_day = {"label": "No data", "completed": 0, "goal": 0}
+    completed_week_days = [day for day in weekly_progress if not day["is_future"]]
+    if completed_week_days:
+        best_day = max(
+            completed_week_days,
+            key=lambda item: (item["percentage"], item["completed"])
+        )
+
+    completion_day_streak = calculate_completion_day_streak(
+        completion_days,
+        reference_date
+    )
+    personal_best_streak = calculate_longest_completion_day_streak(
+        completion_days
+    )
+    weekly_change_summary = summarize_week_over_week_change(
+        weekly_average,
+        previous_week_average,
+        active_days,
+        previous_active_days
+    )
+
+    return {
+        "reference_date": today_string,
+        "weekly_progress": weekly_progress,
+        "weekly_average": weekly_average,
+        "previous_week_average": previous_week_average,
+        "weekly_change_summary": weekly_change_summary,
+        "current_streak": completion_day_streak,
+        "has_scheduled_data": active_days > 0,
+        "best_day": best_day,
+        "at_risk": summarize_dashboard_risk(habit_summaries),
+        "focus_items": build_dashboard_focus_items(habit_summaries),
+        "top_habit": select_top_dashboard_habit(habit_summaries),
+        "streak_summary": build_streak_progress_summary(
+            completion_day_streak,
+            personal_best_streak,
+            habit_summaries,
+            weekly_average,
+            weekly_change_summary
+        ),
+        "habit_summaries": habit_summaries,
+        "category_summaries": category_summaries
+    }
+
+
 
 def init_db():
     conn = sqlite3.connect("habit_tracker.db")
@@ -694,13 +920,6 @@ def init_db():
             share_progress_with_friends INTEGER NOT NULL DEFAULT 1
         )
     """)
-
-    ensure_column_exists(
-        cursor,
-        "users",
-        "share_progress_with_friends",
-        f"INTEGER NOT NULL DEFAULT {DEFAULT_SHARE_PROGRESS_WITH_FRIENDS}"
-    )
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS habits (
@@ -720,6 +939,13 @@ def init_db():
 
     ensure_column_exists(cursor, "habits", "schedule", "TEXT")
 
+
+    ensure_column_exists(
+        cursor,
+        "users",
+        "share_progress_with_friends",
+        f"INTEGER NOT NULL DEFAULT {DEFAULT_SHARE_PROGRESS_WITH_FRIENDS}"
+    )
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS habit_completions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -841,7 +1067,6 @@ def dashboard():
 
     today_date = date.today()
     today = today_date.isoformat()
-    progress_snapshot = build_progress_snapshot(session["user_id"], today_date)
 
     quotes = [
         "Small progress is still progress.",
@@ -1696,7 +1921,7 @@ def profile():
         total_habits=total_habits,
         completed_habits=completed_habits,
         goals=goals,
-        share_progress_with_friends=share_progress_with_friends
+        share_progress_with_friends=share_progress_with_friends,
     )
 
 
@@ -1960,13 +2185,6 @@ def habit_detail(habit_id):
     )
 
 
-@app.route("/logout")
-def logout():
-    session.clear()
-    flash("Logged out successfully.")
-    return redirect(url_for("login"))
-
-
 @app.route("/update_privacy", methods=["POST"])
 def update_privacy():
     if "user_id" not in session:
@@ -1984,6 +2202,14 @@ def update_privacy():
 
     flash("Privacy setting updated successfully.")
     return redirect(url_for("profile"))
+
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    flash("Logged out successfully.")
+    return redirect(url_for("login"))
 
 
 if __name__ == "__main__":
