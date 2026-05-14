@@ -12,10 +12,20 @@ WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 DEFAULT_SHARE_PROGRESS_WITH_FRIENDS = 1
 DASHBOARD_TOP_HABIT_MIN_SCHEDULED_DAYS = 2
 DASHBOARD_TOP_CATEGORY_MIN_SCHEDULED_DAYS = 2
+DASHBOARD_ANALYTICS_WINDOW_DAYS = 7
+DASHBOARD_AT_RISK_RATE_THRESHOLD = 60
+DASHBOARD_STREAK_COOLDOWN_MIN_BEST_STREAK = 3
 
 def ensure_column_exists(cursor, table_name, column_name, column_definition):
     cursor.execute(f"PRAGMA table_info({table_name})")
     existing_columns = [column[1] for column in cursor.fetchall()]
+
+    if column_name not in existing_columns:
+        cursor.execute(
+            f"ALTER TABLE {table_name} "
+            f"ADD COLUMN {column_name} {column_definition}"
+        )
+
 
 def get_user_progress_visibility(user_id):
     conn = sqlite3.connect("habit_tracker.db")
@@ -40,13 +50,6 @@ def set_user_progress_visibility(user_id, value):
     )
     conn.commit()
     conn.close()
-
-
-    if column_name not in existing_columns:
-        cursor.execute(
-            f"ALTER TABLE {table_name} "
-            f"ADD COLUMN {column_name} {column_definition}"
-        )
 
 
 def parse_schedule(schedule_value):
@@ -1069,6 +1072,7 @@ def dashboard():
 
     today_date = date.today()
     today = today_date.isoformat()
+    progress_snapshot = build_progress_snapshot(session["user_id"], today_date)
 
     quotes = [
         "Small progress is still progress.",
