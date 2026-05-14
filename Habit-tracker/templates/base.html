@@ -17,7 +17,7 @@
 
         <div>
             <a class="btn btn-light btn-sm" href="/">Home</a>
-
+            <a class="btn btn-light btn-sm" href="/contact">Contact</a>
             {% if "user_id" in session %}
                 <a class="btn btn-light btn-sm" href="/dashboard">Dashboard</a>
                 <a class="btn btn-light btn-sm" href="/active_habits">Active Habits</a>
@@ -25,6 +25,7 @@
                 <a class="btn btn-light btn-sm" href="/friends">Friends</a>
                 <a class="btn btn-light btn-sm" href="/stats">Stats</a>
                 <a class="btn btn-light btn-sm" href="/profile">Profile</a>
+                <a class="btn btn-light btn-sm" href="/reward">Rewards</a>
                 <a class="btn btn-danger btn-sm" href="/logout">Logout</a>
             {% else %}
                 <a class="btn btn-light btn-sm" href="/login">Login</a>
@@ -38,6 +39,6 @@
     {% block content %}
     {% endblock %}
 </div>
-
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
