@@ -10,6 +10,8 @@ app.secret_key = "habit_tracker_secret_key"
 
 WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 DEFAULT_SHARE_PROGRESS_WITH_FRIENDS = 1
+DASHBOARD_TOP_HABIT_MIN_SCHEDULED_DAYS = 2
+DASHBOARD_TOP_CATEGORY_MIN_SCHEDULED_DAYS = 2
 
 def ensure_column_exists(cursor, table_name, column_name, column_definition):
     cursor.execute(f"PRAGMA table_info({table_name})")
