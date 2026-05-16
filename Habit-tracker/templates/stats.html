@@ -24,12 +24,12 @@
         <a href="/profile" class="sidebar-link">👤 Profile</a>
         <a href="/contact" class="sidebar-link">📧 Contact</a>
 
-<a href="#" class="sidebar-link notification-link" id="notificationButton">
-    🔔 Notifications
-    <span class="notification-badge">3</span>
-</a>
+        <a href="#" class="sidebar-link notification-link" id="notificationButton">
+            🔔 Notifications
+            <span class="notification-badge">3</span>
+        </a>
 
-<a href="/logout" class="sidebar-link logout">🚪 Logout</a>
+        <a href="/logout" class="sidebar-link logout">🚪 Logout</a>
 
         <div class="sidebar-quote">
             <h4>“</h4>
@@ -39,81 +39,82 @@
 
     <main class="dashboard-main">
 
-        <div class="dashboard-top">
+        <section class="dashboard-hero-clean">
             <div>
                 <h1>Stats & Insights 📊</h1>
-                <p>Review your completions, streaks, and weekly progress to understand your routine.</p>
+                <p>Review your completions, streaks, and weekly progress to understand your habit routine.</p>
             </div>
 
-            <div class="date-pill">
+            <div class="hero-quote-pill">
                 Habit Insights
             </div>
-        </div>
+        </section>
 
-        <div class="summary-grid">
-            <div class="summary-card purple">
-                <div class="summary-icon">✅</div>
+        <div class="clean-summary-grid">
+            <article class="clean-summary-card">
+                <div class="clean-summary-icon">✅</div>
                 <div>
                     <p>Total Completed</p>
                     <h2>{{ total_completed }}</h2>
-                    <span>All completions recorded</span>
+                    <span>All completion records saved</span>
                 </div>
-            </div>
+            </article>
 
-            <div class="summary-card split-card">
-                <div class="summary-icon">🔥</div>
-                <div class="split-card-content">
-                    <p class="split-card-title">Current Streak</p>
-
-                    <div class="split-card-metrics">
-                        <div class="split-card-metric">
-                            <span class="split-card-label">Days</span>
-                            <strong>{{ current_streak }}</strong>
-                        </div>
-                    </div>
-
-                    <span class="split-card-detail">
-                        Consecutive days with at least one completed habit.
+            <article class="clean-summary-card">
+                <div class="clean-summary-icon">🔥</div>
+                <div>
+                    <p>Current Streak</p>
+                    <h2>{{ current_streak }}</h2>
+                    <span>
+                        Consecutive day{% if current_streak != 1 %}s{% endif %} with at least one completed habit
                     </span>
                 </div>
-            </div>
+            </article>
 
-            <div class="summary-card blue summary-card-stacked">
-                <div class="summary-icon">📈</div>
+            <article class="clean-summary-card">
+                <div class="clean-summary-icon">📈</div>
                 <div>
                     <p>Weekly Progress</p>
                     <h2>{{ average_progress }}%</h2>
-                    <span>
-                        Average completion rate across your active days this week.
-                    </span>
+                    <span>Average completion rate across active days this week</span>
                 </div>
-            </div>
+            </article>
         </div>
 
-        <div class="stats-dashboard-grid">
-            <section class="dash-card stats-progress-panel">
-                <div class="stats-panel-header">
+        <div class="dashboard-two-column">
+
+            <section class="clean-card">
+                <div class="dashboard-section-title">
                     <div>
-                        <span class="stats-panel-badge">This week</span>
                         <h3>Weekly Progress</h3>
-                        <p class="mb-0">
-                            This week is calculated using your real completions and the number of habits active on each day.
-                        </p>
+                        <p>This chart compares each day’s scheduled habits with completed habits.</p>
+                    </div>
+
+                    <div class="weekly-trend-badge">
+                        <span>Best day</span>
+                        <strong>{{ best_day.label }}</strong>
+                        <small>
+                            {% if best_day.goal > 0 %}
+                                {{ best_day.completed }}/{{ best_day.goal }} completed
+                            {% else %}
+                                No data yet
+                            {% endif %}
+                        </small>
                     </div>
                 </div>
 
-                <div class="stats-week-bars">
+                <div class="weekly-bars-clean">
                     {% for day in weekly_progress %}
-                        <div class="stats-day">
-                            <div class="stats-bar-track">
+                        <div class="weekly-day-clean">
+                            <div class="weekly-track-clean">
                                 <div
-                                    class="stats-bar-fill {% if day.goal == 0 %}empty{% elif day.percentage == 0 %}zero{% endif %}"
-                                    style="height: {% if day.goal == 0 %}0{% elif day.percentage == 0 %}12px{% else %}{{ day.percentage }}%{% endif %};"
+                                    class="weekly-fill-clean {% if day.goal == 0 %}empty{% elif day.percentage == 0 %}zero{% endif %}"
+                                    style="height: {% if day.goal == 0 %}0{% elif day.percentage == 0 %}10px{% else %}{{ day.percentage }}%{% endif %};"
                                     title="{{ day.completed }}/{{ day.goal if day.goal else 0 }}"
                                 ></div>
                             </div>
 
-                            <p class="stats-day-percent">
+                            <p class="weekly-percent-clean">
                                 {% if day.goal > 0 %}
                                     {{ day.percentage }}%
                                 {% else %}
@@ -121,58 +122,137 @@
                                 {% endif %}
                             </p>
 
-                            <p class="stats-day-value">{{ day.completed }}/{{ day.goal }}</p>
-                            <p class="stats-day-label mb-0">{{ day.label }}</p>
+                            <p class="weekly-value-clean">{{ day.completed }}/{{ day.goal }}</p>
+                            <p class="weekly-label-clean">{{ day.label }}</p>
                         </div>
                     {% endfor %}
                 </div>
             </section>
 
-            <section class="dash-card stats-highlight-panel">
-                <div class="stats-panel-header">
+            <section class="clean-card">
+                <div class="dashboard-section-title">
                     <div>
-                        <span class="stats-panel-badge">Highlights</span>
                         <h3>Progress Summary</h3>
-                        <p class="mb-0">Quick overview of your current habit performance.</p>
+                        <p>Quick overview of your current habit performance.</p>
                     </div>
                 </div>
 
-                <div class="stats-highlight-list">
-                    <article class="stats-highlight-card">
-                        <span>Active habits</span>
-                        <strong>{{ total_habits }}</strong>
-                        <small>Total habits currently saved in your account.</small>
+                <div class="focus-list-clean">
+                    <article class="focus-item-clean">
+                        <div>
+                            <span class="focus-reason-clean">Habits</span>
+                            <h4>{{ total_habits }} active habit{% if total_habits != 1 %}s{% endif %}</h4>
+                            <p>Total habits currently saved in your account.</p>
+                        </div>
                     </article>
 
-                    <article class="stats-highlight-card">
-                        <span>Best day</span>
-                        <strong>
-                            {{ best_day.label }}
-                        </strong>
-                        <small>
-                            {% if best_day.goal > 0 %}
-                                {{ best_day.completed }}/{{ best_day.goal }} completed.
-                            {% else %}
-                                No scheduled data yet.
-                            {% endif %}
-                        </small>
+                    <article class="focus-item-clean">
+                        <div>
+                            <span class="focus-reason-clean">Best day</span>
+                            <h4>{{ best_day.label }}</h4>
+                            <p>
+                                {% if best_day.goal > 0 %}
+                                    {{ best_day.completed }}/{{ best_day.goal }} habits completed.
+                                {% else %}
+                                    No scheduled data yet.
+                                {% endif %}
+                            </p>
+                        </div>
                     </article>
 
-                    <article class="stats-highlight-card">
-                        <span>Streak momentum</span>
-                        <strong>
-                            {{ current_streak }} day{% if current_streak != 1 %}s{% endif %}
-                        </strong>
-                        <small>Keep completing at least one habit each day.</small>
+                    <article class="focus-item-clean">
+                        <div>
+                            <span class="focus-reason-clean">Streak</span>
+                            <h4>{{ current_streak }} day{% if current_streak != 1 %}s{% endif %}</h4>
+                            <p>Keep completing at least one habit each day.</p>
+                        </div>
                     </article>
                 </div>
+
+                <div class="highlight-clean">
+                    <span>Weekly completion</span>
+                    <strong>{{ average_progress }}%</strong>
+                    <small>
+                        This is calculated from your scheduled habits and completed check-ins.
+                    </small>
+                </div>
             </section>
+
         </div>
+
+        <section class="clean-card">
+            <div class="dashboard-section-title">
+                <div>
+                    <h3>Next Step</h3>
+                    <p>Use your stats to decide what to improve next.</p>
+                </div>
+
+                <div class="active-preview-actions d-flex gap-2">
+                    <a href="/active_habits" class="btn btn-outline-primary">Review Habits</a>
+                    <a href="/new_habit" class="btn btn-primary">+ Add Goal</a>
+                </div>
+            </div>
+
+            <div class="streak-mini-grid">
+                <article class="streak-mini">
+                    <span>If progress is low</span>
+                    <strong>Simplify</strong>
+                    <small>Reduce difficult goals into smaller daily actions.</small>
+                </article>
+
+                <article class="streak-mini">
+                    <span>If streak is growing</span>
+                    <strong>Keep going</strong>
+                    <small>Stay consistent and protect the routine.</small>
+                </article>
+
+                <article class="streak-mini">
+                    <span>If habits feel too many</span>
+                    <strong>Prioritise</strong>
+                    <small>Focus on the most important habits first.</small>
+                </article>
+
+                <article class="streak-mini">
+                    <span>If today is empty</span>
+                    <strong>Add goal</strong>
+                    <small>Create a scheduled habit for this week.</small>
+                </article>
+            </div>
+        </section>
 
     </main>
 
 </div>
 
+<div class="notification-panel" id="notificationPanel">
+    <div class="notification-header">
+        <h4>Notifications</h4>
+        <button type="button" id="closeNotification">×</button>
+    </div>
+
+    <div class="notification-item">📊 Review your weekly progress.</div>
+    <div class="notification-item">🔥 Keep your streak alive today.</div>
+    <div class="notification-item">✅ Complete at least one habit today.</div>
+</div>
+
+<script>
+const notificationButton = document.getElementById("notificationButton");
+const notificationPanel = document.getElementById("notificationPanel");
+const closeNotification = document.getElementById("closeNotification");
+
+if (notificationButton && notificationPanel) {
+    notificationButton.addEventListener("click", function (event) {
+        event.preventDefault();
+        notificationPanel.classList.toggle("show");
+    });
+}
+
+if (closeNotification && notificationPanel) {
+    closeNotification.addEventListener("click", function () {
+        notificationPanel.classList.remove("show");
+    });
+}
+</script>
 
 {% include "_notifications.html" %}
 

@@ -2,17 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Friends - Habit Tracker</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
-
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body class="dashboard-body">
@@ -30,12 +24,12 @@
         <a href="/profile" class="sidebar-link">👤 Profile</a>
         <a href="/contact" class="sidebar-link">📧 Contact</a>
 
-<a href="#" class="sidebar-link notification-link" id="notificationButton">
-    🔔 Notifications
-    <span class="notification-badge">3</span>
-</a>
+        <a href="#" class="sidebar-link notification-link" id="notificationButton">
+            🔔 Notifications
+            <span class="notification-badge">3</span>
+        </a>
 
-<a href="/logout" class="sidebar-link logout">🚪 Logout</a>
+        <a href="/logout" class="sidebar-link logout">🚪 Logout</a>
 
         <div class="sidebar-quote">
             <h4>“</h4>
@@ -45,16 +39,16 @@
 
     <main class="dashboard-main">
 
-        <div class="dashboard-top">
+        <section class="dashboard-hero-clean">
             <div>
                 <h1>Friends & Challenge 👥</h1>
-                <p>Add friends, select a habit, choose a friend, and compete together.</p>
+                <p>Add friends, compare daily progress, and stay motivated through friendly challenges.</p>
             </div>
 
-            <div class="date-pill">
+            <div class="hero-quote-pill">
                 Social Motivation
             </div>
-        </div>
+        </section>
 
         {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -64,52 +58,42 @@
             {% endif %}
         {% endwith %}
 
-        <div class="summary-grid">
-            <div class="summary-card purple">
-                <div class="summary-icon">👥</div>
+        <div class="clean-summary-grid">
+            <article class="clean-summary-card">
+                <div class="clean-summary-icon">👥</div>
                 <div>
                     <p>Your Friends</p>
                     <h2>{{ friend_list|length }}</h2>
                     <span>People connected with you</span>
                 </div>
-            </div>
+            </article>
 
-            <div class="summary-card split-card">
-                <div class="summary-icon">🏆</div>
-                <div class="split-card-content">
-                    <p class="split-card-title">Leaderboard</p>
-
-                    <div class="split-card-metrics">
-                        <div class="split-card-metric">
-                            <span class="split-card-label">Players</span>
-                            <strong>{{ leaderboard|length }}</strong>
-                        </div>
-                    </div>
-
-                    <span class="split-card-detail">
-                        Ranking is based on completed habits today.
-                    </span>
-                </div>
-            </div>
-
-            <div class="summary-card blue summary-card-stacked">
-                <div class="summary-icon">⚔️</div>
+            <article class="clean-summary-card">
+                <div class="clean-summary-icon">🏆</div>
                 <div>
-                    <p>Challenge Points</p>
-                    <h2>10</h2>
-                    <span>Complete challenge habits to earn points.</span>
+                    <p>Leaderboard</p>
+                    <h2>{{ leaderboard|length }}</h2>
+                    <span>Ranking based on completed habits today</span>
                 </div>
-            </div>
+            </article>
+
+            <article class="clean-summary-card">
+                <div class="clean-summary-icon">⚔️</div>
+                <div>
+                    <p>Challenge Reward</p>
+                    <h2>10</h2>
+                    <span>Points for completing challenge habits</span>
+                </div>
+            </article>
         </div>
 
-        <div class="friends-dashboard-grid">
+        <div class="dashboard-two-column">
 
-            <section class="dash-card friends-add-panel">
-                <div class="friends-panel-header">
+            <section class="clean-card">
+                <div class="dashboard-section-title">
                     <div>
-                        <span class="friends-panel-badge">Connect</span>
                         <h3>Add Friend</h3>
-                        <p class="mb-0">Connect with a friend using email.</p>
+                        <p>Connect with a friend using their email address.</p>
                     </div>
                 </div>
 
@@ -124,22 +108,27 @@
                         required
                     >
 
-                    <button class="btn btn-primary w-100">
+                    <button class="btn btn-primary w-100 mt-3">
                         Add Friend
                     </button>
                 </form>
+
+                <div class="highlight-clean">
+                    <span>Tip</span>
+                    <strong>Invite active classmates</strong>
+                    <small>Friends make the app more fun because you can compare daily completions.</small>
+                </div>
             </section>
 
-            <section class="dash-card friends-list-panel">
-                <div class="friends-panel-header">
+            <section class="clean-card">
+                <div class="dashboard-section-title">
                     <div>
-                        <span class="friends-panel-badge">Community</span>
                         <h3>Your Friends</h3>
-                        <p class="mb-0">Friends participating in challenges.</p>
+                        <p>People participating with you.</p>
                     </div>
 
-                    <span class="friends-count-pill">
-                        {{ friend_list|length }} Friends
+                    <span class="active-count-pill-clean">
+                        {{ friend_list|length }} friend{% if friend_list|length != 1 %}s{% endif %}
                     </span>
                 </div>
 
@@ -148,21 +137,22 @@
                         {% for friend in friend_list %}
                             <article class="friends-profile-card">
                                 <div class="friend-avatar">
-                                    {{ friend[1][0] }}
+                                    {{ friend[1][0]|upper }}
                                 </div>
 
                                 <h5>
                                     {{ friend[1] }}
-                                    {% if friend[3] %}
+                                    {% if friend|length > 3 and friend[3] %}
                                         <span title="{{ friend[3].name }}">{{ friend[3].icon }}</span>
                                     {% endif %}
                                 </h5>
+
                                 <p>{{ friend[2] }}</p>
                             </article>
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div class="friends-empty-state">
+                    <div class="active-empty-clean">
                         <h4>No friends yet</h4>
                         <p>Add your first friend to start competing together.</p>
                     </div>
@@ -171,25 +161,23 @@
 
         </div>
 
-        <section class="dash-card friends-challenge-panel">
-
-            <div class="friends-panel-header">
+        <section class="challenge-beautiful-card">
+            <div class="challenge-beautiful-hero">
                 <div>
-                    <span class="friends-panel-badge">Challenge Mode</span>
-                    <h3 class="challenge-title">Challenge Mode ⚔️</h3>
-                    <p class="challenge-subtitle">
-                        Select a friend and compete on one habit.
-                    </p>
+                    <span class="challenge-kicker">Challenge Mode</span>
+                    <h3>Start a friendly challenge ⚔️</h3>
+                    <p>Select one habit, choose a friend, and compete together today.</p>
+                </div>
+
+                <div class="challenge-reward-bubble">
+                    <span>Reward</span>
+                    <strong>+10 pts</strong>
                 </div>
             </div>
 
-            <div class="challenge-select-grid">
-
-                <div class="challenge-select-box">
-                    <label class="form-label fw-semibold" for="challengeHabitSelect">
-                        Select Challenge Habit
-                    </label>
-
+            <div class="challenge-control-panel">
+                <div class="challenge-field">
+                    <label for="challengeHabitSelect">Challenge Habit</label>
                     <select class="form-control" id="challengeHabitSelect">
                         <option value="Exercise">Exercise</option>
                         <option value="Study">Study</option>
@@ -201,151 +189,112 @@
                     </select>
                 </div>
 
-                <div class="challenge-select-box">
-                    <label class="form-label fw-semibold" for="challengeFriendSelect">
-                        Select Friend
-                    </label>
-
+                <div class="challenge-field">
+                    <label for="challengeFriendSelect">Challenge Friend</label>
                     <select class="form-control" id="challengeFriendSelect">
                         {% if friend_list %}
                             {% for friend in friend_list %}
-                                <option value="{{ friend[1] }}">
-                                    {{ friend[1] }}
-                                </option>
+                                <option value="{{ friend[1] }}">{{ friend[1] }}</option>
                             {% endfor %}
                         {% else %}
-                            <option value="No friends added">
-                                No friends added
-                            </option>
+                            <option value="No friends added">No friends added</option>
                         {% endif %}
                     </select>
                 </div>
 
+                <a href="/active_habits" class="btn btn-outline-primary challenge-review-btn">
+                    Review Habits
+                </a>
             </div>
 
-            <div class="challenge-info-grid mt-4">
-                <div class="challenge-info-card">
-                    <span>Selected Habit</span>
-                    <strong id="selectedHabitText">Exercise</strong>
+            <div class="challenge-match-card">
+                <div class="challenge-player-side">
+                    <div class="challenge-player-avatar you">Y</div>
+                    <span>You</span>
+                    <h4>You</h4>
+                    <p>
+                        Competing in
+                        <strong class="friendChallengeHabit">Exercise</strong>
+                    </p>
+                    <div class="challenge-score-pill">10 pts</div>
                 </div>
 
-                <div class="challenge-info-card">
-                    <span>Selected Friend</span>
-                    <strong id="selectedFriendInfo">
-                        {% if friend_list %}
-                            {{ friend_list[0][1] }}
-                        {% else %}
-                            No friend
-                        {% endif %}
-                    </strong>
-                </div>
-
-                <div class="challenge-info-card">
-                    <span>Reward</span>
-                    <strong>+10 pts</strong>
-                </div>
-            </div>
-
-            <div class="challenge-rule-grid mt-4">
-                <div class="challenge-rule-card">
-                    <h5>Same Habit</h5>
-                    <p>Both players complete the same habit.</p>
-                </div>
-
-                <div class="challenge-rule-card">
-                    <h5>Earn Points</h5>
-                    <p>Complete today = +10 pts.</p>
-                </div>
-
-                <div class="challenge-rule-card">
-                    <h5>Top Player Wins</h5>
-                    <p>Highest points ranks first.</p>
-                </div>
-            </div>
-
-            <div class="challenge-example-box mt-4">
-                <strong>Current Challenge:</strong>
-
-                You and
-
-                <span id="selectedFriendText">
-                    {% if friend_list %}
-                        {{ friend_list[0][1] }}
-                    {% else %}
-                        your friend
-                    {% endif %}
-                </span>
-
-                must complete
-
-                <span id="selectedHabitSentence">
-                    Exercise
-                </span>
-
-                today to earn <strong>10 points</strong>.
-            </div>
-
-            <div class="challenge-player-list mt-4">
-
-                <div class="challenge-player-card">
-                    <div class="challenge-player-left">
-                        <div class="friend-avatar small">Y</div>
-
-                        <div>
-                            <h5>You</h5>
-                            <p>
-                                Competing in
-                                <span class="friendChallengeHabit">Exercise</span>
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="challenge-player-score">
-                        10 pts
-                    </div>
+                <div class="challenge-vs-circle">
+                    VS
                 </div>
 
                 {% if friend_list %}
-                    <div class="challenge-player-card">
-                        <div class="challenge-player-left">
-                            <div class="friend-avatar small" id="selectedFriendAvatar">
-                                {{ friend_list[0][1][0] }}
-                            </div>
-
-                            <div>
-                                <h5 id="selectedFriendPlayer">
-                                    {{ friend_list[0][1] }}
-                                </h5>
-
-                                <p>
-                                    Competing in
-                                    <span class="friendChallengeHabit">Exercise</span>
-                                </p>
-                            </div>
+                    <div class="challenge-player-side friend">
+                        <div class="challenge-player-avatar" id="selectedFriendAvatar">
+                            {{ friend_list[0][1][0]|upper }}
                         </div>
-
-                        <div class="challenge-player-score">
-                            10 pts
-                        </div>
+                        <span>Friend</span>
+                        <h4 id="selectedFriendPlayer">{{ friend_list[0][1] }}</h4>
+                        <p>
+                            Competing in
+                            <strong class="friendChallengeHabit">Exercise</strong>
+                        </p>
+                        <div class="challenge-score-pill">10 pts</div>
                     </div>
                 {% else %}
-                    <div class="friends-empty-state">
-                        <h4>No friend selected</h4>
+                    <div class="challenge-player-side friend">
+                        <div class="challenge-player-avatar">?</div>
+                        <span>Friend</span>
+                        <h4 id="selectedFriendPlayer">No friend</h4>
                         <p>Add friends first, then select one to challenge.</p>
+                        <div class="challenge-score-pill muted">0 pts</div>
                     </div>
                 {% endif %}
-
             </div>
 
+            <div class="challenge-current-banner">
+                <div>
+                    <span>Current Challenge</span>
+                    <strong>
+                        You and
+                        <span id="selectedFriendText">
+                            {% if friend_list %}
+                                {{ friend_list[0][1] }}
+                            {% else %}
+                                your friend
+                            {% endif %}
+                        </span>
+                        must complete
+                        <span id="selectedHabitSentence">Exercise</span>
+                        today.
+                    </strong>
+                </div>
+
+                <div class="challenge-current-icon">⚔️</div>
+            </div>
+
+            <div class="challenge-rule-grid-beautiful">
+                <article>
+                    <span>01</span>
+                    <h5>Pick one habit</h5>
+                    <p>Choose the habit both players should complete today.</p>
+                </article>
+
+                <article>
+                    <span>02</span>
+                    <h5>Compete together</h5>
+                    <p>You and your friend both try to complete the selected habit.</p>
+                </article>
+
+                <article>
+                    <span>03</span>
+                    <h5>Earn points</h5>
+                    <p>Completing the challenge habit gives each player 10 points.</p>
+                </article>
+            </div>
         </section>
 
-        <section class="dash-card friends-leaderboard-panel">
 
-            <div class="friends-panel-header">
+        <section class="clean-card">
+            <div class="dashboard-section-title">
                 <div>
-                    <span class="friends-panel-badge">Daily Competition</span>
                     <h3>Today’s Leaderboard 🏆</h3>
-                    <p class="mb-0">Ranking is based on completed habits today.</p>
+                    <p>Ranking is based on completed habits today.</p>
                 </div>
             </div>
 
@@ -373,7 +322,7 @@
 
                             <div class="friends-leaderboard-user">
                                 <div class="friend-avatar small">
-                                    {{ user.name[0] }}
+                                    {{ user.name[0]|upper }}
                                 </div>
 
                                 <div>
@@ -386,6 +335,7 @@
                                             <span class="leaderboard-self-tag">You</span>
                                         {% endif %}
                                     </h5>
+
                                     {% if user.can_show_progress %}
                                         <p>{{ user.count }} completed habits today</p>
                                     {% else %}
@@ -395,85 +345,77 @@
                             </div>
 
                             {% if user.can_show_progress %}
-                                <div class="friends-score">
-                                    {{ user.count }}
-                                </div>
+                                <div class="friends-score">{{ user.count }}</div>
                             {% else %}
-                                <div class="friends-score private">
-                                    --
-                                </div>
+                                <div class="friends-score private">--</div>
                             {% endif %}
                         </article>
                     {% endfor %}
                 </div>
             {% else %}
-                <div class="friends-empty-state">
+                <div class="active-empty-clean">
                     <h4>No leaderboard data yet</h4>
                     <p>Complete habits today to start building the leaderboard.</p>
                 </div>
             {% endif %}
-
         </section>
 
     </main>
 
 </div>
 
+<div class="notification-panel" id="notificationPanel">
+    <div class="notification-header">
+        <h4>Notifications</h4>
+        <button type="button" id="closeNotification">×</button>
+    </div>
+
+    <div class="notification-item">👥 Add friends to stay motivated.</div>
+    <div class="notification-item">⚔️ Start a challenge today.</div>
+    <div class="notification-item">🏆 Check today’s leaderboard.</div>
+</div>
+
 <script>
-const challengeHabitSelect =
-    document.getElementById("challengeHabitSelect");
-
-const challengeFriendSelect =
-    document.getElementById("challengeFriendSelect");
-
-const selectedHabitText =
-    document.getElementById("selectedHabitText");
-
-const selectedHabitSentence =
-    document.getElementById("selectedHabitSentence");
-
-const selectedFriendText =
-    document.getElementById("selectedFriendText");
-
-const selectedFriendInfo =
-    document.getElementById("selectedFriendInfo");
-
-const selectedFriendPlayer =
-    document.getElementById("selectedFriendPlayer");
-
-const selectedFriendAvatar =
-    document.getElementById("selectedFriendAvatar");
-
-const friendChallengeHabits =
-    document.querySelectorAll(".friendChallengeHabit");
+const challengeHabitSelect = document.getElementById("challengeHabitSelect");
+const challengeFriendSelect = document.getElementById("challengeFriendSelect");
+const selectedHabitText = document.getElementById("selectedHabitText");
+const selectedHabitSentence = document.getElementById("selectedHabitSentence");
+const selectedFriendText = document.getElementById("selectedFriendText");
+const selectedFriendInfo = document.getElementById("selectedFriendInfo");
+const selectedFriendPlayer = document.getElementById("selectedFriendPlayer");
+const selectedFriendAvatar = document.getElementById("selectedFriendAvatar");
+const friendChallengeHabits = document.querySelectorAll(".friendChallengeHabit");
 
 function updateChallengeUI() {
-    const selectedHabit =
-        challengeHabitSelect.value;
-
-    const selectedFriend =
-        challengeFriendSelect.value;
-
-    selectedHabitText.textContent =
-        selectedHabit;
-
-    selectedHabitSentence.textContent =
-        selectedHabit;
-
-    selectedFriendText.textContent =
-        selectedFriend;
-
-    selectedFriendInfo.textContent =
-        selectedFriend;
-
-    if (selectedFriendPlayer) {
-        selectedFriendPlayer.textContent =
-            selectedFriend;
+    if (!challengeHabitSelect || !challengeFriendSelect) {
+        return;
     }
 
-    if (selectedFriendAvatar) {
-        selectedFriendAvatar.textContent =
-            selectedFriend.trim()[0].toUpperCase();
+    const selectedHabit = challengeHabitSelect.value;
+    const selectedFriend = challengeFriendSelect.value;
+
+    if (selectedHabitText) {
+        selectedHabitText.textContent = selectedHabit;
+    }
+
+    if (selectedHabitSentence) {
+        selectedHabitSentence.textContent = selectedHabit;
+    }
+
+    if (selectedFriendText) {
+        selectedFriendText.textContent = selectedFriend;
+    }
+
+    if (selectedFriendInfo) {
+        selectedFriendInfo.textContent = selectedFriend;
+    }
+
+    if (selectedFriendPlayer) {
+        selectedFriendPlayer.textContent = selectedFriend;
+    }
+
+    if (selectedFriendAvatar && selectedFriend.trim().length > 0) {
+        selectedFriendAvatar.textContent = selectedFriend.trim()[0].toUpperCase();
     }
 
     friendChallengeHabits.forEach(function (item) {
@@ -481,12 +423,33 @@ function updateChallengeUI() {
     });
 }
 
-challengeHabitSelect.addEventListener("change", updateChallengeUI);
-challengeFriendSelect.addEventListener("change", updateChallengeUI);
+if (challengeHabitSelect) {
+    challengeHabitSelect.addEventListener("change", updateChallengeUI);
+}
+
+if (challengeFriendSelect) {
+    challengeFriendSelect.addEventListener("change", updateChallengeUI);
+}
 
 updateChallengeUI();
-</script>
 
+const notificationButton = document.getElementById("notificationButton");
+const notificationPanel = document.getElementById("notificationPanel");
+const closeNotification = document.getElementById("closeNotification");
+
+if (notificationButton && notificationPanel) {
+    notificationButton.addEventListener("click", function (event) {
+        event.preventDefault();
+        notificationPanel.classList.toggle("show");
+    });
+}
+
+if (closeNotification && notificationPanel) {
+    closeNotification.addEventListener("click", function () {
+        notificationPanel.classList.remove("show");
+    });
+}
+</script>
 
 {% include "_notifications.html" %}
 
