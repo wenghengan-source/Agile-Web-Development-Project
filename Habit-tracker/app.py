@@ -912,7 +912,6 @@ def build_progress_snapshot(user_id, reference_date=None):
     }
 
 
-
 def init_db():
     conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
@@ -2068,7 +2067,7 @@ def profile():
 
     conn.close()
 
-    # Rewards data is now shown inside Profile instead of a separate main page.
+    # Rewards are displayed inside Profile.
     today_str = date.today().isoformat()
     award_leaderboard_bonus(today_str)
 
@@ -2090,6 +2089,50 @@ def profile():
         bonus_points=bonus_points,
         reward_habits=reward_habits
     )
+
+@app.route("/edit_profile", methods=["GET", "POST"])
+def edit_profile():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    if request.method == "POST":
+        name = request.form.get("name")
+        email = request.form.get("email")
+        password = request.form.get("password")
+
+        if password:
+            hashed_password = generate_password_hash(password)
+            cursor.execute(
+                "UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?",
+                (name, email, hashed_password, session["user_id"])
+            )
+        else:
+            cursor.execute(
+                "UPDATE users SET name = ?, email = ? WHERE id = ?",
+                (name, email, session["user_id"])
+            )
+
+        conn.commit()
+        conn.close()
+
+        # Update session values
+        session["user_name"] = name
+        session["user_email"] = email
+
+        flash("Profile updated.")
+        return redirect(url_for("profile"))
+
+    cursor.execute(
+        "SELECT name, email FROM users WHERE id = ?",
+        (session["user_id"],)
+    )
+    user = cursor.fetchone()
+    conn.close()
+
+    return render_template("edit_profile.html", user=user)
 
 
 @app.route("/contact", methods=["GET", "POST"])
@@ -2224,22 +2267,8 @@ def reward():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    today_str = date.today().isoformat()
-    award_leaderboard_bonus(today_str)
-
-    total_points, base_points, bonus_points = calculate_total_points(
-        session["user_id"]
-    )
-
-    habits = get_per_habit_rewards(session["user_id"])
-
-    return render_template(
-        "reward.html",
-        points=total_points,
-        base_points=base_points,
-        bonus_points=bonus_points,
-        habits=habits
-    )
+    # Rewards are now shown inside Profile.
+    return redirect(url_for("profile"))
 
 
 @app.route("/reward/<int:user_id>")
@@ -2247,28 +2276,8 @@ def reward_user(user_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    conn = sqlite3.connect("habit_tracker.db")
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT name FROM users WHERE id = ?", (user_id,))
-    user_row = cursor.fetchone()
-    if not user_row:
-        conn.close()
-        return "User not found", 404
-
-    conn.close()
-
-    total_points, base_points, bonus_points = calculate_total_points(user_id)
-    habits = get_per_habit_rewards(user_id)
-
-    return render_template(
-        "reward.html",
-        points=total_points,
-        base_points=base_points,
-        bonus_points=bonus_points,
-        habits=habits,
-        viewed_user={'id': user_id, 'name': user_row[0]}
-    )
+    # Public reward pages are no longer used.
+    return redirect(url_for("profile"))
 
 
 @app.route("/claim_reward", methods=["POST"])
