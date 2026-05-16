@@ -923,6 +923,7 @@ def init_db():
             name TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
+            focus_note TEXT,
             share_progress_with_friends INTEGER NOT NULL DEFAULT 1
         )
     """)
@@ -951,6 +952,13 @@ def init_db():
         "users",
         "share_progress_with_friends",
         f"INTEGER NOT NULL DEFAULT {DEFAULT_SHARE_PROGRESS_WITH_FRIENDS}"
+    )
+
+    ensure_column_exists(
+        cursor,
+        "users",
+        "focus_note",
+        "TEXT"
     )
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS habit_completions (
@@ -1454,7 +1462,7 @@ def new_habit():
 
         return redirect(url_for("dashboard"))
 
-    return render_template("new_habit.html")
+    return render_template("new_habit.html", weekday_names=WEEKDAY_NAMES)
 
 
 @app.route("/complete_habit/<int:habit_id>")
@@ -1570,7 +1578,8 @@ def edit_habit(habit_id):
     return render_template(
         "edit_habit.html",
         habit=habit,
-        selected_schedule=selected_schedule
+        selected_schedule=selected_schedule,
+        weekday_names=WEEKDAY_NAMES
     )
 
 
@@ -2003,28 +2012,41 @@ def profile():
     conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
+    ensure_column_exists(cursor, "users", "focus_note", "TEXT")
+
     cursor.execute(
-        "SELECT name, email FROM users WHERE id = ?",
+        "SELECT name, email, focus_note FROM users WHERE id = ?",
         (session["user_id"],)
     )
-    user = cursor.fetchone()
 
-    if user is None:
+    user_row = cursor.fetchone()
+
+    if user_row is None:
         conn.close()
         session.clear()
         flash("Your session expired. Please login again.")
         return redirect(url_for("login"))
 
+    user = (user_row[0], user_row[1])
+
+    focus_note = (
+        user_row[2]
+        if user_row[2]
+        else "Stay consistent and build momentum one day at a time."
+    )
+
     cursor.execute(
         "SELECT COUNT(*) FROM habits WHERE user_id = ?",
         (session["user_id"],)
     )
+
     total_habits = cursor.fetchone()[0]
 
     cursor.execute(
         "SELECT COUNT(*) FROM habit_completions WHERE user_id = ?",
         (session["user_id"],)
     )
+
     completed_habits = cursor.fetchone()[0]
 
     cursor.execute(
@@ -2037,6 +2059,7 @@ def profile():
         """,
         (session["user_id"],)
     )
+
     goals = [row[0] for row in cursor.fetchall()]
 
     share_progress_with_friends = get_user_progress_visibility(
@@ -2045,6 +2068,15 @@ def profile():
 
     conn.close()
 
+    # Rewards data is now shown inside Profile instead of a separate main page.
+    today_str = date.today().isoformat()
+    award_leaderboard_bonus(today_str)
+
+    reward_points, base_points, bonus_points = calculate_total_points(
+        session["user_id"]
+    )
+    reward_habits = get_per_habit_rewards(session["user_id"])
+
     return render_template(
         "profile.html",
         user=user,
@@ -2052,52 +2084,12 @@ def profile():
         completed_habits=completed_habits,
         goals=goals,
         share_progress_with_friends=share_progress_with_friends,
+        focus_note=focus_note,
+        reward_points=reward_points,
+        base_points=base_points,
+        bonus_points=bonus_points,
+        reward_habits=reward_habits
     )
-
-
-@app.route("/edit_profile", methods=["GET", "POST"])
-def edit_profile():
-    if "user_id" not in session:
-        return redirect(url_for("login"))
-
-    conn = sqlite3.connect("habit_tracker.db")
-    cursor = conn.cursor()
-
-    if request.method == "POST":
-        name = request.form.get("name")
-        email = request.form.get("email")
-        password = request.form.get("password")
-
-        if password:
-            hashed_password = generate_password_hash(password)
-            cursor.execute(
-                "UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?",
-                (name, email, hashed_password, session["user_id"])
-            )
-        else:
-            cursor.execute(
-                "UPDATE users SET name = ?, email = ? WHERE id = ?",
-                (name, email, session["user_id"])
-            )
-
-        conn.commit()
-        conn.close()
-
-        # Update session values
-        session["user_name"] = name
-        session["user_email"] = email
-
-        flash("Profile updated.")
-        return redirect(url_for("profile"))
-
-    cursor.execute(
-        "SELECT name, email FROM users WHERE id = ?",
-        (session["user_id"],)
-    )
-    user = cursor.fetchone()
-    conn.close()
-
-    return render_template("edit_profile.html", user=user)
 
 
 @app.route("/contact", methods=["GET", "POST"])
@@ -2435,7 +2427,40 @@ def update_privacy():
     flash("Privacy setting updated successfully.")
     return redirect(url_for("profile"))
 
+@app.route("/update_account", methods=["POST"])
+def update_account():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
 
+    name = request.form.get("name", "").strip()
+    focus_note = request.form.get("focus_note", "").strip()
+
+    if not name:
+        flash("Name cannot be empty.")
+        return redirect(url_for("profile"))
+
+    conn = sqlite3.connect("habit_tracker.db")
+    cursor = conn.cursor()
+
+    ensure_column_exists(cursor, "users", "focus_note", "TEXT")
+
+    cursor.execute(
+        """
+        UPDATE users
+        SET name = ?, focus_note = ?
+        WHERE id = ?
+        """,
+        (name, focus_note, session["user_id"])
+    )
+
+    conn.commit()
+    conn.close()
+
+    session["user_name"] = name
+
+    flash("Account information updated successfully.")
+
+    return redirect(url_for("profile"))
 
 @app.route("/logout")
 def logout():
@@ -2447,3 +2472,6 @@ def logout():
 if __name__ == "__main__":
     init_db()
     app.run(debug=True)
+
+
+

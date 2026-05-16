@@ -39,127 +39,113 @@
 
     <main class="dashboard-main">
 
-        <div class="dashboard-top">
+        <section class="dashboard-hero-clean">
             <div>
                 <h1>Welcome back, {{ session["user_name"] }} 👋</h1>
-                <p>Your habits, momentum, and daily check-ins are all in one place.</p>
+                <p>Your dashboard is focused on today’s habits, weekly progress, and the next action to keep momentum going.</p>
             </div>
 
-            <div class="date-pill">
+            <div class="hero-quote-pill">
                 {{ quote }}
             </div>
-        </div>
+        </section>
 
-        <div class="summary-grid">
-            <div class="summary-card purple">
-                <div class="summary-icon">📋</div>
+        <div class="clean-summary-grid">
+            <article class="clean-summary-card">
+                <div class="clean-summary-icon">📋</div>
                 <div>
-                    <p>Total Habits</p>
+                    <p>Active Today</p>
                     <h2>{{ total }}</h2>
-                    <span>Active today</span>
+                    <span>Habits scheduled for today</span>
                 </div>
-            </div>
+            </article>
 
-            <div class="summary-card split-card">
-                <div class="summary-icon">✓</div>
-                <div class="split-card-content">
-                    <p class="split-card-title">Today</p>
-
-                    <div class="split-card-metrics">
-                        <div class="split-card-metric">
-                            <span class="split-card-label">Completed</span>
-                            <strong>{{ completed }}</strong>
-                        </div>
-                    </div>
-
-                    <span class="split-card-detail">
+            <article class="clean-summary-card">
+                <div class="clean-summary-icon">✅</div>
+                <div>
+                    <p>Completed</p>
+                    <h2>{{ completed }}</h2>
+                    <span>
                         {% if total > 0 %}
-                            {{ completed }}/{{ total }} active habits are checked off today.
+                            {{ completed }}/{{ total }} checked off today
                         {% else %}
-                            Nothing is scheduled for today yet.
+                            Nothing scheduled yet
                         {% endif %}
                     </span>
                 </div>
-            </div>
+            </article>
 
-            <div class="summary-card blue summary-card-stacked">
-                <div class="summary-icon">📈</div>
+            <article class="clean-summary-card">
+                <div class="clean-summary-icon">📈</div>
                 <div>
                     <p>Weekly Completion</p>
                     <h2>{{ progress_snapshot.weekly_average }}%</h2>
                     <span>
                         {% if progress_snapshot.has_scheduled_data %}
-                            Based on scheduled habits from Sunday through today. {{ progress_snapshot.weekly_change_summary }}
+                            {{ progress_snapshot.weekly_change_summary }}
                         {% else %}
-                            Weekly progress will appear once this week has scheduled check-ins.
+                            Appears after scheduled check-ins
                         {% endif %}
                     </span>
                 </div>
-            </div>
+            </article>
         </div>
 
-        <div class="analytics-grid">
-            <div class="analytics-primary-column">
+        <div class="dashboard-two-column">
+            <div class="dashboard-stack">
 
-                <section class="weekly-trend-card">
-                    <div class="weekly-trend-header">
+                <section class="clean-card">
+                    <div class="dashboard-section-title">
                         <div>
                             <h3>Weekly trend</h3>
-                            <p class="mb-0">
-                                A Sunday-to-Saturday view of what was scheduled and what got done this week.
-                            </p>
+                            <p>A simple view of scheduled habits and completions this week.</p>
                         </div>
 
                         {% if progress_snapshot.has_scheduled_data and progress_snapshot.best_day.goal > 0 %}
                             <div class="weekly-trend-badge">
                                 <span>Best day</span>
                                 <strong>{{ progress_snapshot.best_day.label }}</strong>
-                                <small>
-                                    {{ progress_snapshot.best_day.completed }}/{{ progress_snapshot.best_day.goal }}
-                                    completed
-                                </small>
+                                <small>{{ progress_snapshot.best_day.completed }}/{{ progress_snapshot.best_day.goal }} completed</small>
                             </div>
                         {% endif %}
                     </div>
 
                     {% if progress_snapshot.has_scheduled_data %}
-                        <div class="weekly-bars">
+                        <div class="weekly-bars-clean">
                             {% for day in progress_snapshot.weekly_progress %}
-                                <div class="weekly-bar-group {% if day.is_future %}future{% endif %}">
-                                    <div class="weekly-bar-track">
+                                <div class="weekly-day-clean">
+                                    <div class="weekly-track-clean">
                                         <div
-                                            class="weekly-bar-fill {% if day.goal == 0 %}empty{% elif day.percentage == 0 %}zero{% endif %}"
-                                            style="height: {% if day.goal == 0 %}0{% elif day.percentage == 0 %}12px{% else %}{{ day.percentage }}%{% endif %};"
+                                            class="weekly-fill-clean"
+                                            style="height: {% if day.is_future or day.goal == 0 %}0{% elif day.percentage == 0 %}10px{% else %}{{ day.percentage }}%{% endif %};"
                                         ></div>
                                     </div>
 
-                                    <p class="weekly-bar-percent">
+                                    <p class="weekly-percent-clean">
                                         {% if day.is_future %}--{% else %}{{ day.percentage }}%{% endif %}
                                     </p>
 
-                                    <p class="weekly-bar-value">
+                                    <p class="weekly-value-clean">
                                         {% if day.is_future %}Upcoming{% else %}{{ day.completed }}/{{ day.goal }}{% endif %}
                                     </p>
 
-                                    <p class="weekly-bar-label mb-0">{{ day.label }}</p>
+                                    <p class="weekly-label-clean">{{ day.label }}</p>
                                 </div>
                             {% endfor %}
                         </div>
                     {% else %}
                         <div class="weekly-trend-empty">
                             <strong>No weekly trend yet</strong>
-                            <span>
-                                This chart will start filling in once this week has scheduled habit check-ins.
-                            </span>
+                            <span>This chart will fill in after you have scheduled habit check-ins this week.</span>
                         </div>
                     {% endif %}
                 </section>
 
-                <section class="dash-card streak-card">
-                    <div class="streak-card-header">
+                <section class="clean-card">
+                    <div class="dashboard-section-title">
                         <div>
                             <h3>Streak momentum</h3>
-                            <p class="mb-0">{{ progress_snapshot.streak_summary.headline }}</p>
+                            <p>{{ progress_snapshot.streak_summary.headline }}</p>
                         </div>
 
                         <span class="streak-chip">
@@ -193,14 +179,14 @@
                         </div>
                     </div>
 
-                    <div class="streak-card-notes">
-                        <article class="streak-note-card">
+                    <div class="streak-mini-grid">
+                        <article class="streak-mini">
                             <span>Next milestone</span>
                             <strong>{{ progress_snapshot.streak_summary.next_goal }} days</strong>
                             <small>{{ progress_snapshot.streak_summary.detail }}</small>
                         </article>
 
-                        <article class="streak-note-card">
+                        <article class="streak-mini">
                             <span>{{ progress_snapshot.streak_summary.personal_best_label }}</span>
                             <strong>
                                 {% if progress_snapshot.streak_summary.days_to_personal_best == 0 %}
@@ -213,202 +199,168 @@
                             <small>{{ progress_snapshot.streak_summary.personal_best_detail }}</small>
                         </article>
 
-                        <article class="streak-note-card">
-                            <span>Habit carrying the streak</span>
+                        <article class="streak-mini">
+                            <span>Leading habit</span>
                             <strong>{{ progress_snapshot.streak_summary.carrying_habit_name }}</strong>
                             <small>{{ progress_snapshot.streak_summary.carrying_habit_detail }}</small>
                         </article>
 
-                        <article class="streak-note-card">
-                            <span>Weekly completion trend</span>
+                        <article class="streak-mini">
+                            <span>Weekly trend</span>
                             <strong>{{ progress_snapshot.streak_summary.weekly_completion_value }}%</strong>
                             <small>{{ progress_snapshot.streak_summary.weekly_completion_trend }}</small>
                         </article>
                     </div>
+                </section>
 
-                    <p class="streak-card-detail mb-0">
-                        Keep the streak moving and this card will keep updating your next milestone, personal-best pace, and the habit driving the run.
-                    </p>
+                <section class="clean-card">
+                    <div class="dashboard-section-title">
+                        <div>
+                            <h3>Active habits preview</h3>
+                            <p>A quick look at today’s active habits.</p>
+                        </div>
+
+                        <div class="active-preview-actions d-flex gap-2">
+                            <a href="/active_habits" class="btn btn-outline-primary">View All</a>
+                            <a href="/new_habit" class="btn btn-primary">+ Add Goal</a>
+                        </div>
+                    </div>
+
+                    {% set habits = preview_habits %}
+                    {% set empty_message = "No active habits are scheduled for today yet." %}
+                    {% include "_habit_list.html" %}
+
+                    {% if total > preview_habits|length %}
+                        <div class="text-end mt-3">
+                            <a href="/active_habits" class="btn btn-link">
+                                View {{ total - preview_habits|length }} more active habit{% if total - preview_habits|length != 1 %}s{% endif %}
+                            </a>
+                        </div>
+                    {% endif %}
                 </section>
 
             </div>
 
-            <section class="focus-panel-card">
-                <div class="focus-panel-header">
-                    <div>
-                        <h3>Focus this week</h3>
-                        <p class="mb-0">
-                            The habits most worth a quick check-in right now.
-                        </p>
-                    </div>
-                </div>
+            <div class="dashboard-stack">
 
-                <div class="focus-panel-highlight">
-                    <span class="focus-panel-highlight-label">
-                        {% if progress_snapshot.top_habit.has_data %}Leading this week{% else %}Top habit preview{% endif %}
-                    </span>
-
-                    <strong>{{ progress_snapshot.top_habit.name }}</strong>
-
-                    <small>
-                        {{ progress_snapshot.top_habit.summary }}
-                        {% if not progress_snapshot.top_habit.has_data %}
-                            {{ progress_snapshot.top_habit.detail }}
-                        {% endif %}
-                    </small>
-                </div>
-
-                {% if progress_snapshot.focus_items %}
-                    <div class="focus-panel-list">
-                        {% for habit in progress_snapshot.focus_items %}
-                            <article class="focus-panel-item">
-                                <div>
-                                    <span class="focus-panel-reason">{{ habit.reason }}</span>
-                                    <h4>{{ habit.name }}</h4>
-                                    <p class="mb-0">{{ habit.detail }}</p>
-                                </div>
-
-                                <a href="/active_habits" class="btn btn-sm btn-outline-primary">
-                                    Review
-                                </a>
-                            </article>
-                        {% endfor %}
-                    </div>
-                {% else %}
-                    <div class="focus-panel-empty">
-                        <h4>Nothing urgent right now</h4>
-                        <p class="mb-0">
-                            Your habits are on track right now.
-                        </p>
-                    </div>
-                {% endif %}
-            </section>
-        </div>
-
-        <div class="dashboard-grid">
-            <section class="dash-card health-profile-card">
-                <div class="health-profile-header">
-                    <div>
-                        <h3>💪 Health Profile</h3>
-                        <p>Track your body data and fitness goal.</p>
+                <section class="clean-card">
+                    <div class="dashboard-section-title">
+                        <div>
+                            <h3>Focus this week</h3>
+                            <p>The habits most worth a quick check-in.</p>
+                        </div>
                     </div>
 
-                    <span class="health-badge">
-                        BMI {{ bmi if bmi else "-" }}
-                    </span>
-                </div>
+                    <div class="highlight-clean">
+                        <span>
+                            {% if progress_snapshot.top_habit.has_data %}Leading this week{% else %}Top habit preview{% endif %}
+                        </span>
 
-                <div class="health-profile-grid">
-                    <div class="health-metric">
-                        <span>⚖️</span>
-                        <small>Weight</small>
-                        <strong>
-                            {% if health_profile %}{{ health_profile[0] }} kg{% else %}-{% endif %}
-                        </strong>
+                        <strong>{{ progress_snapshot.top_habit.name }}</strong>
+
+                        <small>
+                            {{ progress_snapshot.top_habit.summary }}
+                            {% if not progress_snapshot.top_habit.has_data %}
+                                {{ progress_snapshot.top_habit.detail }}
+                            {% endif %}
+                        </small>
                     </div>
 
-                    <div class="health-metric">
-                        <span>📏</span>
-                        <small>Height</small>
-                        <strong>
-                            {% if health_profile %}{{ health_profile[1] }} cm{% else %}-{% endif %}
-                        </strong>
+                    {% if progress_snapshot.focus_items %}
+                        <div class="focus-list-clean">
+                            {% for habit in progress_snapshot.focus_items %}
+                                <article class="focus-item-clean">
+                                    <div>
+                                        <span class="focus-reason-clean">{{ habit.reason }}</span>
+                                        <h4>{{ habit.name }}</h4>
+                                        <p>{{ habit.detail }}</p>
+                                    </div>
+
+                                    <a href="/active_habits" class="btn btn-sm btn-outline-primary">Review</a>
+                                </article>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="focus-panel-empty mt-3">
+                            <h4>Nothing urgent right now</h4>
+                            <p class="mb-0">Your habits are on track.</p>
+                        </div>
+                    {% endif %}
+                </section>
+
+                <section class="clean-card">
+                    <div class="health-profile-header">
+                        <div>
+                            <h3>💪 Health Profile</h3>
+                            <p>Track your body data and fitness goal.</p>
+                        </div>
+
+                        <span class="health-badge">
+                            BMI {{ bmi if bmi else "-" }}
+                        </span>
                     </div>
 
-                    <div class="health-metric">
-                        <span>🎂</span>
-                        <small>Age</small>
-                        <strong>
-                            {% if health_profile %}{{ health_profile[2] }}{% else %}-{% endif %}
-                        </strong>
+                    <div class="health-profile-grid">
+                        <div class="health-metric">
+                            <span>⚖️</span>
+                            <small>Weight</small>
+                            <strong>{% if health_profile %}{{ health_profile[0] }} kg{% else %}-{% endif %}</strong>
+                        </div>
+
+                        <div class="health-metric">
+                            <span>📏</span>
+                            <small>Height</small>
+                            <strong>{% if health_profile %}{{ health_profile[1] }} cm{% else %}-{% endif %}</strong>
+                        </div>
+
+                        <div class="health-metric">
+                            <span>🎂</span>
+                            <small>Age</small>
+                            <strong>{% if health_profile %}{{ health_profile[2] }}{% else %}-{% endif %}</strong>
+                        </div>
+
+                        <div class="health-metric">
+                            <span>🎯</span>
+                            <small>Goal</small>
+                            <strong>{% if health_profile %}{{ health_profile[3] }}{% else %}-{% endif %}</strong>
+                        </div>
                     </div>
 
-                    <div class="health-metric">
-                        <span>🎯</span>
-                        <small>Goal</small>
-                        <strong>
-                            {% if health_profile %}{{ health_profile[3] }}{% else %}-{% endif %}
-                        </strong>
-                    </div>
-                </div>
-
-                <form method="POST" action="/update_health" class="health-form mt-4">
-                    <div class="row">
-                        <div class="col-md-3 mb-2">
+                    <form method="POST" action="/update_health" class="health-form mt-4">
+                        <div class="health-form-grid">
                             <input type="number" step="0.1" name="weight" class="form-control" placeholder="Weight kg" required>
-                        </div>
-
-                        <div class="col-md-3 mb-2">
                             <input type="number" step="0.1" name="height" class="form-control" placeholder="Height cm" required>
-                        </div>
-
-                        <div class="col-md-3 mb-2">
                             <input type="number" name="age" class="form-control" placeholder="Age" required>
-                        </div>
-
-                        <div class="col-md-3 mb-2">
                             <input type="text" name="goal" class="form-control" placeholder="Goal" required>
                         </div>
-                    </div>
 
-                    <button class="btn btn-primary mt-2 w-100">
-                        Save Health Profile
-                    </button>
-                </form>
-            </section>
+                        <button class="btn btn-primary mt-3 w-100">
+                            Save Health Profile
+                        </button>
+                    </form>
+                </section>
+
+            </div>
         </div>
 
-        <section class="dash-card mt-4">
-            <h3>🎬 Today's Suggested Videos</h3>
+        <section class="clean-card">
+            <div class="dashboard-section-title">
+                <div>
+                    <h3>🎬 Today’s suggested videos</h3>
+                    <p>Small motivation boosts for your habits and focus.</p>
+                </div>
+            </div>
 
-            <div class="row">
+            <div class="video-grid-clean">
                 {% for video in today_videos %}
-                    <div class="col-md-4 mb-3">
-                        <a href="{{ video.watch_url }}" target="_blank">
-                            <img
-                                src="{{ video.thumbnail }}"
-                                class="video-thumbnail"
-                                alt="{{ video.title }}"
-                            >
-                        </a>
-
-                        <h6 class="mt-2">{{ video.title }}</h6>
-                    </div>
+                    <a href="{{ video.watch_url }}" target="_blank" class="text-decoration-none">
+                        <article class="video-card-clean">
+                            <img src="{{ video.thumbnail }}" alt="{{ video.title }}">
+                            <h6>{{ video.title }}</h6>
+                        </article>
+                    </a>
                 {% endfor %}
             </div>
-        </section>
-
-        <section class="dash-card mt-4">
-            <div class="active-preview-header d-flex justify-content-between align-items-center mb-3">
-                <div>
-                    <h3>Active Habits Preview</h3>
-                    <p class="text-muted mb-0">
-                        A quick look at today's active habits. Open the full page to manage everything.
-                    </p>
-                </div>
-
-                <div class="active-preview-actions d-flex gap-2">
-                    <a href="/active_habits" class="btn btn-outline-primary">
-                        View All Habits
-                    </a>
-
-                    <a href="/new_habit" class="btn btn-primary">
-                        + Add Goal
-                    </a>
-                </div>
-            </div>
-
-            {% set habits = preview_habits %}
-            {% set empty_message = "No active habits are scheduled for today yet." %}
-            {% include "_habit_list.html" %}
-
-            {% if total > preview_habits|length %}
-                <div class="text-end mt-3">
-                    <a href="/active_habits" class="btn btn-link">
-                        View {{ total - preview_habits|length }} more active habit{% if total - preview_habits|length != 1 %}s{% endif %}
-                    </a>
-                </div>
-            {% endif %}
         </section>
 
     </main>
@@ -421,17 +373,9 @@
         <button type="button" id="closeNotification">×</button>
     </div>
 
-    <div class="notification-item">
-        ⚔️ Pengfei challenged you to Exercise.
-    </div>
-
-    <div class="notification-item">
-        🔥 Keep your streak alive today.
-    </div>
-
-    <div class="notification-item">
-        ✅ You still have incomplete habits today.
-    </div>
+    <div class="notification-item">⚔️ Pengfei challenged you to Exercise.</div>
+    <div class="notification-item">🔥 Keep your streak alive today.</div>
+    <div class="notification-item">✅ You still have incomplete habits today.</div>
 </div>
 
 <script>
@@ -439,16 +383,19 @@ const notificationButton = document.getElementById("notificationButton");
 const notificationPanel = document.getElementById("notificationPanel");
 const closeNotification = document.getElementById("closeNotification");
 
-notificationButton.addEventListener("click", function (event) {
-    event.preventDefault();
-    notificationPanel.classList.toggle("show");
-});
+if (notificationButton && notificationPanel) {
+    notificationButton.addEventListener("click", function (event) {
+        event.preventDefault();
+        notificationPanel.classList.toggle("show");
+    });
+}
 
-closeNotification.addEventListener("click", function () {
-    notificationPanel.classList.remove("show");
-});
+if (closeNotification && notificationPanel) {
+    closeNotification.addEventListener("click", function () {
+        notificationPanel.classList.remove("show");
+    });
+}
 </script>
-
 
 {% include "_notifications.html" %}
 
