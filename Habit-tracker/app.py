@@ -16,6 +16,17 @@ DASHBOARD_TOP_CATEGORY_MIN_SCHEDULED_DAYS = 2
 DASHBOARD_ANALYTICS_WINDOW_DAYS = 7
 DASHBOARD_AT_RISK_RATE_THRESHOLD = 60
 DASHBOARD_STREAK_COOLDOWN_MIN_BEST_STREAK = 3
+TROPHY_TIERS = [
+    {"key": "iron", "icon": "\U0001FAA8", "name": "Iron", "required": 50},
+    {"key": "bronze", "icon": "\U0001F949", "name": "Bronze", "required": 100},
+    {"key": "silver", "icon": "\U0001F948", "name": "Silver", "required": 200},
+    {"key": "gold", "icon": "\U0001F947", "name": "Gold", "required": 350},
+    {"key": "platinum", "icon": "\U0001F48E", "name": "Platinum", "required": 500},
+    {"key": "diamond", "icon": "\U0001F451", "name": "Diamond", "required": 650},
+    {"key": "legend", "icon": "\U0001F3C6", "name": "Legend", "required": 800},
+    {"key": "master", "icon": "\U0001F31F", "name": "Master", "required": 1000},
+]
+TROPHY_TIERS_BY_KEY = {tier["key"]: tier for tier in TROPHY_TIERS}
 
 def ensure_column_exists(cursor, table_name, column_name, column_definition):
     cursor.execute(f"PRAGMA table_info({table_name})")
@@ -51,6 +62,13 @@ def set_user_progress_visibility(user_id, value):
     )
     conn.commit()
     conn.close()
+
+
+def get_trophy_label(tier_key):
+    tier = TROPHY_TIERS_BY_KEY.get(tier_key)
+    if tier is None:
+        return "Unknown Trophy"
+    return f"{tier['icon']} {tier['name']}"
 
 
 def parse_schedule(schedule_value):
@@ -1056,17 +1074,6 @@ def calculate_total_points(user_id):
 
 def get_highest_trophy(user_id):
     """Return the highest unlocked trophy across all habits for a user."""
-    thresholds = [
-        ("iron", "🪨", 50),
-        ("bronze", "🥉", 100),
-        ("silver", "🥈", 200),
-        ("gold", "🥇", 350),
-        ("platinum", "💎", 500),
-        ("diamond", "👑", 650),
-        ("legend", "🏆", 800),
-        ("master", "🌟", 1000),
-    ]
-
     conn = sqlite3.connect("habit_tracker.db")
     cursor = conn.cursor()
 
@@ -1080,10 +1087,19 @@ def get_highest_trophy(user_id):
 
     best_tier = None
     for habit_id, completions in cursor.fetchall():
-        for key, icon, required in reversed(thresholds):
+        for tier in reversed(TROPHY_TIERS):
+            required = tier.get("required")
+            if required is None:
+                continue
             if completions >= required:
-                if best_tier is None or required > best_tier["required"]:
-                    best_tier = {"key": key, "icon": icon, "name": key.title()}
+                best_required = best_tier.get("required", -1) if best_tier else -1
+                if required > best_required:
+                    best_tier = {
+                        "key": tier.get("key"),
+                        "icon": tier.get("icon", ""),
+                        "name": tier.get("name", "Unknown"),
+                        "required": required,
+                    }
                 break
 
     conn.close()
@@ -2216,16 +2232,6 @@ def get_per_habit_rewards(user_id):
     """, (user_id, user_id))
 
     habits = []
-    thresholds = [
-        ("iron", "🪨 Iron", 50),
-        ("bronze", "🥉 Bronze", 100),
-        ("silver", "🥈 Silver", 200),
-        ("gold", "🥇 Gold", 350),
-        ("platinum", "💎 Platinum", 500),
-        ("diamond", "👑 Diamond", 650),
-        ("legend", "🏆 Legend", 800),
-        ("master", "🌟 Master", 1000),
-    ]
 
     for row in cursor.fetchall():
         habit_id, name, category, completions = row
@@ -2237,10 +2243,12 @@ def get_per_habit_rewards(user_id):
         claimed_tiers = {r[0] for r in cursor.fetchall()}
 
         tier_progress = []
-        for key, label, required in thresholds:
+        for tier in TROPHY_TIERS:
+            key = tier.get("key")
+            required = tier.get("required", 0)
             tier_progress.append({
                 "key": key,
-                "label": label,
+                "label": get_trophy_label(key),
                 "required": required,
                 "unlocked": completions >= required,
                 "claimed": key in claimed_tiers,
@@ -2288,18 +2296,9 @@ def claim_reward():
     tier = request.form.get("tier")
     habit_id = request.form.get("habit_id")
 
-    thresholds = {
-        "iron": 50, "bronze": 100, "silver": 200,
-        "gold": 350, "platinum": 500, "diamond": 650,
-        "legend": 800, "master": 1000
-    }
-    trophy_names = {
-        "iron": "🪨 Iron", "bronze": "🥉 Bronze",
-        "silver": "🥈 Silver", "gold": "🥇 Gold",
-        "platinum": "💎 Platinum", "diamond": "👑 Diamond",
-        "legend": "🏆 Legend", "master": "🌟 Master"
-    }
-    required = thresholds.get(tier, None)
+    tier_info = TROPHY_TIERS_BY_KEY.get(tier, {})
+    required = tier_info.get("required", None)
+    trophy_label = get_trophy_label(tier)
 
     if required is None:
         flash("Invalid reward tier.")
@@ -2325,16 +2324,16 @@ def claim_reward():
     already_claimed = cursor.fetchone()
 
     if already_claimed:
-        flash(f"You already claimed {trophy_names[tier]} for this habit.")
+        flash(f"You already claimed {trophy_label} for this habit.")
     elif habit_points >= required:
         cursor.execute("""
             INSERT INTO habit_reward_claims (user_id, habit_id, tier, claimed_date)
             VALUES (?, ?, ?, ?)
         """, (session["user_id"], habit_id, tier, date.today().isoformat()))
         conn.commit()
-        flash(f"🎉 {trophy_names[tier]} claimed! Congratulations!")
+        flash(f"\U0001F389 {trophy_label} claimed! Congratulations!")
     else:
-        flash(f"Not enough points for {trophy_names[tier]}. "
+        flash(f"Not enough points for {trophy_label}. "
               f"Need {required} completions (this habit has {habit_points}).")
 
     conn.close()
